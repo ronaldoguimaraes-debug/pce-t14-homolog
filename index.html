@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PCE — Dashboard [HOMOLOG]</title>
+<title>PCE — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#18161f;--bg2:#1f1c2a;--sidebar:#1a1726;--card:#232030;
+  --bg:#1A1A18;--bg2:#212120;--sidebar:#1E1E1C;--card:#252523;
   --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.12);
-  --green:#f5a623;--green2:#3d2e0a;--green3:#e09018;
+  --green:#63F858;--green2:#243d26;--green3:#4bc943;
   --cream:#EAE5E1;--muted:#7a7a76;--muted2:#4a4a47;
   --amber:#f5c542;--red:#ff5f5f;--blue:#4d9fff;--purple:#a78bfa;
   --ticker-h:52px;--sidebar-w:220px;--header-h:58px;--r:10px;--rl:13px;
@@ -211,11 +211,6 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--cream);dis
 </head>
 <body>
 
-<!-- HOMOLOG BANNER -->
-<div style="background:linear-gradient(90deg,#f5a623,#e07b0a);color:#1A1A18;text-align:center;font-family:'Barlow',sans-serif;font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;padding:6px;flex-shrink:0">
-  ⚠️ AMBIENTE DE HOMOLOGAÇÃO — NÃO É PRODUÇÃO ⚠️
-</div>
-
 <!-- TICKER BAR -->
 <div class="ticker">
   <div class="ticker-track" id="ticker-track"></div>
@@ -227,7 +222,7 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--cream);dis
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-head">
-      <div class="logo-mark" style="background:#3d2e0a;border-color:rgba(245,166,35,.3)">
+      <div class="logo-mark">
         <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
           <polygon points="8,8 26,8 32,14 20,14 20,20 32,20 26,32 8,32 14,26 26,26 26,20 14,20"/>
         </svg>
@@ -361,14 +356,63 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--cream);dis
 
 <script>
 // ═══════════════════════════════════════════════════════════
-// [PCE] LAYER 0 — CONSTANTS & STATIC DATA
+// [PCE] LAYER 0 — CONSTANTS, CONFIG & STATIC DATA
+// Versão: 3.0 | Engenharia de Produção Elite
 // ═══════════════════════════════════════════════════════════
-const API_URL    = 'https://script.google.com/macros/s/AKfycbxl63uGMbt1Ao5DBMjp8X_D-FNhkq5agLZZVs6iQ-9hHepmFkrGVtjA8pcZdjwBa-ba/exec';
-const API_URL_US = 'https://script.google.com/macros/s/AKfycbzzfV6Agp-AExPKx4w5jpoF5uzhHxfF7ySsDA3bvrxZMqnxaXtkAL99FvWVxvCcHtI/exec';
 
-// FALLBACK: dados estáticos embutidos — exibidos imediatamente no boot
+// ── Versão do sistema ──
+const PCE_VERSION = '3.0.0';
+const API_SCHEMA_VERSION = '1.0'; // Validado contra payloads recebidos
+
+// ── Configuração de fontes de dados ──
+// Estrutura genérica — suporta N turmas sem hardcode
+const DATA_SOURCES = {
+  br: {
+    id:          'br',
+    label:       'T14 Brasil',
+    flag:        '🇧🇷',
+    color:       '#63F858',
+    url:         'https://script.google.com/macros/s/AKfycbxl63uGMbt1Ao5DBMjp8X_D-FNhkq5agLZZVs6iQ-9hHepmFkrGVtjA8pcZdjwBa-ba/exec',
+    type:        'full',   // full = rows + stats completos
+    timeout:     15000,
+    retries:     2,
+    retryDelay:  2000,     // delay base para backoff exponencial
+  },
+  us: {
+    id:          'us',
+    label:       'T13 Orlando',
+    flag:        '🇺🇸',
+    color:       '#4d9fff',
+    url:         'https://script.google.com/macros/s/AKfycbzzfV6Agp-AExPKx4w5jpoF5uzhHxfF7ySsDA3bvrxZMqnxaXtkAL99FvWVxvCcHtI/exec',
+    type:        'summary', // summary = apenas totais e confirmados
+    timeout:     15000,
+    retries:     2,
+    retryDelay:  2000,
+  }
+};
+
+// ── Schema mínimo exigido nos payloads (validação defensiva) ──
+const SCHEMA = {
+  br: {
+    requiredFields: ['rows', 'total'],
+    rowRequiredFields: ['nome', 'presenca', 'tipo'],
+    minRows: 1,
+  },
+  us: {
+    requiredFields: ['total', 'confirmados'],
+    minTotal: 0,
+  }
+};
+
+// ── FALLBACK versionado — dados offline com metadados ──
+const FALLBACK_META = {
+  version:     '3.0.0',
+  capturedAt:  '2026-03-27T18:00:00.000Z',
+  totalRows:   192,
+  isOffline:   true,
+  source:      'static_embedded',
+};
 const FALLBACK = [{"tipo":"Taxa de Transferência Isento","evento":"ORLANDO + BRASIL","nome":"Alexandre Fouani","presenca":"SEM RETORNO","onboarding":"NÃO INICIADO","whats":"NÃO","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"Raquel Afonso Ribeiro Correia","presenca":"PROXIMA TURMA","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"Brasíliano Correia Filho","presenca":"PROXIMA TURMA","onboarding":"REALIZADO","whats":"NÃO","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"Rogerio Eduardo Ferreira de Oliveira","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"ANGÉLICA BERNARDES YOSHIDA","presenca":"CANCELAMENTO","onboarding":"NÃO INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"ORLANDO + BRASIL","nome":"Yara Assaad","presenca":"SEM RETORNO","onboarding":"NÃO INICIADO","whats":"NÃO","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"IVANI DE SOUSA FREITAS","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Clécio Sidnei Gonçalves","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"GECY ALVES NE NETO","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Talge Celuppi Gonçalves","presenca":"CANCELAMENTO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Flavio Ratzke","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"RODRIGO DE PAULA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"FERNANDA RANGEL DE AZEVEDO DE PAULA","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"REGIS BOSQUEROLLI PRESTES","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"GABRIELA RODRIGUES COELHO","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"DIONE COELHO","presenca":"PROXIMA TURMA","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"JULIENE SOARES COELHO RODRIGUES HERCULINO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"ANA KARLA LIMA BARROS DE CARVALHO E SA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Jéferson Rodrigues da Silva","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Igor Nonato Almeida Pereira","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"ANDRE LOPES TEIXEIRA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"CARINE RODRIGUES","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Lucas Asato Britto Lopes","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Shirley de Carvalho Santos","presenca":"PROXIMA TURMA","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"RENATO DA SILVA UCHOA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Antônio Edson De Oliveira Marinho Júnior","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"ANTONIO MARCOS PIRES CONDE","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"JUCELIA MARTINI","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"BRASIL","nome":"IGOR GOMES PIRES","presenca":"PROXIMA TURMA","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"BRASIL","nome":"William Avancini","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Daniel Carneiro da Frota","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Germany Araujo","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"ENVIADO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Milene Teixeira Cruz","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"JOAO LUCAS DE FIGUEIREDO BEDA PICCIRILLO","presenca":"PROXIMA TURMA","onboarding":"NÃO INICIADO","whats":"SIM","data":"Wed Mar 04 2026 10:11:34 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"MATEUS Oliveira de Azambuja","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Wed Mar 04 2026 10:11:34 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"ERLAINE VIEIRA DOS SANTOS AGUDO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Wed Mar 04 2026 10:11:34 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Diego Oliveira Censi","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 06 2026 10:21:32 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"GABRIELE SOUZA DE OLIVEIRA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 06 2026 15:37:30 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"ALYSSON MATARELI DE CASTRO ABREU","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:45 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"EVANDRO LUIZ MOREIRA","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"MARCOS ROSENDO DA SILVA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"tarlis faé","presenca":"PROXIMA TURMA","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"EVILLEN SCHULZE DE CARVALHO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"EDUARDO HENRIQUE DE PROSPERO AMUI","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"GISELE FREIRE DA FONSECA TEIXEIRA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Elisa Ermida Ramos","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"PAULO CESAR MENDES BORGES","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Roberson Sidnei Callegaro","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Felipe Alvarenga Rolf Reichle","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"OTAVIO BEHLING JUNIOR","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"júlia caroline","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"KLEBER ROBERTO DA SILVA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Fabiano Macias Montoro Faga","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Bruno Cunha","presenca":"BR + US CONFIRMAOD","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"DAVID LACERDA DANTAS COUTO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"DIEGO EDUARDO GARCIA","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"DAVID LACERDA DANTAS COUTO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Mariana Pimentel","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"ENVIADO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Matusalem de oliveira","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"LUCIANO ARTIFON","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"FABIO HENRIK VALENCA CRISOSTIMO","presenca":"SEM RETORNO","onboarding":"NÃO INICIADO","whats":"NÃO","data":"Mon Mar 09 2026 13:40:30 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Ediney Rodrigues","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 13:40:30 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"BRASIL","nome":"LUANA LINARES MOSTACHIO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 13:40:30 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Claudia Laysa de Aragão Torres Guimarães","presenca":"PROXIMA TURMA","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Ayarla Pereira de Souza","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"FERNANDO HENRIQUE JOHANN","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Aristides da Costa Braga Junior","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"ELISANGELA BATISTA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Carla Cooper","presenca":"PROXIMA TURMA","onboarding":"NÃO INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Rodrigo Pereira de Freitas","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CHRISTIANO AUGUSTO DOS SANTOS","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"FERNANDO DE MEDEIROS PENACHIN","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Roberto Chiamente","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Samantha Busnello","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Diogo Rezende de Almeida","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Anderson Fernando Gasparetto","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Vandeilson Paulino de Araujo","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Rony Franchin","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Evandro Vieira","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"André Rodrigo Lui","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CARLOS REIS VALENTIM DA SILVA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"SYNARA BUSNELLO GAVIAO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 12:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"TACIANA MICHELLY ROSADO TAVORA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"LARISSA VITORIA LOPES FIRMINO","presenca":"BR + US CONFIRMAOD","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"NORMA JEAN LOPES","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Daiane da Silva Almeida","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Marla Honorato Braga Andrade","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ROGERIO FERNANDES GUIMARAES","presenca":"BR + US CONFIRMAOD","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Eliel Andrade Carapiá","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ROSELAINE FERNANDES","presenca":"SEM RETORNO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ALEXANDRE LISBOA FLORES","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"RODRIGO LENGENFELDER AGUDO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:30 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Mariana Zboralski Pires Bicalho","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Carlos Felipe Távora","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Rosa de Fátima Surek","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:31 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Carina Andres","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"FERNANDO CARPES BRAGA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"SHARON DOS SANTOS SILVA","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ELIZABETE DA CONCEICAO BARBOSA DE AVILA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Fernanda Garcia Redondo","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Michel Santana das Neves","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"VANESSA LILIAM ZBORALSKI","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ROBERTO DE LACERDA RUSSO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"JHOSEPH CARLOS DAROSCI DA SILVA","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"Taxa de Transferência","evento":"BRASIL","nome":"MARA RIBASKI","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"Taxa de Transferência","evento":"BRASIL","nome":"Gabriella Tucumantel","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Veronica Alves","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Cibele  Lopes da Silva","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"GIORGIO BERTACHINI D ANGELO","presenca":"BR + US CONFIRMAOD","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Fabiola Franca Azzi Paranhos","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Erica Rangel","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Nathasha Gonçalves Nunes Cadorna","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ANA PAULA PACHECO NAMMUR","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Fábio Quintanilha","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CELSO DA SILVA BATISTA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Zaquiely Guzatti Klafke Rodrigues","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Bruno Garcia Redondo","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Danielle Felix","presenca":"PROXIMA TURMA","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ROBERTO TROMBETTA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"soraya schmitz","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"luiz fernando bortolanza","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Joseline Tome","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"RICARDO TONIN","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"RAFAEL FERNANDO DAL BOSCO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Cláudio Márcio borges","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"SANDRO AUGUSTO GOLIN","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"GEOVANNE GHIZONI","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"VALDICIR BERTOL","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"GELIANDRO FELTRIN","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"marco antonio scariot","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Marlon Nardi Molon","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Marlete Chagas","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"GABRIELA MOURA BAPTISTETTI","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Eli Moraes","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Camile Hermes Lago","presenca":"CANCELAMENTO","onboarding":"NÃO INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Marcos Soligo","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"FRANCIELE PAULA MULLER","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"RONALDO DE BRITO LEITE FILHO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"DANILO VENDRUSCOLO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"DIEGO DE LARA SENDESKI","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"CLAYTON PIZA PINHEIRO","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Aline Fernandes De Matto","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"MICHAEL SELVO DO NASCIMENTO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Rodrigo Pasa","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"RAFAEL XAVIER MAZO","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Giovane Zembruski","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ELIZANGELA DE SOUZA SILVA","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ALCIMAR Moretti","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"WALBRAM MARIO MORAES COELHO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"JULIANA CORSO","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Thu Mar 19 2026 10:23:10 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"MARINILSE PIASSESKI CORSO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Thu Mar 19 2026 10:23:10 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"GILMAR BISPO DA SILVA JUNIOR","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Thu Mar 19 2026 10:23:10 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CRISTIANE APARECIDA SILVA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Thu Mar 19 2026 10:23:10 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Alexandre Marcos Bertagnolli","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Thu Mar 19 2026 10:23:10 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Antonio Cassiano da Cunha filho","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Thu Mar 19 2026 10:23:36 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"JOSUÉ ALVES SANDRI","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Thu Mar 19 2026 10:24:13 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Vanessa Quintanilha","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:19 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"MARIA JONILDE SUREK ASSERMANN","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:19 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"Cortesia","evento":"BRASIL","nome":"LUCIO CARLOS DE CARVALHO BOGGIAN","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Cortesia","evento":"BRASIL","nome":"Flavia Cristina Teixeira Silva","presenca":"SEM RETORNO","onboarding":"NÃO INICIADO","whats":"NÃO","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"THARYAN LUCCA ANDRADE","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CIBELE MAGALHÃES DE SOUZA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"STEFANY DO NASCIMENTO BARRETO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"","nome":"GILNEI ANTONIO SCHMITZ","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"MAYARA CRISTINE SILVA BEHLING","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"LEANDRO MARTINS DA SILVA","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Samara Lilian da silva","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Cleber Márcio Ganassini","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Débora Tamires Fernandes dos Santos","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Fátima Eurides Silva Araújo","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"PAULO SERGIO REICHLE","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"DOUGLAS BELLAN","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CAIO TADEU DO CARMO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"MAURILIO KALLEB COSTA LINS","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"DIEGO PEROSA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"FERNANDA ZEMBRUSKI","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"RAUL GABRIEL BALBINO PINHEIRO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"LUAN ARIEL GUZATTI KLAFKE","presenca":"BR CONFIRMADO","onboarding":"NÃO INICIADO","whats":"NÃO","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Candida Campos","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:21 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"MAYARA COSTA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:21 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"LUCIANA REZENDE ALMEIDA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 24 2026 09:12:24 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ANA CLAUDIA VENANCIO DOS SANTOS","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 24 2026 09:12:24 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"pedro henrique Barella Golin","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 24 2026 09:12:24 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"SANDRA MARIA BARELLA GOLIN","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 24 2026 15:15:19 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ALINE ROSSETTO","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 24 2026 15:15:19 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Angela Alves Pereira","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 24 2026 15:15:19 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Marcelo Marcon de Vargas","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Tue Mar 24 2026 15:15:19 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Luiz Ernesto Silva Saggiorato","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 24 2026 17:07:34 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"Taxa de Transferência","evento":"BRASIL","nome":"BARBARA PASCOTTO DE OSTE LOCATELLI","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Wed Mar 25 2026 15:22:27 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"FERNANDO HENRIQUE M LOCATELLI","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Wed Mar 25 2026 15:22:27 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"GUSTAVO MILANO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Wed Mar 25 2026 15:22:27 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"LUANNA ALVES SILVA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Wed Mar 25 2026 15:22:28 GMT-0300","typeform":"ENVIADO","contrato":""}];
-
 const PERFIL = [
 ["Juliene Coelho","Laboratório PETRI","Feminino","Petrolina Pernambuco","Saúde e Bem-Estar","Pessoa Jurídica e Pessoa Física","Sim","6","03/03/2026"],
 ["Daniel Frota","Clínica Renovo","Masculino","Fortaleza Ceará","Saúde e Bem-Estar","Pessoa Física","Sim","8","04/03/2026"],
@@ -447,7 +491,6 @@ const PERFIL = [
 ["Marcelo de Vargas","Axdoc Tecnologia","Masculino","Francisco Beltrão PR","Tecnologia e Inovação","Pessoa Jurídica","Não","9","23/03/2026"],
 ["Joseline Schmitz","Constrular Imóveis","Feminino","Pinhalzinho SC","Serviços","Pessoa Física","Sim","8","24/03/2026"]
 ];
-
 const FAQ_DATA = [
   {q:"O que é o PCE — Programa de Crescimento Empresarial?", a:"O PCE é um programa intensivo da Febracis voltado para empresários que desejam escalar seus negócios com estrutura, liderança e crescimento sustentável. Ao longo do programa, os participantes passam por imersões, mentorias e ferramentas práticas de gestão."},
   {q:"Quais são as imersões do PCE T14?", a:"O PCE T14 possui duas imersões: a Imersão Brasil (BR Confirmado), realizada em território nacional, e a Imersão Brasil + Orlando (BR + US Confirmado), que inclui também uma imersão presencial em Orlando, nos Estados Unidos."},
@@ -458,21 +501,82 @@ const FAQ_DATA = [
 ];
 
 // ═══════════════════════════════════════════════════════════
-// [PCE] LAYER 1 — NORMALIZATION
-// Garante status padronizado independente de typos da planilha
+// [PCE] OBSERVABILITY — Sistema de Logs Padronizado
+// Todos os logs têm: timestamp, origem, nível, contexto
+// ═══════════════════════════════════════════════════════════
+
+const Logger = (() => {
+  const prefix = '[PCE]';
+  const ts = () => new Date().toISOString().slice(11, 23); // HH:MM:SS.mmm
+
+  return {
+    info:  (origin, msg, ctx={}) => console.log(  `${prefix} ${ts()} ℹ️  [${origin}] ${msg}`, Object.keys(ctx).length ? ctx : ''),
+    warn:  (origin, msg, ctx={}) => console.warn( `${prefix} ${ts()} ⚠️  [${origin}] ${msg}`, Object.keys(ctx).length ? ctx : ''),
+    error: (origin, msg, ctx={}) => console.error(`${prefix} ${ts()} 🔴 [${origin}] ${msg}`, Object.keys(ctx).length ? ctx : ''),
+    debug: (origin, msg, ctx={}) => {
+      if (window._PCE_DEBUG) console.debug(`${prefix} ${ts()} 🔍 [${origin}] ${msg}`, Object.keys(ctx).length ? ctx : '');
+    },
+    perf:  (origin, label, startMs) => console.log(`${prefix} ${ts()} ⚡ [${origin}] ${label} — ${Date.now()-startMs}ms`),
+  };
+})();
+
+// Ativar modo debug: window._PCE_DEBUG = true no console
+window._PCE_DEBUG = false;
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] LAYER 1 — SCHEMA VALIDATION + NORMALIZATION
+// Valida estrutura antes de normalizar — nunca confia na API
 // ═══════════════════════════════════════════════════════════
 
 /**
- * normalizeStatus(raw) — contrato fixo de normalização
- * Corrige todos os typos conhecidos e padroniza casing
- * @param {string} raw - status bruto da planilha
- * @returns {string} status normalizado em maiúsculas
+ * validateBrPayload(raw) — validação defensiva do payload Brasil
+ * Verifica campos obrigatórios, tipos e tamanho mínimo
+ * @returns {{ valid: boolean, errors: string[] }}
+ */
+function validateBrPayload(raw) {
+  const errors = [];
+  if (!raw || typeof raw !== 'object')        { errors.push('payload nulo ou não-objeto'); return { valid: false, errors }; }
+  if (!Array.isArray(raw.rows))               errors.push('rows deve ser um array');
+  if (typeof raw.total !== 'number')          errors.push('total deve ser number');
+  if (Array.isArray(raw.rows) && raw.rows.length < SCHEMA.br.minRows) {
+    errors.push(`rows.length=${raw.rows.length} < mínimo=${SCHEMA.br.minRows}`);
+  }
+  // Verifica amostra das primeiras 3 rows
+  if (Array.isArray(raw.rows) && raw.rows.length > 0) {
+    const sample = raw.rows.slice(0, 3);
+    for (const field of SCHEMA.br.rowRequiredFields) {
+      if (!sample.every(r => field in r)) errors.push(`campo obrigatório ausente em row: ${field}`);
+    }
+  }
+  // Valida versão do schema se presente
+  if (raw.version && raw.version !== API_SCHEMA_VERSION) {
+    Logger.warn('SCHEMA', `Versão do schema incompatível: esperado=${API_SCHEMA_VERSION} recebido=${raw.version}`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * validateUsPayload(raw) — validação defensiva do payload Orlando
+ */
+function validateUsPayload(raw) {
+  const errors = [];
+  if (!raw || typeof raw !== 'object')            { errors.push('payload nulo'); return { valid: false, errors }; }
+  if (typeof raw.total !== 'number')              errors.push('total deve ser number');
+  if (typeof raw.confirmados !== 'number')        errors.push('confirmados deve ser number');
+  if (raw.total < SCHEMA.us.minTotal)             errors.push(`total inválido: ${raw.total}`);
+  if (raw.version && raw.version !== API_SCHEMA_VERSION) {
+    Logger.warn('SCHEMA', `Versão do schema Orlando incompatível: ${raw.version}`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * normalizeStatus(raw) — corrige typos e padroniza casing
  */
 function normalizeStatus(raw) {
   if (!raw || typeof raw !== 'string') return '';
   const s = raw.toUpperCase().trim();
-  // Corrige typos conhecidos da planilha
-  if (s === 'BR + US CONFIRMAOD') return 'BR + US CONFIRMADO';
+  if (s === 'BR + US CONFIRMAOD') return 'BR + US CONFIRMADO'; // typo intencional planilha
   if (s === 'BR + US CONFIRMADO') return 'BR + US CONFIRMADO';
   if (s === 'PROXIMA TURMA')      return 'PROXIMA TURMA';
   if (s === 'PRÓXIMA TURMA')      return 'PROXIMA TURMA';
@@ -485,47 +589,47 @@ function normalizeStatus(raw) {
 }
 
 /**
- * normalizeOnboarding(raw) — padroniza status de onboarding
+ * normalizeOnboarding(raw)
  */
 function normalizeOnboarding(raw) {
   if (!raw || typeof raw !== 'string') return 'NAO_INICIADO';
   const s = raw.toUpperCase().trim();
-  if (s === 'REALIZADO') return 'REALIZADO';
-  if (s.includes('PENDENTE')) return 'PENDENTE';
-  if (s === 'INICIADO') return 'INICIADO';
+  if (s === 'REALIZADO')          return 'REALIZADO';
+  if (s.includes('PENDENTE'))     return 'PENDENTE';
+  if (s === 'INICIADO')           return 'INICIADO';
   return 'NAO_INICIADO';
 }
 
 /**
- * computeStatsFromRows(rows) — calcula stats a partir do array quando backend não fornece
- * Usado como fallback defensivo
+ * computeStatsFromRows(rows) — calcula stats quando backend não fornece
+ * Proteção contra Data Drift: funciona mesmo se colunas mudarem de ordem
  */
 function computeStatsFromRows(rows) {
-  const presenca = { brConfirmado:0, brUs:0, usConfirmado:0, confirmado:0, semRetorno:0, cancelamento:0, proximaTurma:0, totalConfirmados:0 };
+  const presenca   = { brConfirmado:0, brUs:0, usConfirmado:0, confirmado:0, semRetorno:0, cancelamento:0, proximaTurma:0, totalConfirmados:0 };
   const onboarding = { realizado:0, iniciado:0, pendente:0, naoIniciado:0 };
-  const operacional = { whatsOk:0, typeformOk:0, typeformEnv:0, contratoOk:0 };
-  const eventos = { brasil:0, orlando:0 };
+  const operacional= { whatsOk:0, typeformOk:0, typeformEnv:0, contratoOk:0 };
+  const eventos    = { brasil:0, orlando:0 };
 
   for (const r of rows) {
     const p = normalizeStatus(r.presenca);
-    if (p === 'BR CONFIRMADO')       presenca.brConfirmado++;
-    else if (p === 'BR + US CONFIRMADO') presenca.brUs++;
-    else if (p === 'US CONFIRMADO')   presenca.usConfirmado++;
-    else if (p === 'CONFIRMADO')      presenca.confirmado++;
-    else if (p === 'SEM RETORNO')     presenca.semRetorno++;
-    else if (p === 'CANCELAMENTO')    presenca.cancelamento++;
-    else if (p === 'PROXIMA TURMA')   presenca.proximaTurma++;
+    if      (p === 'BR CONFIRMADO')       presenca.brConfirmado++;
+    else if (p === 'BR + US CONFIRMADO')  presenca.brUs++;
+    else if (p === 'US CONFIRMADO')       presenca.usConfirmado++;
+    else if (p === 'CONFIRMADO')          presenca.confirmado++;
+    else if (p === 'SEM RETORNO')         presenca.semRetorno++;
+    else if (p === 'CANCELAMENTO')        presenca.cancelamento++;
+    else if (p === 'PROXIMA TURMA')       presenca.proximaTurma++;
 
     const ob = normalizeOnboarding(r.onboarding);
-    if (ob === 'REALIZADO') onboarding.realizado++;
-    else if (ob === 'PENDENTE') onboarding.pendente++;
-    else if (ob === 'INICIADO') onboarding.iniciado++;
-    else onboarding.naoIniciado++;
+    if      (ob === 'REALIZADO')  onboarding.realizado++;
+    else if (ob === 'PENDENTE')   onboarding.pendente++;
+    else if (ob === 'INICIADO')   onboarding.iniciado++;
+    else                          onboarding.naoIniciado++;
 
     if ((r.whats||'').toUpperCase() === 'SIM') operacional.whatsOk++;
     const tf = (r.typeform||'').toUpperCase();
-    if (tf === 'PREENCHIDO') operacional.typeformOk++;
-    else if (tf === 'ENVIADO') operacional.typeformEnv++;
+    if      (tf === 'PREENCHIDO') operacional.typeformOk++;
+    else if (tf === 'ENVIADO')    operacional.typeformEnv++;
     if ((r.contrato||'').toUpperCase() === 'SIM') operacional.contratoOk++;
 
     const ev = (r.evento||'').toUpperCase();
@@ -537,89 +641,138 @@ function computeStatsFromRows(rows) {
 }
 
 /**
- * normalizeBrPayload(raw) — valida e normaliza payload da API Brasil
- * Retorna null se inválido — nunca lança exceção
+ * normalizeBrPayload(raw) — valida schema + normaliza dados Brasil
+ * Retorna null se inválido — nunca lança exceção para fora
  */
 function normalizeBrPayload(raw) {
   try {
-    if (!raw || !Array.isArray(raw.rows) || raw.rows.length === 0) return null;
-    const rows = raw.rows;
-    // Usa stats do backend se confiáveis, senão calcula
-    const stats = (raw.stats && raw.stats.presenca)
-      ? raw.stats
-      : computeStatsFromRows(rows);
-    // Normaliza typo no brUs do backend
-    if (stats.presenca && stats.presenca.brUs === undefined && raw.stats && raw.stats.presenca) {
-      stats.presenca.brUs = raw.stats.presenca.brUs || 0;
+    const t0 = Date.now();
+    const { valid, errors } = validateBrPayload(raw);
+    if (!valid) {
+      Logger.error('NORMALIZE', 'Payload Brasil inválido — descartando', { errors, raw: typeof raw });
+      return null;
     }
-    return { rows, stats, total: rows.length, updated: raw.updated || new Date().toISOString() };
+    const rows  = raw.rows;
+    const stats = (raw.stats && raw.stats.presenca) ? raw.stats : computeStatsFromRows(rows);
+    if (!stats.presenca) {
+      Logger.warn('NORMALIZE', 'stats.presenca ausente — recalculando', { total: rows.length });
+    }
+    const result = {
+      rows,
+      stats,
+      total:     rows.length,
+      updated:   raw.updated || new Date().toISOString(),
+      version:   raw.version || 'unknown',
+      source:    'api_live',
+    };
+    Logger.perf('NORMALIZE', 'normalizeBrPayload', t0);
+    return result;
   } catch(e) {
-    console.error('[PCE] Erro ao normalizar payload Brasil:', e);
+    Logger.error('NORMALIZE', 'Exceção em normalizeBrPayload', { message: e.message });
     return null;
   }
 }
 
 /**
- * normalizeUsPayload(raw) — valida e normaliza payload da API Orlando
+ * normalizeUsPayload(raw) — valida schema + normaliza dados Orlando
  */
 function normalizeUsPayload(raw) {
   try {
-    if (!raw) return null;
-    const total = raw.total || (raw.rows ? raw.rows.length : 0);
-    const confirmados = raw.confirmados !== undefined ? raw.confirmados : 0;
-    const stats = raw.stats || { confirmado: confirmados, semRetorno: 0, cancelamento: 0, outros: 0 };
-    return { rows: raw.rows || [], total, confirmados, stats, updated: raw.updated || new Date().toISOString() };
+    const { valid, errors } = validateUsPayload(raw);
+    if (!valid) {
+      Logger.error('NORMALIZE', 'Payload Orlando inválido — descartando', { errors });
+      return null;
+    }
+    const total      = raw.total;
+    const confirmados = raw.confirmados;
+    const stats      = raw.stats || { confirmado: confirmados, semRetorno: 0, cancelamento: 0, outros: 0 };
+    return {
+      rows:       raw.rows || [],
+      total,
+      confirmados,
+      stats,
+      updated:    raw.updated || new Date().toISOString(),
+      version:    raw.version || 'unknown',
+      source:     'api_live',
+    };
   } catch(e) {
-    console.error('[PCE] Erro ao normalizar payload Orlando:', e);
+    Logger.error('NORMALIZE', 'Exceção em normalizeUsPayload', { message: e.message });
     return null;
   }
 }
 
 // ═══════════════════════════════════════════════════════════
 // [PCE] LAYER 2 — STATE STORE
-// Estado global único e controlado — nunca sobrescreve dados válidos com erro
+// Estado granular, controlado e auditável
 // ═══════════════════════════════════════════════════════════
 const store = {
-  br:   { rows: null, stats: null, updated: null },
-  us:   { data: null, updated: null },
-  meta: { loading: false, error: null, isOffline: false, currentView: 'br' }
+  br: {
+    rows:    null,
+    stats:   null,
+    updated: null,
+    version: null,
+    source:  null,   // 'api_live' | 'static_embedded'
+  },
+  us: {
+    data:    null,
+    updated: null,
+    version: null,
+    source:  null,
+  },
+  meta: {
+    brLoading:   false,   // loading granular por fonte
+    usLoading:   false,
+    isOffline:   false,
+    currentView: 'br',
+    lastFetchAt: null,
+    fetchCount:  0,
+    // Controle de concorrência — cancela respostas de fetches antigos
+    fetchToken:  0,
+  }
 };
 
 function storeUpdateBr(payload) {
-  // Só atualiza se payload válido — nunca sobrescreve dado bom com null
-  if (!payload) { console.warn('[PCE] storeUpdateBr: payload inválido, mantendo dados anteriores'); return false; }
+  if (!payload) {
+    Logger.warn('STORE', 'storeUpdateBr: payload nulo — mantendo dados anteriores');
+    return false;
+  }
   store.br.rows    = payload.rows;
   store.br.stats   = payload.stats;
   store.br.updated = payload.updated;
-  console.log('[PCE] Brasil atualizado:', payload.rows.length, 'registros', payload.stats);
+  store.br.version = payload.version;
+  store.br.source  = payload.source || 'api_live';
+  Logger.info('STORE', 'Brasil atualizado', { total: payload.rows.length, source: store.br.source, version: store.br.version });
   return true;
 }
 
 function storeUpdateUs(payload) {
-  if (!payload) { console.warn('[PCE] storeUpdateUs: payload inválido, mantendo dados anteriores'); return false; }
+  if (!payload) {
+    Logger.warn('STORE', 'storeUpdateUs: payload nulo — mantendo dados anteriores');
+    return false;
+  }
   store.us.data    = payload;
   store.us.updated = payload.updated;
-  console.log('[PCE] Orlando atualizado:', payload.total, 'total,', payload.confirmados, 'confirmados');
+  store.us.version = payload.version;
+  store.us.source  = payload.source || 'api_live';
+  Logger.info('STORE', 'Orlando atualizado', { total: payload.total, confirmados: payload.confirmados });
   return true;
 }
 
 function storeSetOffline(isOffline) {
   store.meta.isOffline = isOffline;
-  // Mostra/esconde banner de offline
   const banner = document.getElementById('offline-banner');
   if (banner) banner.classList.toggle('hidden', !isOffline);
 }
 
 // ═══════════════════════════════════════════════════════════
-// [PCE] LAYER 3 — DATA LAYER (JSONP + FETCH)
+// [PCE] LAYER 3 — DATA LAYER
+// JSONP com retry exponencial + controle de concorrência
 // ═══════════════════════════════════════════════════════════
 
 /**
- * jsonp(url, name) — requisição JSONP com cleanup garantido
- * Cada requisição tem callback único via timestamp+random
- * Garante remoção do script tag e do callback global
+ * jsonp(url, name, timeoutMs) — JSONP com cleanup total garantido
  */
-function jsonp(url, name) {
+function jsonp(url, name, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     const cbName = '_pce_cb_' + name + '_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     let done = false;
@@ -628,8 +781,8 @@ function jsonp(url, name) {
       if (done) return;
       done = true;
       cleanup();
-      reject(new Error('[PCE] Timeout JSONP: ' + name));
-    }, 15000);
+      reject(new Error('Timeout JSONP: ' + name));
+    }, timeoutMs);
 
     function cleanup() {
       clearTimeout(timer);
@@ -651,7 +804,7 @@ function jsonp(url, name) {
       if (done) return;
       done = true;
       cleanup();
-      reject(new Error('[PCE] Script error JSONP: ' + name));
+      reject(new Error('Script error JSONP: ' + name));
     };
     script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
     document.head.appendChild(script);
@@ -659,40 +812,94 @@ function jsonp(url, name) {
 }
 
 /**
- * fetchAllData(silent) — busca BR e US em paralelo
- * APIs são independentes: falha de uma não impede renderização da outra
- * @param {boolean} silent — se true, não altera UI do botão
+ * fetchWithRetry(sourceConfig, token) — JSONP com retry exponencial
+ * Estratégia: 1ª tentativa imediata → aguarda delay*2^n → nova tentativa
+ * Abandona se token de concorrência mudou (fetch mais novo em andamento)
+ *
+ * @param {object} sourceConfig - configuração da fonte (DATA_SOURCES.br/us)
+ * @param {number} token        - token de concorrência — abandona se mudou
+ * @returns {Promise<object>}   - dados brutos da API
  */
-async function fetchAllData(silent = false) {
-  if (store.meta.loading) {
-    console.log('[PCE] Fetch já em andamento, ignorando');
-    return;
+async function fetchWithRetry(sourceConfig, token) {
+  const { id, url, timeout, retries, retryDelay, label } = sourceConfig;
+  let lastError;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    // ── Controle de concorrência: abandona se há fetch mais novo ──
+    if (store.meta.fetchToken !== token) {
+      Logger.debug('FETCH', `[${id}] Fetch cancelado — token obsoleto`, { expected: token, current: store.meta.fetchToken });
+      throw new Error('CANCELLED');
+    }
+
+    if (attempt > 0) {
+      const delay = retryDelay * Math.pow(2, attempt - 1); // backoff exponencial: 2s, 4s
+      Logger.warn('FETCH', `[${id}] Retry ${attempt}/${retries} em ${delay}ms`, { lastError: lastError?.message });
+      await new Promise(r => setTimeout(r, delay));
+
+      // Checa novamente após o delay
+      if (store.meta.fetchToken !== token) throw new Error('CANCELLED');
+    }
+
+    try {
+      const t0 = Date.now();
+      Logger.info('FETCH', `[${id}] Tentativa ${attempt + 1}/${retries + 1} — ${label}`);
+      const data = await jsonp(url, id + '_' + attempt, timeout);
+      Logger.perf('FETCH', `[${id}] Resposta recebida`, t0);
+      return data;
+    } catch(e) {
+      lastError = e;
+      Logger.warn('FETCH', `[${id}] Tentativa ${attempt + 1} falhou`, { error: e.message });
+    }
   }
 
-  store.meta.loading = true;
-  const btn = document.getElementById('btnR');
+  throw new Error(`[${id}] Todas as ${retries + 1} tentativas falharam. Último erro: ${lastError?.message}`);
+}
 
+/**
+ * fetchAllData(silent) — orquestra fetches de todas as fontes em paralelo
+ * Controle de concorrência: cada chamada gera um token único.
+ * Se um fetch mais novo chegar, o anterior é abandonado ao verificar o token.
+ */
+async function fetchAllData(silent = false) {
+  // ── Controle de concorrência: gera token único para este fetch ──
+  const token = ++store.meta.fetchToken;
+
+  Logger.info('FETCH', 'Iniciando fetch paralelo', { token, silent, fetchCount: ++store.meta.fetchCount });
+
+  store.meta.brLoading = true;
+  store.meta.usLoading = true;
+  const t0 = Date.now();
+
+  const btn = document.getElementById('btnR');
   if (!silent) {
-    btn.disabled = true;
-    btn.classList.add('spinning');
+    if (btn) { btn.disabled = true; btn.classList.add('spinning'); }
     setStatus('load', 'Buscando...');
   }
 
-  console.log('[PCE] Iniciando fetch paralelo — Brasil + Orlando');
-
+  // ── Fetch paralelo e independente com retry ──
   const [resBr, resUs] = await Promise.allSettled([
-    jsonp(API_URL,    'br'),
-    jsonp(API_URL_US, 'us')
+    fetchWithRetry(DATA_SOURCES.br, token),
+    fetchWithRetry(DATA_SOURCES.us, token),
   ]);
+
+  // ── Controle de concorrência: abandona resultado se token obsoleto ──
+  if (store.meta.fetchToken !== token) {
+    Logger.warn('FETCH', 'Resultado descartado — token obsoleto (fetch mais novo em andamento)', { token });
+    return;
+  }
+
+  store.meta.brLoading = false;
+  store.meta.usLoading = false;
+  store.meta.lastFetchAt = new Date().toISOString();
 
   // ── Processa Brasil ──
   let brOk = false;
   if (resBr.status === 'fulfilled') {
     const normalized = normalizeBrPayload(resBr.value);
     brOk = storeUpdateBr(normalized);
-    if (!brOk) console.warn('[PCE] Brasil: payload recebido mas inválido após normalização');
-  } else {
-    console.warn('[PCE] Falha API Brasil:', resBr.reason);
+    if (!brOk) Logger.warn('FETCH', 'Brasil: payload inválido após normalização', { raw: typeof resBr.value });
+  } else if (resBr.reason?.message !== 'CANCELLED') {
+    Logger.error('FETCH', 'Falha definitiva API Brasil', { error: resBr.reason?.message });
   }
 
   // ── Processa Orlando ──
@@ -700,48 +907,43 @@ async function fetchAllData(silent = false) {
   if (resUs.status === 'fulfilled') {
     const normalized = normalizeUsPayload(resUs.value);
     usOk = storeUpdateUs(normalized);
-    if (!usOk) console.warn('[PCE] Orlando: payload recebido mas inválido após normalização');
-  } else {
-    console.warn('[PCE] Falha API Orlando:', resUs.reason);
+    if (!usOk) Logger.warn('FETCH', 'Orlando: payload inválido após normalização');
+  } else if (resUs.reason?.message !== 'CANCELLED') {
+    Logger.error('FETCH', 'Falha definitiva API Orlando', { error: resUs.reason?.message });
   }
 
-  // ── Decide status e offline mode ──
+  // ── Decide estado offline ──
   if (!brOk && !usOk) {
-    // Ambas falharam — usa fallback se ainda não tem dados
-    console.error('[PCE] Ambas as APIs falharam');
+    Logger.error('FETCH', 'Ambas as APIs falharam — modo offline');
     if (!store.br.rows) {
-      console.log('[PCE] Carregando FALLBACK estático');
+      Logger.info('FETCH', 'Carregando FALLBACK estático', { rows: FALLBACK.length, capturedAt: FALLBACK_META.capturedAt });
       const fb = normalizeBrPayload({ rows: FALLBACK, stats: null });
-      storeUpdateBr(fb);
+      if (fb) { fb.source = 'static_embedded'; storeUpdateBr(fb); }
     }
     storeSetOffline(true);
     setStatus('err', 'Cache local');
     updateTimestamp('(cache)');
   } else {
     storeSetOffline(false);
-    const brLabel = brOk ? store.br.rows.length : '?';
-    const usLabel = usOk ? store.us.data.confirmados : 'offline';
-    setStatus('ok', `Ao vivo · 🇧🇷 ${brLabel} · 🇺🇸 ${usLabel}`);
+    const brLabel = brOk ? `${store.br.rows.length} registros` : '⚠️ cache';
+    const usLabel = usOk ? `${store.us.data.confirmados} conf.` : '⚠️ offline';
+    setStatus('ok', `🇧🇷 ${brLabel} · 🇺🇸 ${usLabel}`);
     updateTimestamp();
-    console.log('[PCE] Fetch completo — BR:', brOk, '| US:', usOk);
   }
 
-  // ── Renderiza view atual com dados novos ──
+  Logger.perf('FETCH', 'fetchAllData completo', t0);
+
+  // ── Renderiza view atual ──
   renderCurrentView();
 
-  store.meta.loading = false;
-
-  if (!silent) {
-    btn.disabled = false;
-    btn.classList.remove('spinning');
-  }
+  if (!silent && btn) { btn.disabled = false; btn.classList.remove('spinning'); }
 }
 
 // ═══════════════════════════════════════════════════════════
 // [PCE] LAYER 4 — CHART ENGINE
-// Funções puras de renderização de gráficos
+// Isolamento de falhas: cada gráfico falha individualmente
 // ═══════════════════════════════════════════════════════════
-const G='#f5a623',G2='#3d2e0a',G3='#e09018',AM='#f5c542',RD='#ff5f5f',BL='#4d9fff',CR='#EAE5E1';
+const G='#63F858',G2='#243d26',G3='#4bc943',AM='#f5c542',RD='#ff5f5f',BL='#4d9fff',CR='#EAE5E1';
 const PAL=[G,BL,AM,RD,'#a78bfa','#f472b6','#2dd4bf','#fb923c',G2,'#facc15','#34d399','#60a5fa'];
 const CHART_REGISTRY = {};
 const LC='#4a4a47', GC='rgba(255,255,255,.035)';
@@ -752,94 +954,110 @@ const TOOLTIP_DEFAULTS = {
 };
 
 function destroyChart(id) {
-  if (CHART_REGISTRY[id]) { CHART_REGISTRY[id].destroy(); delete CHART_REGISTRY[id]; }
+  if (CHART_REGISTRY[id]) { try { CHART_REGISTRY[id].destroy(); } catch(e){} delete CHART_REGISTRY[id]; }
 }
 
 function safeEl(id) {
   const el = document.getElementById(id);
-  if (!el) console.warn('[PCE] Elemento não encontrado:', id);
+  if (!el) Logger.debug('UI', `Elemento não encontrado: ${id}`);
   return el;
 }
 
+/**
+ * safeRender(name, fn) — wrapper de isolamento de falhas de UI
+ * Um gráfico com erro nunca quebra os outros nem a página
+ */
+function safeRender(name, fn) {
+  try {
+    fn();
+  } catch(e) {
+    Logger.error('UI', `Falha isolada ao renderizar: ${name}`, { message: e.message });
+    // Tenta mostrar placeholder de erro no elemento correspondente
+    const el = document.getElementById(name);
+    if (el) el.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:20px;text-align:center">⚠️ Erro ao renderizar</div>';
+  }
+}
+
 function renderLegend(id, labels, data, colors) {
-  const el = safeEl(id);
-  if (!el) return;
-  const total = data.reduce((a,b) => a+b, 0);
-  el.innerHTML = labels.map((l,i) =>
-    `<span><span class="ld" style="background:${colors[i%colors.length]}"></span>${l}: <strong style="color:${CR}">${data[i]}</strong> <span style="color:#4a4a47">(${Math.round(data[i]/total*100)}%)</span></span>`
-  ).join('');
+  safeRender('legend_' + id, () => {
+    const el = safeEl(id);
+    if (!el) return;
+    const total = data.reduce((a,b) => a+b, 0);
+    el.innerHTML = labels.map((l,i) =>
+      `<span><span class="ld" style="background:${colors[i%colors.length]}"></span>${l}: <strong style="color:${CR}">${data[i]}</strong> <span style="color:#4a4a47">(${Math.round(data[i]/total*100)}%)</span></span>`
+    ).join('');
+  });
 }
 
 function renderDonut(id, labels, data, colors) {
-  destroyChart(id);
-  const el = safeEl(id);
-  if (!el) return;
-  CHART_REGISTRY[id] = new Chart(el, {
-    type:'doughnut',
-    data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#252523',borderWidth:3}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{display:false},tooltip:TOOLTIP_DEFAULTS}}
+  safeRender(id, () => {
+    destroyChart(id);
+    const el = safeEl(id);
+    if (!el) return;
+    CHART_REGISTRY[id] = new Chart(el, {
+      type:'doughnut',
+      data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#252523',borderWidth:3}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{display:false},tooltip:TOOLTIP_DEFAULTS}}
+    });
   });
 }
 
 function renderHBar(id, labels, data, palette) {
-  destroyChart(id);
-  const el = safeEl(id);
-  if (!el) return;
-  CHART_REGISTRY[id] = new Chart(el, {
-    type:'bar',
-    data:{labels,datasets:[{data,backgroundColor:labels.map((_,i)=>palette[i%palette.length]),borderColor:'transparent',borderRadius:5,borderSkipped:false}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TOOLTIP_DEFAULTS},
-      scales:{x:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:11}},border:{color:'transparent'}},
-              y:{grid:{display:false},ticks:{color:'#7a7a76',font:{family:'Barlow',size:11},padding:4},border:{color:'transparent'}}}}
+  safeRender(id, () => {
+    destroyChart(id);
+    const el = safeEl(id);
+    if (!el) return;
+    CHART_REGISTRY[id] = new Chart(el, {
+      type:'bar',
+      data:{labels,datasets:[{data,backgroundColor:labels.map((_,i)=>palette[i%palette.length]),borderColor:'transparent',borderRadius:5,borderSkipped:false}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TOOLTIP_DEFAULTS},
+        scales:{x:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:11}},border:{color:'transparent'}},
+                y:{grid:{display:false},ticks:{color:'#7a7a76',font:{family:'Barlow',size:11},padding:4},border:{color:'transparent'}}}}
+    });
   });
 }
 
 function renderVBar(id, labels, data, colors) {
-  destroyChart(id);
-  const el = safeEl(id);
-  if (!el) return;
-  CHART_REGISTRY[id] = new Chart(el, {
-    type:'bar',
-    data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'transparent',borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TOOLTIP_DEFAULTS,callbacks:{title:c=>`Nota ${c[0].label}`}}},
-      scales:{x:{grid:{display:false},ticks:{color:LC,font:{family:'Barlow',size:11}},border:{color:'transparent'}},
-              y:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:10},stepSize:1},border:{color:'transparent'},min:0}}}
+  safeRender(id, () => {
+    destroyChart(id);
+    const el = safeEl(id);
+    if (!el) return;
+    CHART_REGISTRY[id] = new Chart(el, {
+      type:'bar',
+      data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'transparent',borderRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TOOLTIP_DEFAULTS,callbacks:{title:c=>`Nota ${c[0].label}`}}},
+        scales:{x:{grid:{display:false},ticks:{color:LC,font:{family:'Barlow',size:11}},border:{color:'transparent'}},
+                y:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:10},stepSize:1},border:{color:'transparent'},min:0}}}
+    });
   });
 }
 
 function renderLine(id, labels, data, color) {
-  destroyChart(id);
-  const el = safeEl(id);
-  if (!el) return;
-  const ctx = el.getContext('2d');
-  const gr = ctx.createLinearGradient(0,0,0,120);
-  gr.addColorStop(0,color+'30'); gr.addColorStop(1,color+'00');
-  CHART_REGISTRY[id] = new Chart(ctx, {
-    type:'line',
-    data:{labels,datasets:[{data,borderColor:color,borderWidth:2.5,pointBackgroundColor:color,pointRadius:data.map(v=>v>1?4:2),fill:true,backgroundColor:gr,tension:.4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TOOLTIP_DEFAULTS,callbacks:{label:c=>` ${c.parsed.y} reg.`}}},
-      scales:{x:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:9},maxRotation:35},border:{color:'transparent'}},
-              y:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:9},stepSize:1},border:{color:'transparent'},min:0}}}
+  safeRender(id, () => {
+    destroyChart(id);
+    const el = safeEl(id);
+    if (!el) return;
+    const ctx = el.getContext('2d');
+    const gr = ctx.createLinearGradient(0,0,0,120);
+    gr.addColorStop(0,color+'30'); gr.addColorStop(1,color+'00');
+    CHART_REGISTRY[id] = new Chart(ctx, {
+      type:'line',
+      data:{labels,datasets:[{data,borderColor:color,borderWidth:2.5,pointBackgroundColor:color,pointRadius:data.map(v=>v>1?4:2),fill:true,backgroundColor:gr,tension:.4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TOOLTIP_DEFAULTS,callbacks:{label:c=>` ${c.parsed.y} reg.`}}},
+        scales:{x:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:9},maxRotation:35},border:{color:'transparent'}},
+                y:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:9},stepSize:1},border:{color:'transparent'},min:0}}}
+    });
   });
 }
 
-// Utilitários de contagem
 function countBy(arr) { return arr.reduce((o,v)=>{o[v]=(o[v]||0)+1;return o;},{}); }
 function topN(obj, n=12) { return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n); }
 
 // ═══════════════════════════════════════════════════════════
-// [PCE] LAYER 4 — TICKER (contrato fixo: sempre buildTicker(items))
+// [PCE] TICKER — Contrato fixo buildTicker(items[])
 // ═══════════════════════════════════════════════════════════
-
-/**
- * buildTicker(items) — contrato fixo de entrada
- * @param {Array<{lbl,val,cls,tag}>} items - itens a exibir
- */
 function buildTicker(items) {
-  if (!Array.isArray(items) || items.length === 0) {
-    console.warn('[PCE] buildTicker: items vazio ou inválido');
-    return;
-  }
+  if (!Array.isArray(items) || items.length === 0) { Logger.warn('TICKER', 'items vazio'); return; }
   const html = items.map(i => `
     <div class="ticker-item">
       <div>
@@ -850,20 +1068,17 @@ function buildTicker(items) {
         </div>
       </div>
     </div>`).join('');
-  const track = document.getElementById('ticker-track');
+  const track = safeEl('ticker-track');
   if (!track) return;
   track.innerHTML = html + html;
   track.style.animationDuration = Math.max(items.length * 4, 20) + 's';
 }
 
-/**
- * buildTickerBr(stats, total) — monta itens do ticker para view Brasil
- */
 function buildTickerBr(stats, total) {
   const pr = stats.presenca || {};
   const op = stats.operacional || {};
   const t100 = v => total > 0 ? Math.round(v/total*100) : 0;
-  const items = [
+  buildTicker([
     {lbl:'🇧🇷 Total da Turma T14',   val:total,               cls:'w', tag:null},
     {lbl:'🇧🇷 Confirmados',          val:pr.brConfirmado||0,   cls:'g', tag:{txt:`${t100(pr.brConfirmado||0)}%`,cls:'up'}},
     {lbl:'🇧🇷 Sem Retorno',          val:pr.semRetorno||0,     cls:'r', tag:{txt:`${t100(pr.semRetorno||0)}%`,cls:'dn'}},
@@ -873,36 +1088,28 @@ function buildTickerBr(stats, total) {
     {lbl:'🇧🇷 WhatsApp',             val:op.whatsOk||0,        cls:'g', tag:{txt:`${t100(op.whatsOk||0)}%`,cls:'up'}},
     {lbl:'🇧🇷 Typeform Preenchido',  val:op.typeformOk||0,     cls:'a', tag:{txt:`${t100(op.typeformOk||0)}%`,cls:'neu'}},
     {lbl:'🇧🇷 Contrato Assinado',    val:op.contratoOk||0,     cls:'w', tag:{txt:`${t100(op.contratoOk||0)}%`,cls:'neu'}},
-  ];
-  buildTicker(items);
+  ]);
 }
 
-/**
- * buildTickerUs(data) — monta itens do ticker para view Orlando
- */
 function buildTickerUs(data) {
   const total = data.total || 0;
   const conf  = data.confirmados || 0;
   const stats = data.stats || {};
   const t100  = v => total > 0 ? Math.round(v/total*100) : 0;
-  const items = [
-    {lbl:'🇺🇸 Total T13 Orlando',   val:total,               cls:'w', tag:null},
-    {lbl:'🇺🇸 Confirmados',          val:conf,                cls:'b', tag:{txt:`${t100(conf)}%`,cls:'up'}},
-    {lbl:'🇺🇸 Sem Retorno',          val:stats.semRetorno||0, cls:'r', tag:{txt:`${t100(stats.semRetorno||0)}%`,cls:'dn'}},
-    {lbl:'🇺🇸 Cancelamentos',        val:stats.cancelamento||0,cls:'r',tag:null},
-    {lbl:'🇺🇸 Taxa Confirmação',      val:t100(conf)+'%',     cls:'b', tag:null},
-  ];
-  buildTicker(items);
+  buildTicker([
+    {lbl:'🇺🇸 Total T13 Orlando',    val:total,                cls:'w', tag:null},
+    {lbl:'🇺🇸 Confirmados',          val:conf,                 cls:'b', tag:{txt:`${t100(conf)}%`,cls:'up'}},
+    {lbl:'🇺🇸 Sem Retorno',          val:stats.semRetorno||0,  cls:'r', tag:{txt:`${t100(stats.semRetorno||0)}%`,cls:'dn'}},
+    {lbl:'🇺🇸 Cancelamentos',        val:stats.cancelamento||0,cls:'r', tag:null},
+    {lbl:'🇺🇸 Taxa Confirmação',      val:t100(conf)+'%',      cls:'b', tag:null},
+  ]);
 }
 
-/**
- * buildTickerGeral(brStats, brTotal, usData) — ticker para PCE Geral
- */
 function buildTickerGeral(brStats, brTotal, usData) {
-  const brPr = brStats.presenca || {};
+  const brPr  = brStats.presenca || {};
   const usTotal = usData.total || 0;
   const usConf  = usData.confirmados || 0;
-  const items = [
+  buildTicker([
     {lbl:'🇧🇷 T14 Total',      val:brTotal,             cls:'g', tag:null},
     {lbl:'🇧🇷 Confirmados',    val:brPr.totalConfirmados||0,cls:'g',tag:{txt:`${brTotal>0?Math.round((brPr.totalConfirmados||0)/brTotal*100):0}%`,cls:'up'}},
     {lbl:'🇧🇷 Sem Retorno',    val:brPr.semRetorno||0,  cls:'r', tag:null},
@@ -910,583 +1117,533 @@ function buildTickerGeral(brStats, brTotal, usData) {
     {lbl:'🇺🇸 Confirmados',    val:usConf,              cls:'b', tag:{txt:`${usTotal>0?Math.round(usConf/usTotal*100):0}%`,cls:'up'}},
     {lbl:'🇺🇸 Sem Retorno',    val:usData.stats?.semRetorno||0,cls:'r',tag:null},
     {lbl:'📊 Total Geral',      val:brTotal+usTotal,     cls:'w', tag:null},
-  ];
-  buildTicker(items);
+  ]);
 }
 
 // ═══════════════════════════════════════════════════════════
 // [PCE] LAYER 4 — UI RENDERERS
-// Cada função tem UMA responsabilidade: renderizar uma view
+// safeRender() isola cada bloco — falha nunca propaga
 // ═══════════════════════════════════════════════════════════
 
-/**
- * renderViewBr() — renderiza view T14 Brasil
- * Contrato: usa store.br (rows + stats)
- */
 function renderViewBr() {
   const rows  = store.br.rows;
   const stats = store.br.stats;
+  if (!rows || rows.length === 0) { Logger.warn('UI', 'renderViewBr: sem dados'); return; }
 
-  if (!rows || rows.length === 0) {
-    console.warn('[PCE] renderViewBr: sem dados para renderizar');
-    return;
-  }
+  const total        = rows.length;
+  const pr           = stats.presenca    || {};
+  const ob           = stats.onboarding  || {};
+  const op           = stats.operacional || {};
+  const brOnly       = pr.brConfirmado    || 0;
+  const brUs         = pr.brUs            || 0;
+  const semRet       = pr.semRetorno      || 0;
+  const proxTurma    = pr.proximaTurma    || 0;
+  const cancelamento = pr.cancelamento    || 0;
+  const totalConf    = pr.totalConfirmados|| (brOnly + brUs);
+  const onbReal      = ob.realizado       || 0;
+  const onbIni       = ob.iniciado        || 0;
+  const onbPend      = ob.pendente        || 0;
+  const onbNao       = ob.naoIniciado     || 0;
+  const whatsOk      = op.whatsOk         || 0;
+  const tfOk         = op.typeformOk      || 0;
+  const tfEnv        = op.typeformEnv     || 0;
+  const ctOk         = op.contratoOk      || 0;
 
-  const total = rows.length;
-  const pr    = stats.presenca    || {};
-  const ob    = stats.onboarding  || {};
-  const op    = stats.operacional || {};
-
-  const brOnly    = pr.brConfirmado    || 0;
-  const brUs      = pr.brUs            || 0;
-  const semRet    = pr.semRetorno      || 0;
-  const proxTurma = pr.proximaTurma    || 0;
-  const cancelamento = pr.cancelamento || 0;
-  const totalConf = pr.totalConfirmados || (brOnly + brUs);
-  const onbReal   = ob.realizado       || 0;
-  const onbIni    = ob.iniciado        || 0;
-  const onbPend   = ob.pendente        || 0;
-  const onbNao    = ob.naoIniciado     || 0;
-  const whatsOk   = op.whatsOk         || 0;
-  const tfOk      = op.typeformOk      || 0;
-  const tfEnv     = op.typeformEnv     || 0;
-  const ctOk      = op.contratoOk      || 0;
-
-  console.log('[PCE] renderViewBr — total:', total, '| conf:', totalConf, '| brOnly:', brOnly, '| brUs:', brUs);
+  Logger.info('UI', 'renderViewBr', { total, totalConf, brOnly, brUs, source: store.br.source });
 
   // ── KPIs ──
-  document.getElementById('kpi-dash').innerHTML = `
-    <div class="kpi hi"><div class="kpi-lbl">Total da turma</div><div class="kpi-val g">${total}</div><div class="kpi-sub">participantes registrados</div></div>
-    <div class="kpi hi"><div class="kpi-lbl">Total confirmados</div><div class="kpi-val g">${totalConf}</div><div class="kpi-sub">${total>0?Math.round(totalConf/total*100):0}% confirmados</div></div>
-    <div class="kpi hi-b"><div class="kpi-lbl">Onboarding feito</div><div class="kpi-val b">${onbReal}</div><div class="kpi-sub">${total>0?Math.round(onbReal/total*100):0}% realizado</div></div>
-    <div class="kpi hi-r"><div class="kpi-lbl">Sem retorno</div><div class="kpi-val r">${semRet}</div><div class="kpi-sub">${total>0?Math.round(semRet/total*100):0}% do total</div></div>
-  `;
+  safeRender('kpi-dash', () => {
+    document.getElementById('kpi-dash').innerHTML = `
+      <div class="kpi hi"><div class="kpi-lbl">Total da turma</div><div class="kpi-val g">${total}</div><div class="kpi-sub">participantes registrados</div></div>
+      <div class="kpi hi"><div class="kpi-lbl">Total confirmados</div><div class="kpi-val g">${totalConf}</div><div class="kpi-sub">${total>0?Math.round(totalConf/total*100):0}% confirmados</div></div>
+      <div class="kpi hi-b"><div class="kpi-lbl">Onboarding feito</div><div class="kpi-val b">${onbReal}</div><div class="kpi-sub">${total>0?Math.round(onbReal/total*100):0}% realizado</div></div>
+      <div class="kpi hi-r"><div class="kpi-lbl">Sem retorno</div><div class="kpi-val r">${semRet}</div><div class="kpi-sub">${total>0?Math.round(semRet/total*100):0}% do total</div></div>
+    `;
+  });
 
-  // ── Card de Imersão — full width ──
+  // ── Card de Imersão Full Width ──
   const brPct  = totalConf > 0 ? Math.round(brOnly/totalConf*100) : 0;
   const brusPct = totalConf > 0 ? Math.round(brUs/totalConf*100) : 0;
 
-  document.getElementById('imersao-container').innerHTML = `
-    <div class="imersao-full">
-      <!-- Header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:24px">
-        <div style="display:flex;align-items:center;gap:16px">
-          <span style="font-size:36px">🇧🇷</span>
-          <div>
-            <div style="font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--green);margin-bottom:3px">T14 — Imersão Brasil</div>
-            <div style="font-size:13px;color:var(--muted)">Programa de Crescimento Empresarial · Febracis</div>
+  safeRender('imersao-container', () => {
+    document.getElementById('imersao-container').innerHTML = `
+      <div class="imersao-full">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:24px">
+          <div style="display:flex;align-items:center;gap:16px">
+            <span style="font-size:36px">🇧🇷</span>
+            <div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--green);margin-bottom:3px">T14 — Imersão Brasil</div>
+              <div style="font-size:13px;color:var(--muted)">Programa de Crescimento Empresarial · Febracis</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:32px">
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Total da turma</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;line-height:1;color:var(--cream)">${total}</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:3px">participantes</div>
+            </div>
+            <div style="width:1px;height:48px;background:rgba(255,255,255,.1)"></div>
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Total confirmados</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;line-height:1;color:var(--green)">${totalConf}</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:3px">confirmados</div>
+            </div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:32px">
-          <div style="text-align:center">
-            <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Total da turma</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;line-height:1;color:var(--cream)">${total}</div>
-            <div style="font-size:10px;color:var(--muted2);margin-top:3px">participantes</div>
+        <div style="width:100%;height:1px;background:rgba(255,255,255,.07);margin-bottom:24px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0;width:100%;align-items:center">
+          <div style="padding-right:32px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <div style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 8px rgba(99,248,88,.5)"></div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green)">Imersão Brasil</div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Somente no Brasil</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:800;line-height:1;color:var(--green)">${brOnly}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:14px">participantes confirmados</div>
+            <div style="background:rgba(99,248,88,.08);border-radius:6px;height:6px;overflow:hidden;margin-bottom:8px">
+              <div style="height:100%;border-radius:6px;background:var(--green);width:${brPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:var(--green)">${brPct}% dos confirmados</div>
           </div>
-          <div style="width:1px;height:48px;background:rgba(255,255,255,.1)"></div>
-          <div style="text-align:center">
-            <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Total confirmados</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;line-height:1;color:var(--green)">${totalConf}</div>
-            <div style="font-size:10px;color:var(--muted2);margin-top:3px">confirmados</div>
+          <div style="background:rgba(255,255,255,.07);height:120px;margin:0 4px"></div>
+          <div style="padding:0 32px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <div style="width:10px;height:10px;border-radius:50%;background:#a78bfa;flex-shrink:0;box-shadow:0 0 8px rgba(167,139,250,.4)"></div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#a78bfa">Brasil + Orlando</div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Confirmados nos dois eventos</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:800;line-height:1;color:#a78bfa">${brUs}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:14px">participantes confirmados</div>
+            <div style="background:rgba(167,139,250,.08);border-radius:6px;height:6px;overflow:hidden;margin-bottom:8px">
+              <div style="height:100%;border-radius:6px;background:#a78bfa;width:${brusPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:#a78bfa">${brusPct}% dos confirmados</div>
+          </div>
+          <div style="background:rgba(255,255,255,.07);height:120px;margin:0 4px"></div>
+          <div style="padding-left:32px;display:flex;flex-direction:column;gap:16px">
+            <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Distribuição dos confirmados</div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="font-size:11px;color:var(--green)">🇧🇷 Brasil</span>
+                <span style="font-size:11px;font-weight:700;color:var(--green)">${brPct}%</span>
+              </div>
+              <div style="background:rgba(255,255,255,.06);border-radius:4px;height:8px;overflow:hidden">
+                <div style="height:100%;border-radius:4px;background:var(--green);width:${brPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="font-size:11px;color:#a78bfa">🇺🇸 Brasil + Orlando</span>
+                <span style="font-size:11px;font-weight:700;color:#a78bfa">${brusPct}%</span>
+              </div>
+              <div style="background:rgba(255,255,255,.06);border-radius:4px;height:8px;overflow:hidden">
+                <div style="height:100%;border-radius:4px;background:#a78bfa;width:${brusPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--muted2);margin-top:4px">% sobre o total de confirmados</div>
           </div>
         </div>
       </div>
-      <div style="width:100%;height:1px;background:rgba(255,255,255,.07);margin-bottom:24px"></div>
-      <!-- Três colunas -->
-      <div style="display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0;width:100%;align-items:center">
-        <!-- BR Somente -->
-        <div style="padding-right:32px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <div style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 8px rgba(99,248,88,.5)"></div>
-            <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green)">Imersão Brasil</div>
-          </div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Somente no Brasil</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:800;line-height:1;color:var(--green)">${brOnly}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:14px">participantes confirmados</div>
-          <div style="background:rgba(99,248,88,.08);border-radius:6px;height:6px;overflow:hidden;margin-bottom:8px">
-            <div style="height:100%;border-radius:6px;background:var(--green);width:${brPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
-          </div>
-          <div style="font-size:13px;font-weight:700;color:var(--green)">${brPct}% dos confirmados</div>
-        </div>
-        <div style="background:rgba(255,255,255,.07);height:120px;margin:0 4px"></div>
-        <!-- BR+US -->
-        <div style="padding:0 32px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <div style="width:10px;height:10px;border-radius:50%;background:#a78bfa;flex-shrink:0;box-shadow:0 0 8px rgba(167,139,250,.4)"></div>
-            <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#a78bfa">Brasil + Orlando</div>
-          </div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Confirmados nos dois eventos</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:800;line-height:1;color:#a78bfa">${brUs}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:14px">participantes confirmados</div>
-          <div style="background:rgba(167,139,250,.08);border-radius:6px;height:6px;overflow:hidden;margin-bottom:8px">
-            <div style="height:100%;border-radius:6px;background:#a78bfa;width:${brusPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
-          </div>
-          <div style="font-size:13px;font-weight:700;color:#a78bfa">${brusPct}% dos confirmados</div>
-        </div>
-        <div style="background:rgba(255,255,255,.07);height:120px;margin:0 4px"></div>
-        <!-- Distribuição visual -->
-        <div style="padding-left:32px;display:flex;flex-direction:column;gap:16px">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Distribuição dos confirmados</div>
-          <div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <span style="font-size:11px;color:var(--green)">🇧🇷 Brasil</span>
-              <span style="font-size:11px;font-weight:700;color:var(--green)">${brPct}%</span>
-            </div>
-            <div style="background:rgba(255,255,255,.06);border-radius:4px;height:8px;overflow:hidden">
-              <div style="height:100%;border-radius:4px;background:var(--green);width:${brPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
-            </div>
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <span style="font-size:11px;color:#a78bfa">🇺🇸 Brasil + Orlando</span>
-              <span style="font-size:11px;font-weight:700;color:#a78bfa">${brusPct}%</span>
-            </div>
-            <div style="background:rgba(255,255,255,.06);border-radius:4px;height:8px;overflow:hidden">
-              <div style="height:100%;border-radius:4px;background:#a78bfa;width:${brusPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
-            </div>
-          </div>
-          <div style="font-size:10px;color:var(--muted2);margin-top:4px">% sobre o total de confirmados</div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // ── Gráfico Presença ──
-  const pL = ['BR Confirmado','Brasil+Orlando','Próxima Turma','Sem Retorno','Cancelamento'];
-  const pD = [brOnly, brUs, proxTurma, semRet, cancelamento];
-  const pC = [G, '#a78bfa', AM, RD, '#fb923c'];
-  const pF = pL.filter((_,i)=>pD[i]>0), pDF=pD.filter(v=>v>0), pCF=pC.filter((_,i)=>pD[i]>0);
-  renderDonut('cPres', pF, pDF, pCF); renderLegend('lPres', pF, pDF, pCF);
-
-  // ── Onboarding ──
-  const oL = ['Realizado','Iniciado','Pendente','Não iniciado'];
-  const oD = [onbReal, onbIni, onbPend, onbNao].map(v=>v||0);
-  const oF = oL.filter((_,i)=>oD[i]>0), oDF=oD.filter(v=>v>0);
-  renderDonut('cOnb', oF, oDF, [G,BL,AM,RD]); renderLegend('lOnb', oF, oDF, [G,BL,AM,RD]);
-
-  // ── Operacional ──
-  renderDonut('cW', ['Sim','Não'], [whatsOk, total-whatsOk], [G,RD]);
-  renderLegend('lW', ['Sim','Não'], [whatsOk, total-whatsOk], [G,RD]);
-
-  renderDonut('cTf', ['Preenchido','Enviado','Não preencheu'], [tfOk, tfEnv, Math.max(0,total-tfOk-tfEnv)], [G,BL,RD]);
-  renderLegend('lTf', ['Preenchido','Enviado','Não preencheu'], [tfOk, tfEnv, Math.max(0,total-tfOk-tfEnv)], [G,BL,RD]);
-
-  renderDonut('cCt', ['Sim','Não'], [ctOk, total-ctOk], [G,RD]);
-  renderLegend('lCt', ['Sim','Não'], [ctOk, total-ctOk], [G,RD]);
-
-  // ── Tipo matrícula e Evento ──
-  const mE = topN(countBy(rows.map(r=>r.tipo||'Não informado')), 8);
-  renderHBar('cMat', mE.map(e=>e[0]), mE.map(e=>e[1]), PAL);
-
-  const evE = topN(countBy(rows.map(r=>r.evento||'Não informado')), 6);
-  renderDonut('cEv', evE.map(e=>e[0]), evE.map(e=>e[1]), PAL);
-  renderLegend('lEv', evE.map(e=>e[0]), evE.map(e=>e[1]), PAL);
-
-  // ── Timeline ──
-  const dateMap = {};
-  rows.forEach(r => {
-    const raw = r.data || '';
-    const m = raw.match(/(\w{3})\s+(\w{3})\s+(\d{2})\s+(\d{4})/);
-    if (m) {
-      const months = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
-      const k = `${m[4]}-${months[m[2]]||'01'}-${m[3]}`;
-      dateMap[k] = (dateMap[k]||0) + 1;
-    }
+    `;
   });
-  const sortedDates = Object.keys(dateMap).sort();
-  renderLine('cEnt',
-    sortedDates.map(d => { const[,mo,dy]=d.split('-'); return `${dy}/${mo}`; }),
-    sortedDates.map(k => dateMap[k]),
-    G
-  );
 
-  // ── Badge sidebar ──
+  // ── Gráficos — cada um isolado com safeRender ──
+  safeRender('cPres', () => {
+    const pL=['BR Confirmado','Brasil+Orlando','Próxima Turma','Sem Retorno','Cancelamento'];
+    const pD=[brOnly,brUs,proxTurma,semRet,cancelamento];
+    const pC=[G,'#a78bfa',AM,RD,'#fb923c'];
+    const pF=pL.filter((_,i)=>pD[i]>0),pDF=pD.filter(v=>v>0),pCF=pC.filter((_,i)=>pD[i]>0);
+    renderDonut('cPres',pF,pDF,pCF); renderLegend('lPres',pF,pDF,pCF);
+  });
+
+  safeRender('cOnb', () => {
+    const oL=['Realizado','Iniciado','Pendente','Não iniciado'];
+    const oD=[onbReal,onbIni,onbPend,onbNao].map(v=>v||0);
+    const oF=oL.filter((_,i)=>oD[i]>0),oDF=oD.filter(v=>v>0);
+    renderDonut('cOnb',oF,oDF,[G,BL,AM,RD]); renderLegend('lOnb',oF,oDF,[G,BL,AM,RD]);
+  });
+
+  safeRender('cW', () => {
+    renderDonut('cW',['Sim','Não'],[whatsOk,Math.max(0,total-whatsOk)],[G,RD]);
+    renderLegend('lW',['Sim','Não'],[whatsOk,Math.max(0,total-whatsOk)],[G,RD]);
+  });
+
+  safeRender('cTf', () => {
+    renderDonut('cTf',['Preenchido','Enviado','Não preencheu'],[tfOk,tfEnv,Math.max(0,total-tfOk-tfEnv)],[G,BL,RD]);
+    renderLegend('lTf',['Preenchido','Enviado','Não preencheu'],[tfOk,tfEnv,Math.max(0,total-tfOk-tfEnv)],[G,BL,RD]);
+  });
+
+  safeRender('cCt', () => {
+    renderDonut('cCt',['Sim','Não'],[ctOk,Math.max(0,total-ctOk)],[G,RD]);
+    renderLegend('lCt',['Sim','Não'],[ctOk,Math.max(0,total-ctOk)],[G,RD]);
+  });
+
+  safeRender('cMat', () => {
+    const mE=topN(countBy(rows.map(r=>r.tipo||'Não informado')),8);
+    renderHBar('cMat',mE.map(e=>e[0]),mE.map(e=>e[1]),PAL);
+  });
+
+  safeRender('cEv', () => {
+    const evE=topN(countBy(rows.map(r=>r.evento||'Não informado')),6);
+    renderDonut('cEv',evE.map(e=>e[0]),evE.map(e=>e[1]),PAL);
+    renderLegend('lEv',evE.map(e=>e[0]),evE.map(e=>e[1]),PAL);
+  });
+
+  safeRender('cEnt', () => {
+    const dateMap={};
+    rows.forEach(r=>{
+      const raw=r.data||'';
+      const m=raw.match(/\b(\w{3})\s+(\w{3})\s+(\d{2})\s+(\d{4})/);
+      if(m){const months={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+        const k=`${m[4]}-${months[m[2]]||'01'}-${m[3]}`;dateMap[k]=(dateMap[k]||0)+1;}
+    });
+    const sd=Object.keys(dateMap).sort();
+    renderLine('cEnt',sd.map(d=>{const[,mo,dy]=d.split('-');return`${dy}/${mo}`;}),sd.map(k=>dateMap[k]),G);
+  });
+
   document.getElementById('badge-total').textContent = total;
-
-  // ── Ticker ──
   buildTickerBr(stats, total);
 }
 
-/**
- * renderViewUs() — renderiza view T13 Orlando
- * Contrato: usa store.us.data
- */
 function renderViewUs() {
   const data = store.us.data;
-
   if (!data) {
-    console.warn('[PCE] renderViewUs: sem dados de Orlando no store');
-    document.getElementById('kpi-dash').innerHTML = `
-      <div class="kpi hi-b" style="grid-column:1/-1;text-align:center">
-        <div class="kpi-lbl">T13 Orlando</div>
-        <div style="font-size:14px;color:var(--muted);padding:20px">Dados de Orlando não disponíveis. Clique em Atualizar.</div>
-      </div>`;
+    Logger.warn('UI', 'renderViewUs: sem dados de Orlando');
+    safeRender('kpi-dash', () => {
+      document.getElementById('kpi-dash').innerHTML = `
+        <div class="kpi hi-b" style="grid-column:1/-1;text-align:center">
+          <div class="kpi-lbl">T13 Orlando</div>
+          <div style="font-size:14px;color:var(--muted);padding:20px">Dados indisponíveis. Clique em Atualizar.</div>
+        </div>`;
+    });
     return;
   }
 
-  const total = data.total    || 0;
-  const conf  = data.confirmados || 0;
-  const stats = data.stats    || {};
-  const semRet  = stats.semRetorno   || 0;
-  const cancel  = stats.cancelamento || 0;
-  const outros  = Math.max(0, total - conf - semRet - cancel);
+  const total  = data.total    || 0;
+  const conf   = data.confirmados || 0;
+  const stats  = data.stats    || {};
+  const semRet = stats.semRetorno   || 0;
+  const cancel = stats.cancelamento || 0;
+  const outros = Math.max(0, total - conf - semRet - cancel);
 
-  console.log('[PCE] renderViewUs — total:', total, '| conf:', conf);
+  Logger.info('UI', 'renderViewUs', { total, conf, source: store.us.source });
 
-  // ── KPIs ──
-  document.getElementById('kpi-dash').innerHTML = `
-    <div class="kpi hi-b"><div class="kpi-lbl">Total T13 Orlando</div><div class="kpi-val b">${total}</div><div class="kpi-sub">participantes registrados</div></div>
-    <div class="kpi hi-b"><div class="kpi-lbl">Confirmados</div><div class="kpi-val b">${conf}</div><div class="kpi-sub">${total>0?Math.round(conf/total*100):0}% confirmados</div></div>
-    <div class="kpi hi-r"><div class="kpi-lbl">Sem retorno</div><div class="kpi-val r">${semRet}</div><div class="kpi-sub">${total>0?Math.round(semRet/total*100):0}% do total</div></div>
-    <div class="kpi"><div class="kpi-lbl">Cancelamentos</div><div class="kpi-val a">${cancel}</div><div class="kpi-sub">${total>0?Math.round(cancel/total*100):0}% do total</div></div>
-  `;
+  safeRender('kpi-dash', () => {
+    document.getElementById('kpi-dash').innerHTML = `
+      <div class="kpi hi-b"><div class="kpi-lbl">Total T13 Orlando</div><div class="kpi-val b">${total}</div><div class="kpi-sub">participantes registrados</div></div>
+      <div class="kpi hi-b"><div class="kpi-lbl">Confirmados</div><div class="kpi-val b">${conf}</div><div class="kpi-sub">${total>0?Math.round(conf/total*100):0}% confirmados</div></div>
+      <div class="kpi hi-r"><div class="kpi-lbl">Sem retorno</div><div class="kpi-val r">${semRet}</div><div class="kpi-sub">${total>0?Math.round(semRet/total*100):0}% do total</div></div>
+      <div class="kpi"><div class="kpi-lbl">Cancelamentos</div><div class="kpi-val a">${cancel}</div><div class="kpi-sub">${total>0?Math.round(cancel/total*100):0}% do total</div></div>
+    `;
+  });
 
-  // ── Card de imersão Orlando ──
   const confPct = total > 0 ? Math.round(conf/total*100) : 0;
-  document.getElementById('imersao-container').innerHTML = `
-    <div class="im-card us">
-      <div class="im-flag">🇺🇸</div>
-      <div class="im-body">
-        <div class="im-lbl">Imersão Orlando — T13</div>
-        <div class="im-desc">Total de participantes registrados</div>
-        <div class="im-num">${total}</div>
-        <div class="im-sub">participantes registrados</div>
-        <div style="margin-top:12px">
-          <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:6px">Confirmados</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:800;color:var(--blue)">${conf}</div>
-          <div class="im-bar"><div class="im-fill" style="width:${confPct}%"></div></div>
-          <div class="im-pct">${confPct}% do total</div>
+  safeRender('imersao-container', () => {
+    document.getElementById('imersao-container').innerHTML = `
+      <div class="im-card us">
+        <div class="im-flag">🇺🇸</div>
+        <div class="im-body">
+          <div class="im-lbl">Imersão Orlando — T13</div>
+          <div class="im-desc">Total de participantes registrados</div>
+          <div class="im-num">${total}</div>
+          <div class="im-sub">participantes registrados</div>
+          <div style="margin-top:12px">
+            <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:6px">Confirmados</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:800;color:var(--blue)">${conf}</div>
+            <div class="im-bar"><div class="im-fill" style="width:${confPct}%"></div></div>
+            <div class="im-pct">${confPct}% do total</div>
+          </div>
         </div>
       </div>
-    </div>
-  `;
+    `;
+  });
 
-  // ── Gráficos ──
-  const pL = ['Confirmado','Sem Retorno','Cancelamento','Outros'];
-  const pD = [conf, semRet, cancel, outros];
-  const pC = [BL, RD, '#fb923c', AM];
-  const pF=pL.filter((_,i)=>pD[i]>0), pDF=pD.filter(v=>v>0), pCF=pC.filter((_,i)=>pD[i]>0);
-  renderDonut('cPres', pF, pDF, pCF); renderLegend('lPres', pF, pDF, pCF);
+  safeRender('cPres', () => {
+    const pL=['Confirmado','Sem Retorno','Cancelamento','Outros'];
+    const pD=[conf,semRet,cancel,outros];
+    const pC=[BL,RD,'#fb923c',AM];
+    const pF=pL.filter((_,i)=>pD[i]>0),pDF=pD.filter(v=>v>0),pCF=pC.filter((_,i)=>pD[i]>0);
+    renderDonut('cPres',pF,pDF,pCF); renderLegend('lPres',pF,pDF,pCF);
+  });
 
-  // Limpa gráficos não usados na view US
-  ['cOnb','cW','cTf','cCt','cMat'].forEach(id => destroyChart(id));
-  ['lOnb','lW','lTf','lCt'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=''; });
+  ['cOnb','cW','cTf','cCt','cMat'].forEach(id => safeRender(id, ()=>destroyChart(id)));
+  ['lOnb','lW','lTf','lCt'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=''; });
 
-  renderDonut('cEv', ['Confirmado','Outros'], [conf, Math.max(0,total-conf)], [BL,RD]);
-  renderLegend('lEv', ['Confirmado','Outros'], [conf, Math.max(0,total-conf)], [BL,RD]);
+  safeRender('cEv', () => {
+    renderDonut('cEv',['Confirmado','Outros'],[conf,Math.max(0,total-conf)],[BL,RD]);
+    renderLegend('lEv',['Confirmado','Outros'],[conf,Math.max(0,total-conf)],[BL,RD]);
+  });
 
-  // ── Badge + Ticker ──
   document.getElementById('badge-total').textContent = total;
   buildTickerUs(data);
 }
 
-/**
- * renderViewGeral() — renderiza PCE Geral (ambas as turmas)
- * Contrato: usa store.br + store.us
- */
 function renderViewGeral() {
   const brRows  = store.br.rows;
   const brStats = store.br.stats;
   const usData  = store.us.data;
+  if (!brRows) { Logger.warn('UI', 'renderViewGeral: dados Brasil indisponíveis'); return; }
 
-  if (!brRows) {
-    console.warn('[PCE] renderViewGeral: dados Brasil indisponíveis');
-    return;
-  }
+  const brPr     = brStats.presenca    || {};
+  const brTotal  = brRows.length;
+  const brConf   = brPr.totalConfirmados || 0;
+  const brSem    = brPr.semRetorno      || 0;
+  const brOnb    = brStats.onboarding?.realizado || 0;
+  const brCancel = brPr.cancelamento    || 0;
+  const brProx   = brPr.proximaTurma    || 0;
+  const usTotal  = usData?.total        || 0;
+  const usConf   = usData?.confirmados  || 0;
+  const usSem    = usData?.stats?.semRetorno   || 0;
+  const usCancel = usData?.stats?.cancelamento || 0;
+  const usOutros = usData?.stats?.outros       || 0;
 
-  const brPr    = brStats.presenca    || {};
-  const brTotal = brRows.length;
-  const brConf  = brPr.totalConfirmados || 0;
-  const brSem   = brPr.semRetorno      || 0;
-  const brOnb   = brStats.onboarding?.realizado || 0;
-  const brCancel = brPr.cancelamento   || 0;
-  const brProx  = brPr.proximaTurma    || 0;
+  Logger.info('UI', 'renderViewGeral', { brTotal, usTotal });
 
-  const usTotal = usData?.total       || 0;
-  const usConf  = usData?.confirmados || 0;
-  const usSem   = usData?.stats?.semRetorno   || 0;
-  const usCancel= usData?.stats?.cancelamento || 0;
-  const usOutros= usData?.stats?.outros       || 0;
+  safeRender('kpi-dash', () => {
+    document.getElementById('kpi-dash').innerHTML = `
+      <div class="kpi hi"><div class="kpi-lbl">🇧🇷 Total T14</div><div class="kpi-val g">${brTotal}</div><div class="kpi-sub">participantes</div></div>
+      <div class="kpi hi"><div class="kpi-lbl">🇧🇷 Confirmados T14</div><div class="kpi-val g">${brConf}</div><div class="kpi-sub">${brTotal>0?Math.round(brConf/brTotal*100):0}% do total</div></div>
+      <div class="kpi hi-b"><div class="kpi-lbl">🇺🇸 Total T13</div><div class="kpi-val b">${usTotal||'—'}</div><div class="kpi-sub">participantes</div></div>
+      <div class="kpi hi-b"><div class="kpi-lbl">🇺🇸 Confirmados T13</div><div class="kpi-val b">${usConf||'—'}</div><div class="kpi-sub">${usTotal>0?Math.round(usConf/usTotal*100):0}% do total</div></div>
+    `;
+  });
 
-  console.log('[PCE] renderViewGeral — BR:', brTotal, '| US:', usTotal);
-
-  // ── Cards de cabeçalho ──
-  document.getElementById('imersao-container').innerHTML = `
-    <div class="geral-header">
-      <div class="geral-card br">
-        <div class="geral-flag">🇧🇷</div>
-        <div class="geral-turma">PCE T14 — Brasil</div>
-        <div class="geral-title">Programa de Crescimento Empresarial</div>
-        <div class="geral-kpis">
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Total</div><div class="geral-kpi-val">${brTotal}</div><div class="geral-kpi-sub">participantes</div></div>
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Confirmados</div><div class="geral-kpi-val">${brConf}</div><div class="geral-kpi-sub">${brTotal>0?Math.round(brConf/brTotal*100):0}% do total</div></div>
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Sem Retorno</div><div class="geral-kpi-val" style="color:var(--red)">${brSem}</div><div class="geral-kpi-sub">${brTotal>0?Math.round(brSem/brTotal*100):0}% do total</div></div>
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Onboarding</div><div class="geral-kpi-val">${brOnb}</div><div class="geral-kpi-sub">${brTotal>0?Math.round(brOnb/brTotal*100):0}% realizado</div></div>
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Próxima Turma</div><div class="geral-kpi-val" style="color:var(--amber)">${brProx}</div><div class="geral-kpi-sub">migrados</div></div>
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Cancelamentos</div><div class="geral-kpi-val" style="color:var(--red)">${brCancel}</div><div class="geral-kpi-sub">cancelados</div></div>
-        </div>
-      </div>
-      <div class="geral-card us">
-        <div class="geral-flag">🇺🇸</div>
-        <div class="geral-turma">PCE T13 — Orlando</div>
-        <div class="geral-title">Imersão Internacional</div>
-        <div class="geral-kpis">
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Total</div><div class="geral-kpi-val">${usTotal||'—'}</div><div class="geral-kpi-sub">participantes</div></div>
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Confirmados</div><div class="geral-kpi-val">${usConf||'—'}</div><div class="geral-kpi-sub">${usTotal>0?Math.round(usConf/usTotal*100):0}% do total</div></div>
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Sem Retorno</div><div class="geral-kpi-val" style="color:var(--red)">${usSem}</div><div class="geral-kpi-sub">${usTotal>0?Math.round(usSem/usTotal*100):0}% do total</div></div>
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Cancelamentos</div><div class="geral-kpi-val" style="color:var(--red)">${usCancel}</div><div class="geral-kpi-sub">cancelados</div></div>
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Taxa Confirm.</div><div class="geral-kpi-val">${usTotal>0?Math.round(usConf/usTotal*100):0}%</div><div class="geral-kpi-sub">do total</div></div>
-          <div class="geral-kpi"><div class="geral-kpi-lbl">Outros</div><div class="geral-kpi-val" style="color:var(--amber)">${usOutros}</div><div class="geral-kpi-sub">status</div></div>
-        </div>
-      </div>
-    </div>
-    <div class="geral-compare">
-      <div class="geral-compare-title">Comparativo — T14 Brasil vs T13 Orlando</div>
-      ${[
-        {lbl:'Confirmados',br:brConf,us:usConf,brT:brTotal,usT:usTotal},
-        {lbl:'Sem Retorno',br:brSem, us:usSem, brT:brTotal,usT:usTotal},
-        {lbl:'Cancelamentos',br:brCancel,us:usCancel,brT:brTotal,usT:usTotal},
-      ].map(r=>`
-        <div class="compare-row">
-          <div class="compare-lbl">${r.lbl}</div>
-          <div class="compare-bars">
-            <div class="compare-bar-wrap">
-              <div style="font-size:9px;color:var(--green);width:14px">🇧🇷</div>
-              <div class="compare-bar-bg"><div class="compare-bar-fill br" style="width:${r.brT>0?Math.round(r.br/r.brT*100):0}%"></div></div>
-              <div class="compare-val br">${r.br}</div>
-              <div class="compare-pct">${r.brT>0?Math.round(r.br/r.brT*100):0}%</div>
-            </div>
-            <div class="compare-bar-wrap">
-              <div style="font-size:9px;color:var(--blue);width:14px">🇺🇸</div>
-              <div class="compare-bar-bg"><div class="compare-bar-fill us" style="width:${r.usT>0?Math.round(r.us/r.usT*100):0}%"></div></div>
-              <div class="compare-val us">${r.us}</div>
-              <div class="compare-pct">${r.usT>0?Math.round(r.us/r.usT*100):0}%</div>
-            </div>
+  safeRender('imersao-container', () => {
+    document.getElementById('imersao-container').innerHTML = `
+      <div class="geral-header">
+        <div class="geral-card br">
+          <div class="geral-flag">🇧🇷</div>
+          <div class="geral-turma">PCE T14 — Brasil</div>
+          <div class="geral-title">Programa de Crescimento Empresarial</div>
+          <div class="geral-kpis">
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Total</div><div class="geral-kpi-val">${brTotal}</div><div class="geral-kpi-sub">participantes</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Confirmados</div><div class="geral-kpi-val">${brConf}</div><div class="geral-kpi-sub">${brTotal>0?Math.round(brConf/brTotal*100):0}% do total</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Sem Retorno</div><div class="geral-kpi-val" style="color:var(--red)">${brSem}</div><div class="geral-kpi-sub">${brTotal>0?Math.round(brSem/brTotal*100):0}% do total</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Onboarding</div><div class="geral-kpi-val">${brOnb}</div><div class="geral-kpi-sub">${brTotal>0?Math.round(brOnb/brTotal*100):0}% realizado</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Próxima Turma</div><div class="geral-kpi-val" style="color:var(--amber)">${brProx}</div><div class="geral-kpi-sub">migrados</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Cancelamentos</div><div class="geral-kpi-val" style="color:var(--red)">${brCancel}</div><div class="geral-kpi-sub">cancelados</div></div>
           </div>
-        </div>`).join('')}
-    </div>
-    <div class="g2" style="margin-bottom:12px">
-      <div class="card"><div class="ct">🇧🇷 T14 Brasil — Presença</div><div class="cs">Status de confirmação</div><div style="position:relative;height:200px"><canvas id="cGeralBR"></canvas></div><div class="leg" id="lGeralBR"></div></div>
-      <div class="card"><div class="ct">🇺🇸 T13 Orlando — Presença</div><div class="cs">Status de confirmação</div><div style="position:relative;height:200px"><canvas id="cGeralUS"></canvas></div><div class="leg" id="lGeralUS"></div></div>
-    </div>
-  `;
+        </div>
+        <div class="geral-card us">
+          <div class="geral-flag">🇺🇸</div>
+          <div class="geral-turma">PCE T13 — Orlando</div>
+          <div class="geral-title">Imersão Internacional</div>
+          <div class="geral-kpis">
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Total</div><div class="geral-kpi-val">${usTotal||'—'}</div><div class="geral-kpi-sub">participantes</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Confirmados</div><div class="geral-kpi-val">${usConf||'—'}</div><div class="geral-kpi-sub">${usTotal>0?Math.round(usConf/usTotal*100):0}% do total</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Sem Retorno</div><div class="geral-kpi-val" style="color:var(--red)">${usSem}</div><div class="geral-kpi-sub">${usTotal>0?Math.round(usSem/usTotal*100):0}% do total</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Cancelamentos</div><div class="geral-kpi-val" style="color:var(--red)">${usCancel}</div><div class="geral-kpi-sub">cancelados</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Taxa Confirm.</div><div class="geral-kpi-val">${usTotal>0?Math.round(usConf/usTotal*100):0}%</div><div class="geral-kpi-sub">do total</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Outros</div><div class="geral-kpi-val" style="color:var(--amber)">${usOutros}</div><div class="geral-kpi-sub">status</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="geral-compare">
+        <div class="geral-compare-title">Comparativo — T14 Brasil vs T13 Orlando</div>
+        ${[
+          {lbl:'Confirmados',br:brConf,us:usConf,brT:brTotal,usT:usTotal},
+          {lbl:'Sem Retorno', br:brSem, us:usSem, brT:brTotal,usT:usTotal},
+          {lbl:'Cancelamentos',br:brCancel,us:usCancel,brT:brTotal,usT:usTotal},
+        ].map(r=>`
+          <div class="compare-row">
+            <div class="compare-lbl">${r.lbl}</div>
+            <div class="compare-bars">
+              <div class="compare-bar-wrap">
+                <div style="font-size:9px;color:var(--green);width:14px">🇧🇷</div>
+                <div class="compare-bar-bg"><div class="compare-bar-fill br" style="width:${r.brT>0?Math.round(r.br/r.brT*100):0}%"></div></div>
+                <div class="compare-val br">${r.br}</div>
+                <div class="compare-pct">${r.brT>0?Math.round(r.br/r.brT*100):0}%</div>
+              </div>
+              <div class="compare-bar-wrap">
+                <div style="font-size:9px;color:var(--blue);width:14px">🇺🇸</div>
+                <div class="compare-bar-bg"><div class="compare-bar-fill us" style="width:${r.usT>0?Math.round(r.us/r.usT*100):0}%"></div></div>
+                <div class="compare-val us">${r.us}</div>
+                <div class="compare-pct">${r.usT>0?Math.round(r.us/r.usT*100):0}%</div>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="g2" style="margin-bottom:12px">
+        <div class="card"><div class="ct">🇧🇷 T14 Brasil — Presença</div><div class="cs">Status de confirmação</div><div style="position:relative;height:200px"><canvas id="cGeralBR"></canvas></div><div class="leg" id="lGeralBR"></div></div>
+        <div class="card"><div class="ct">🇺🇸 T13 Orlando — Presença</div><div class="cs">Status de confirmação</div><div style="position:relative;height:200px"><canvas id="cGeralUS"></canvas></div><div class="leg" id="lGeralUS"></div></div>
+      </div>
+    `;
+  });
 
-  // KPIs geral
-  document.getElementById('kpi-dash').innerHTML = `
-    <div class="kpi hi"><div class="kpi-lbl">🇧🇷 Total T14</div><div class="kpi-val g">${brTotal}</div><div class="kpi-sub">participantes</div></div>
-    <div class="kpi hi"><div class="kpi-lbl">🇧🇷 Confirmados T14</div><div class="kpi-val g">${brConf}</div><div class="kpi-sub">${brTotal>0?Math.round(brConf/brTotal*100):0}% do total</div></div>
-    <div class="kpi hi-b"><div class="kpi-lbl">🇺🇸 Total T13</div><div class="kpi-val b">${usTotal||'—'}</div><div class="kpi-sub">participantes</div></div>
-    <div class="kpi hi-b"><div class="kpi-lbl">🇺🇸 Confirmados T13</div><div class="kpi-val b">${usConf||'—'}</div><div class="kpi-sub">${usTotal>0?Math.round(usConf/usTotal*100):0}% do total</div></div>
-  `;
-
-  // ── Gráficos comparativos ──
-  const brPL = ['BR Confirmado','BR+US','Sem Retorno','Próx. Turma','Cancelamento'];
-  const brPD = [brPr.brConfirmado||0, brPr.brUs||0, brSem, brProx, brCancel];
-  const brPC = [G, '#a78bfa', RD, AM, '#fb923c'];
-  const brF=brPL.filter((_,i)=>brPD[i]>0), brDF=brPD.filter(v=>v>0), brCF=brPC.filter((_,i)=>brPD[i]>0);
-  renderDonut('cGeralBR', brF, brDF, brCF); renderLegend('lGeralBR', brF, brDF, brCF);
+  safeRender('cGeralBR', () => {
+    const brPL=['BR Confirmado','BR+US','Sem Retorno','Próx. Turma','Cancelamento'];
+    const brPD=[brPr.brConfirmado||0,brPr.brUs||0,brSem,brProx,brCancel];
+    const brPC=[G,'#a78bfa',RD,AM,'#fb923c'];
+    const brF=brPL.filter((_,i)=>brPD[i]>0),brDF=brPD.filter(v=>v>0),brCF=brPC.filter((_,i)=>brPD[i]>0);
+    renderDonut('cGeralBR',brF,brDF,brCF); renderLegend('lGeralBR',brF,brDF,brCF);
+  });
 
   if (usData) {
-    const usPL = ['Confirmado','Sem Retorno','Cancelamento','Outros'];
-    const usPD = [usConf, usSem, usCancel, usOutros];
-    const usPC = [BL, RD, '#fb923c', AM];
-    const usF=usPL.filter((_,i)=>usPD[i]>0), usDF=usPD.filter(v=>v>0), usCF=usPC.filter((_,i)=>usPD[i]>0);
-    renderDonut('cGeralUS', usF, usDF, usCF); renderLegend('lGeralUS', usF, usDF, usCF);
+    safeRender('cGeralUS', () => {
+      const usPL=['Confirmado','Sem Retorno','Cancelamento','Outros'];
+      const usPD=[usConf,usSem,usCancel,usOutros];
+      const usPC=[BL,RD,'#fb923c',AM];
+      const usF=usPL.filter((_,i)=>usPD[i]>0),usDF=usPD.filter(v=>v>0),usCF=usPC.filter((_,i)=>usPD[i]>0);
+      renderDonut('cGeralUS',usF,usDF,usCF); renderLegend('lGeralUS',usF,usDF,usCF);
+    });
   }
 
-  // ── Badge + Ticker ──
   document.getElementById('badge-total').textContent = brTotal;
   buildTickerGeral(brStats, brTotal, usData || {total:0,confirmados:0,stats:{}});
 }
 
-/**
- * renderCurrentView() — dispatch para a view ativa no store
- */
 function renderCurrentView() {
   const v = store.meta.currentView;
-  console.log('[PCE] renderCurrentView:', v);
-  try {
-    if (v === 'br')        renderViewBr();
-    else if (v === 'us')   renderViewUs();
-    else if (v === 'geral') renderViewGeral();
-  } catch(e) {
-    console.error('[PCE] Erro ao renderizar view "' + v + '":', e);
-  }
+  Logger.debug('UI', 'renderCurrentView', { view: v });
+  safeRender('view_' + v, () => {
+    if      (v === 'br')     renderViewBr();
+    else if (v === 'us')     renderViewUs();
+    else if (v === 'geral')  renderViewGeral();
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
-// [PCE] LAYER 4 — UI HELPERS
+// [PCE] UI HELPERS
 // ═══════════════════════════════════════════════════════════
 function setStatus(type, txt) {
-  const p = document.getElementById('pill');
-  const d = document.getElementById('dot');
-  const t = document.getElementById('pill-txt');
+  const p=document.getElementById('pill'), d=document.getElementById('dot'), t=document.getElementById('pill-txt');
   if (!p||!d||!t) return;
-  const cls  = {ok:'',err:' err',load:' loading',neu:' neu',offline:' offline'};
-  const dcls = {ok:'',err:' off',load:' spin',neu:' warn',offline:' warn'};
-  p.className = 'pill' + (cls[type]||'');
-  d.className = 'dot'  + (dcls[type]||'');
-  t.textContent = txt;
+  const cls ={ok:'',err:' err',load:' loading',neu:' neu',offline:' offline'};
+  const dcls={ok:'',err:' off',load:' spin',neu:' warn',offline:' warn'};
+  p.className='pill'+(cls[type]||'');
+  d.className='dot'+(dcls[type]||'');
+  t.textContent=txt;
 }
 
-function updateTimestamp(suffix = '') {
-  const el = document.getElementById('ts');
-  if (!el) return;
-  const now = new Date();
-  const formatted = now.toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  el.textContent = formatted + (suffix ? ' ' + suffix : '');
+function updateTimestamp(suffix='') {
+  const el=document.getElementById('ts'); if (!el) return;
+  el.textContent=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+(suffix?' '+suffix:'');
 }
 
 function switchView(v) {
-  if (!['br','us','geral'].includes(v)) { console.error('[PCE] switchView: view inválida:', v); return; }
+  if (!['br','us','geral'].includes(v)) { Logger.error('UI','switchView inválida',{v}); return; }
   store.meta.currentView = v;
-
-  // Atualiza botões
-  const labels = { br:'active-br', us:'active-us', geral:'active-geral' };
-  ['br','us','geral'].forEach(id => {
-    const btn = document.getElementById('vbtn-' + id);
-    if (btn) { btn.className = 'vbtn' + (id === v ? ' ' + labels[id] : ''); }
-  });
-
-  // Atualiza título
-  const titles = { br:'Dashboard — T14 Brasil', us:'Dashboard — T13 Orlando', geral:'PCE — Visão Geral' };
-  const titleEl = document.getElementById('page-title');
-  if (titleEl) titleEl.textContent = titles[v];
-
-  // Esconde/mostra view buttons na sidebar (só no dashboard)
+  const labels={br:'active-br',us:'active-us',geral:'active-geral'};
+  ['br','us','geral'].forEach(id=>{ const btn=document.getElementById('vbtn-'+id); if(btn) btn.className='vbtn'+(id===v?' '+labels[id]:''); });
+  const titles={br:'Dashboard — T14 Brasil',us:'Dashboard — T13 Orlando',geral:'PCE — Visão Geral'};
+  const titleEl=document.getElementById('page-title'); if(titleEl) titleEl.textContent=titles[v];
   renderCurrentView();
 }
 
 function switchPage(p) {
-  const pages = ['dash','perfil','faq'];
-  pages.forEach(pg => {
-    const el = document.getElementById('page-' + pg);
-    if (el) el.classList.toggle('active', pg === p);
-    const nav = document.getElementById('nav-' + pg);
-    if (nav) nav.classList.toggle('active', pg === p);
+  ['dash','perfil','faq'].forEach(pg=>{
+    const el=document.getElementById('page-'+pg); if(el) el.classList.toggle('active',pg===p);
+    const nav=document.getElementById('nav-'+pg); if(nav) nav.classList.toggle('active',pg===p);
   });
-
-  // View buttons só aparecem no dashboard
-  const viewBtns = document.getElementById('view-btns-container');
-  if (viewBtns) viewBtns.style.display = p === 'dash' ? 'flex' : 'none';
-
-  const titles = { dash: store.meta.currentView === 'br' ? 'Dashboard — T14 Brasil' : store.meta.currentView === 'us' ? 'Dashboard — T13 Orlando' : 'PCE — Visão Geral', perfil:'Perfil da Turma', faq:'FAQ — PCE' };
-  const titleEl = document.getElementById('page-title');
-  if (titleEl) titleEl.textContent = titles[p]||'';
+  const viewBtns=document.getElementById('view-btns-container'); if(viewBtns) viewBtns.style.display=p==='dash'?'flex':'none';
+  const titles={dash:'Dashboard',perfil:'Perfil da Turma',faq:'FAQ — PCE'};
+  const titleEl=document.getElementById('page-title'); if(titleEl) titleEl.textContent=titles[p]||'';
 }
 
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('collapsed');
-}
-
-function refreshManual() {
-  fetchAllData(false);
-}
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+function refreshManual() { fetchAllData(false); }
 
 // ═══════════════════════════════════════════════════════════
-// [PCE] PERFIL DA TURMA (estático)
+// [PCE] PERFIL DA TURMA
 // ═══════════════════════════════════════════════════════════
 function buildPerfil() {
-  const d = PERFIL;
-  const total = d.length;
-  const emp   = new Set(d.map(r=>r[1].toLowerCase()).filter(Boolean));
-  const avals = d.map(r=>parseFloat(r[7])).filter(v=>!isNaN(v));
-  const avg   = (avals.reduce((a,b)=>a+b,0)/avals.length).toFixed(1);
-  const mvv   = d.filter(r=>r[6].toLowerCase()==='sim').length;
-
-  document.getElementById('kpi-perf').innerHTML = `
-    <div class="kpi hi"><div class="kpi-lbl">Respostas</div><div class="kpi-val g">${total}</div><div class="kpi-sub">formulários preenchidos</div></div>
-    <div class="kpi hi-b"><div class="kpi-lbl">Empresas únicas</div><div class="kpi-val b">${emp.size}</div><div class="kpi-sub">negócios distintos</div></div>
-    <div class="kpi hi-b"><div class="kpi-lbl">Avaliação média</div><div class="kpi-val b">${avg}</div><div class="kpi-sub">colaboração (0–10)</div></div>
-    <div class="kpi hi-a"><div class="kpi-lbl">Têm MVV</div><div class="kpi-val a">${Math.round(mvv/total*100)}%</div><div class="kpi-sub">missão, visão e valores</div></div>
-  `;
-
-  function nSeg(s){const l=s.toLowerCase();
-    if(l.match(/saúde|saude|farmácia|farmacia|clínica|clinica|médic/))return'Saúde e Bem-Estar';
-    if(l.match(/comér|comer/))return'Comércio';if(l.match(/serviç/))return'Serviços';
-    if(l.match(/indúst|indust/))return'Indústria';if(l.match(/educa/))return'Educação';
-    if(l.match(/agro/))return'Agroindústria';if(l.match(/finanç|financ|seguros/))return'Finanças e Seguros';
-    if(l.match(/constru|imobili/))return'Construção e Imobiliário';if(l.match(/tecnolog/))return'Tecnologia';
-    if(l.match(/energia/))return'Energia';if(l.match(/alimenta|bebidas/))return'Alimentação e Bebidas';
-    if(l.match(/e-commerce/))return'E-commerce';if(l.match(/verde|sustent|ambiente/))return'Meio Ambiente';
-    return s.substring(0,22);
-  }
-  function nCli(s){if(s.match(/jurídica e pessoa física/i))return'B2B + B2C';if(s.match(/jurídica/i))return'B2B';if(s.match(/física/i))return'B2C';return s.substring(0,15);}
-  function eSt(s){
-    const map={Pernambuco:'PE',Ceará:'CE',Fortaleza:'CE','Boa Viagem':'CE','São Paulo':'SP',Paulinia:'SP',Jundiai:'SP',Jundiaí:'SP',Sertãozinho:'SP','Embu das Artes':'SP',Curitiba:'PR',Maringá:'PR','Francisco Beltrão':'PR','Quedas do Iguaçu':'PR',Cascavel:'PR',Paraná:'PR','Iporã do Oeste':'SC','Iporã Do Oeste':'SC',Maravilha:'SC',Saudades:'SC',Xanxerê:'SC','São Joaquim':'SC',Iraceminha:'SC',Chapecó:'SC',Pinhalzinho:'SC','São José':'SC',Itapema:'SC',Criciúma:'SC',Sabará:'MG','Belo Horizonte':'MG','Frei Paulo':'SE','Santo Ângelo':'RS','Porto Alegre':'RS',Erechim:'RS','Mundo Novo':'MS',Cuiabá:'MT','Tangará da Serra':'MT',Itabuna:'BA',Salvador:'BA',Itaperuna:'RJ',Óbidos:'PA','Rio Verde':'GO'};
-    for(const[k,v]of Object.entries(map)){if(s.includes(k))return v;}
-    const m=s.match(/\b([A-Z]{2})\b/);return m?m[1]:s.split(/[,\- ]/)[0].substring(0,10);
-  }
-
-  const segE = topN(countBy(d.map(r=>nSeg(r[4]))),12); renderHBar('cSeg',segE.map(e=>e[0]),segE.map(e=>e[1]),PAL);
-  const estE = topN(countBy(d.map(r=>eSt(r[3]))),10);  renderHBar('cEst',estE.map(e=>e[0]),estE.map(e=>e[1]),PAL);
-  const gR=countBy(d.map(r=>r[2]||'N/I'));const gL=Object.keys(gR),gD=gL.map(k=>gR[k]),gC=[BL,'#f472b6',G];
-  renderDonut('cGen',gL,gD,gC); renderLegend('lGen',gL,gD,gC);
-  const cR=countBy(d.map(r=>nCli(r[5])));const cL=Object.keys(cR),cD=cL.map(k=>cR[k]),cC=[AM,BL,G,RD];
-  renderDonut('cCli',cL,cD,cC); renderLegend('lCli',cL,cD,cC);
-  const bins={};for(let i=0;i<=10;i++)bins[i]=0;
-  avals.forEach(v=>{const k=Math.round(v);if(k>=0&&k<=10)bins[k]++;});
-  renderVBar('cAval',Object.keys(bins),Object.values(bins),Object.keys(bins).map(k=>{const n=+k;return n<=3?RD:n<=6?AM:n<=8?G3:G;}));
-  const dc3={};
-  d.forEach(r=>{const raw=r[8];if(!raw)return;const m=raw.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-    if(m){const k=`${m[3]}-${m[2]}-${m[1]}`;dc3[k]=(dc3[k]||0)+1;}});
-  const sd2=Object.keys(dc3).sort();
-  renderLine('cTime',sd2.map(d=>{const[,mo,dy]=d.split('-');return`${dy}/${mo}`;}),sd2.map(k=>dc3[k]),G);
+  safeRender('kpi-perf', () => {
+    const d=PERFIL; const total=d.length;
+    const emp=new Set(d.map(r=>r[1].toLowerCase()).filter(Boolean));
+    const avals=d.map(r=>parseFloat(r[7])).filter(v=>!isNaN(v));
+    const avg=(avals.reduce((a,b)=>a+b,0)/avals.length).toFixed(1);
+    const mvv=d.filter(r=>r[6].toLowerCase()==='sim').length;
+    document.getElementById('kpi-perf').innerHTML=`
+      <div class="kpi hi"><div class="kpi-lbl">Respostas</div><div class="kpi-val g">${total}</div><div class="kpi-sub">formulários preenchidos</div></div>
+      <div class="kpi hi-b"><div class="kpi-lbl">Empresas únicas</div><div class="kpi-val b">${emp.size}</div><div class="kpi-sub">negócios distintos</div></div>
+      <div class="kpi hi-b"><div class="kpi-lbl">Avaliação média</div><div class="kpi-val b">${avg}</div><div class="kpi-sub">colaboração (0–10)</div></div>
+      <div class="kpi hi-a"><div class="kpi-lbl">Têm MVV</div><div class="kpi-val a">${Math.round(mvv/total*100)}%</div><div class="kpi-sub">missão, visão e valores</div></div>
+    `;
+    function nSeg(s){const l=s.toLowerCase();
+      if(l.match(/saúde|saude|farmácia|farmacia|clínica|clinica|médic/))return'Saúde e Bem-Estar';
+      if(l.match(/comér|comer/))return'Comércio';if(l.match(/serviç/))return'Serviços';
+      if(l.match(/indúst|indust/))return'Indústria';if(l.match(/educa/))return'Educação';
+      if(l.match(/agro/))return'Agroindústria';if(l.match(/finanç|financ|seguros/))return'Finanças e Seguros';
+      if(l.match(/constru|imobili/))return'Construção e Imobiliário';if(l.match(/tecnolog/))return'Tecnologia';
+      if(l.match(/energia/))return'Energia';if(l.match(/alimenta|bebidas/))return'Alimentação e Bebidas';
+      if(l.match(/e-commerce/))return'E-commerce';if(l.match(/verde|sustent|ambiente/))return'Meio Ambiente';
+      return s.substring(0,22);}
+    function nCli(s){if(s.match(/jurídica e pessoa física/i))return'B2B + B2C';if(s.match(/jurídica/i))return'B2B';if(s.match(/física/i))return'B2C';return s.substring(0,15);}
+    function eSt(s){const map={Pernambuco:'PE',Ceará:'CE',Fortaleza:'CE','Boa Viagem':'CE','São Paulo':'SP',Paulinia:'SP',Jundiai:'SP',Jundiaí:'SP',Sertãozinho:'SP','Embu das Artes':'SP',Curitiba:'PR',Maringá:'PR','Francisco Beltrão':'PR','Quedas do Iguaçu':'PR',Cascavel:'PR',Paraná:'PR','Iporã do Oeste':'SC','Iporã Do Oeste':'SC',Maravilha:'SC',Saudades:'SC',Xanxerê:'SC','São Joaquim':'SC',Iraceminha:'SC',Chapecó:'SC',Pinhalzinho:'SC','São José':'SC',Itapema:'SC',Criciúma:'SC',Sabará:'MG','Belo Horizonte':'MG','Frei Paulo':'SE','Santo Ângelo':'RS','Porto Alegre':'RS',Erechim:'RS','Mundo Novo':'MS',Cuiabá:'MT','Tangará da Serra':'MT',Itabuna:'BA',Salvador:'BA',Itaperuna:'RJ',Óbidos:'PA','Rio Verde':'GO'};
+      for(const[k,v]of Object.entries(map)){if(s.includes(k))return v;}const m=s.match(/\b([A-Z]{2})\b/);return m?m[1]:s.split(/[,\- ]/)[0].substring(0,10);}
+    const segE=topN(countBy(d.map(r=>nSeg(r[4]))),12); renderHBar('cSeg',segE.map(e=>e[0]),segE.map(e=>e[1]),PAL);
+    const estE=topN(countBy(d.map(r=>eSt(r[3]))),10);  renderHBar('cEst',estE.map(e=>e[0]),estE.map(e=>e[1]),PAL);
+    const gR=countBy(d.map(r=>r[2]||'N/I'));const gL=Object.keys(gR),gD=gL.map(k=>gR[k]),gC=[BL,'#f472b6',G];
+    renderDonut('cGen',gL,gD,gC); renderLegend('lGen',gL,gD,gC);
+    const cR=countBy(d.map(r=>nCli(r[5])));const cL=Object.keys(cR),cD=cL.map(k=>cR[k]),cC=[AM,BL,G,RD];
+    renderDonut('cCli',cL,cD,cC); renderLegend('lCli',cL,cD,cC);
+    const bins={};for(let i=0;i<=10;i++)bins[i]=0;
+    avals.forEach(v=>{const k=Math.round(v);if(k>=0&&k<=10)bins[k]++;});
+    renderVBar('cAval',Object.keys(bins),Object.values(bins),Object.keys(bins).map(k=>{const n=+k;return n<=3?RD:n<=6?AM:n<=8?G3:G;}));
+    const dc3={};d.forEach(r=>{const raw=r[8];if(!raw)return;const m=raw.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      if(m){const k=`${m[3]}-${m[2]}-${m[1]}`;dc3[k]=(dc3[k]||0)+1;}});
+    const sd2=Object.keys(dc3).sort();
+    renderLine('cTime',sd2.map(d=>{const[,mo,dy]=d.split('-');return`${dy}/${mo}`;}),sd2.map(k=>dc3[k]),G);
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
 // [PCE] FAQ
 // ═══════════════════════════════════════════════════════════
 function buildFaq() {
-  document.getElementById('faq-list').innerHTML = FAQ_DATA.map((f,i) => `
-    <div class="faq-item" id="faq-${i}">
-      <div class="faq-q" onclick="toggleFaq(${i})">
-        <span>${f.q}</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="faq-a">${f.a}</div>
-    </div>`).join('');
+  safeRender('faq-list', () => {
+    document.getElementById('faq-list').innerHTML=FAQ_DATA.map((f,i)=>`
+      <div class="faq-item" id="faq-${i}">
+        <div class="faq-q" onclick="toggleFaq(${i})">
+          <span>${f.q}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-a">${f.a}</div>
+      </div>`).join('');
+  });
 }
 
-function toggleFaq(i) {
-  const el = document.getElementById('faq-' + i);
-  if (el) el.classList.toggle('open');
-}
+function toggleFaq(i) { const el=document.getElementById('faq-'+i); if(el) el.classList.toggle('open'); }
 
 // ═══════════════════════════════════════════════════════════
-// [PCE] BOOT — execução sequencial garantida
+// [PCE] BOOT — Sequência determinística e resiliente
 // ═══════════════════════════════════════════════════════════
 (function boot() {
-  console.log('[PCE] Boot iniciado');
+  const t0 = Date.now();
+  Logger.info('BOOT', `PCE Dashboard v${PCE_VERSION} iniciando`);
 
-  // 1. Inicializa store com FALLBACK — exibe imediatamente
+  // 1. Seed store com FALLBACK — dados disponíveis instantaneamente
   const fb = normalizeBrPayload({ rows: FALLBACK, stats: null });
   if (fb) {
+    fb.source = 'static_embedded';
     storeUpdateBr(fb);
-    storeSetOffline(true); // começa em modo cache até confirmar API
-    console.log('[PCE] FALLBACK carregado:', FALLBACK.length, 'registros');
+    storeSetOffline(true);
+    Logger.info('BOOT', 'FALLBACK carregado', { rows: FALLBACK.length, capturedAt: FALLBACK_META.capturedAt });
+  } else {
+    Logger.error('BOOT', 'FALLBACK inválido — UI pode iniciar vazia');
   }
 
-  // 2. Renderiza UI imediatamente com dados do FALLBACK
-  try { renderCurrentView(); } catch(e) { console.error('[PCE] Erro render inicial:', e); }
+  // 2. Render imediato com dados do FALLBACK
+  try { renderCurrentView(); } catch(e) { Logger.error('BOOT', 'Erro no render inicial', { message: e.message }); }
   setStatus('neu', 'Atualizando...');
 
-  // 3. Constrói páginas estáticas
-  try { buildPerfil(); } catch(e) { console.error('[PCE] Erro buildPerfil:', e); }
-  try { buildFaq(); }    catch(e) { console.error('[PCE] Erro buildFaq:', e); }
+  // 3. Páginas estáticas
+  try { buildPerfil(); } catch(e) { Logger.error('BOOT', 'Erro buildPerfil', { message: e.message }); }
+  try { buildFaq(); }    catch(e) { Logger.error('BOOT', 'Erro buildFaq', { message: e.message }); }
 
-  // 4. Busca dados reais em background após 80ms (não bloqueia UI)
+  // 4. Fetch real em background
   setTimeout(() => {
-    fetchAllData(true).catch(e => console.error('[PCE] Erro fetch inicial:', e));
+    fetchAllData(true).catch(e => Logger.error('BOOT', 'Erro fetch inicial', { message: e.message }));
   }, 80);
 
-  // 5. Auto-refresh a cada 15 minutos
+  // 5. Auto-refresh
   setInterval(() => {
-    fetchAllData(true).catch(e => console.warn('[PCE] Erro auto-refresh:', e));
+    fetchAllData(true).catch(e => Logger.warn('BOOT', 'Erro auto-refresh', { message: e.message }));
   }, 15 * 60 * 1000);
 
-  console.log('[PCE] Boot completo — auto-refresh em 15min');
+  Logger.perf('BOOT', 'Boot completo', t0);
 })();
+
 </script>
 </body>
 </html>
