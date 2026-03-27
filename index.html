@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PCE — Dashboard</title>
+<title>PCE — Dashboard [HOMOLOG]</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#1A1A18;--bg2:#212120;--sidebar:#1E1E1C;--card:#252523;
+  --bg:#18161f;--bg2:#1f1c2a;--sidebar:#1a1726;--card:#232030;
   --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.12);
-  --green:#63F858;--green2:#243d26;--green3:#4bc943;
+  --green:#f5a623;--green2:#3d2e0a;--green3:#e09018;
   --cream:#EAE5E1;--muted:#7a7a76;--muted2:#4a4a47;
   --amber:#f5c542;--red:#ff5f5f;--blue:#4d9fff;--purple:#a78bfa;
   --ticker-h:52px;--sidebar-w:220px;--header-h:58px;--r:10px;--rl:13px;
@@ -211,6 +211,11 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--cream);dis
 </head>
 <body>
 
+<!-- HOMOLOG BANNER -->
+<div style="background:linear-gradient(90deg,#f5a623,#e07b0a);color:#1A1A18;text-align:center;font-family:'Barlow',sans-serif;font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;padding:6px;flex-shrink:0">
+  ⚠️ AMBIENTE DE HOMOLOGAÇÃO — NÃO É PRODUÇÃO ⚠️
+</div>
+
 <!-- TICKER BAR -->
 <div class="ticker">
   <div class="ticker-track" id="ticker-track"></div>
@@ -222,7 +227,7 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--cream);dis
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-head">
-      <div class="logo-mark">
+      <div class="logo-mark" style="background:#3d2e0a;border-color:rgba(245,166,35,.3)">
         <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
           <polygon points="8,8 26,8 32,14 20,14 20,20 32,20 26,32 8,32 14,26 26,26 26,20 14,20"/>
         </svg>
@@ -736,7 +741,7 @@ async function fetchAllData(silent = false) {
 // [PCE] LAYER 4 — CHART ENGINE
 // Funções puras de renderização de gráficos
 // ═══════════════════════════════════════════════════════════
-const G='#63F858',G2='#243d26',G3='#4bc943',AM='#f5c542',RD='#ff5f5f',BL='#4d9fff',CR='#EAE5E1';
+const G='#f5a623',G2='#3d2e0a',G3='#e09018',AM='#f5c542',RD='#ff5f5f',BL='#4d9fff',CR='#EAE5E1';
 const PAL=[G,BL,AM,RD,'#a78bfa','#f472b6','#2dd4bf','#fb923c',G2,'#facc15','#34d399','#60a5fa'];
 const CHART_REGISTRY = {};
 const LC='#4a4a47', GC='rgba(255,255,255,.035)';
