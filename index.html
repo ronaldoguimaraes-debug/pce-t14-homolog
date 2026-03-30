@@ -399,6 +399,12 @@ const SCHEMA = {
   br: { requiredFields:['rows','total'], rowRequiredFields:['nome','presenca','tipo'], minRows:1 },
   us: { requiredFields:['total','confirmados'], minTotal:0 },
 };
+const FALLBACK_META = {
+  capturedAt: '2026-03-30T13:17:00.000Z',
+  totalRows:  192,
+  source:     'static_embedded',
+};
+
 
 // ── DATA SOURCES (Dashboard) ─────────────────────────────────
 const DATA_SOURCES = {
