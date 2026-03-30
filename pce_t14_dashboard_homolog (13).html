@@ -1,0 +1,2300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCE — Dashboard [HOMOLOG]</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#18161f;--bg2:#1f1c2a;--sidebar:#1a1726;--card:#232030;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.12);
+  --green:#f5a623;--green2:#3d2e0a;--green3:#e09018;
+  --cream:#EAE5E1;--muted:#7a7a76;--muted2:#4a4a47;
+  --amber:#f5c542;--red:#ff5f5f;--blue:#4d9fff;--purple:#a78bfa;
+  --ticker-h:52px;--sidebar-w:220px;--header-h:58px;--r:10px;--rl:13px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--cream);display:flex;flex-direction:column}
+
+/* ── TICKER ── */
+.ticker{height:var(--ticker-h);min-height:var(--ticker-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;overflow:hidden;position:relative;flex-shrink:0}
+.ticker-track{display:flex;align-items:center;animation:tickerMove 40s linear infinite;white-space:nowrap}
+.ticker:hover .ticker-track{animation-play-state:paused}
+@keyframes tickerMove{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker-item{display:flex;align-items:center;gap:10px;padding:0 28px;border-right:1px solid var(--border);height:var(--ticker-h)}
+.t-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+.t-val{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:800;line-height:1}
+.t-val.g{color:var(--green)}.t-val.b{color:var(--blue)}.t-val.a{color:var(--amber)}.t-val.r{color:var(--red)}.t-val.w{color:var(--cream)}
+.t-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;margin-left:4px}
+.t-tag.up{background:rgba(99,248,88,.15);color:var(--green)}
+.t-tag.dn{background:rgba(255,95,95,.15);color:var(--red)}
+.t-tag.neu{background:rgba(234,229,225,.08);color:var(--muted)}
+
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s;flex-shrink:0}
+.sidebar.collapsed{width:58px;min-width:58px}
+.sidebar-head{height:var(--header-h);display:flex;align-items:center;padding:0 16px;gap:12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo-mark{width:30px;height:30px;background:var(--green2);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(99,248,88,.2)}
+.logo-mark svg{width:18px;height:18px;fill:var(--green)}
+.logo-text{overflow:hidden;transition:opacity .2s}
+.logo-tag{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green);opacity:.7}
+.logo-title{font-family:"Barlow Condensed",sans-serif;font-size:14px;font-weight:800;color:var(--cream);text-transform:uppercase;white-space:nowrap}
+.sidebar.collapsed .logo-text{opacity:0;width:0;overflow:hidden}
+.sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-section{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted2);padding:12px 18px 6px;white-space:nowrap;overflow:hidden}
+.sidebar.collapsed .nav-section{opacity:0}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all .15s;white-space:nowrap;border-left:2px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--cream)}
+.nav-item.active{color:var(--green);border-left-color:var(--green);background:rgba(99,248,88,.05)}
+.nav-item svg{flex-shrink:0;width:16px;height:16px}
+.nav-label{overflow:hidden;transition:opacity .2s;white-space:nowrap}
+.sidebar.collapsed .nav-label{opacity:0;width:0}
+.nav-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;background:var(--green2);color:var(--green);margin-left:auto;flex-shrink:0}
+.sidebar.collapsed .nav-badge{display:none}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border)}
+.collapse-btn{width:100%;display:flex;align-items:center;gap:10px;padding:9px 6px;border-radius:var(--r);background:transparent;border:none;color:var(--muted);font-family:"Barlow",sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.collapse-btn:hover{background:rgba(255,255,255,.04);color:var(--cream)}
+.collapse-icon{flex-shrink:0;transition:transform .25s}
+.sidebar.collapsed .collapse-icon{transform:rotate(180deg)}
+.sidebar.collapsed .collapse-btn span{opacity:0;width:0;overflow:hidden}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:var(--header-h);min-height:var(--header-h);display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;gap:12px}
+.page-title{font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:700;color:var(--cream);text-transform:uppercase;letter-spacing:.04em}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.pill{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:20px;background:var(--green2);color:var(--green);display:flex;align-items:center;gap:6px;flex-shrink:0}
+.pill.err{background:rgba(255,95,95,.1);color:var(--red)}
+.pill.loading{background:rgba(77,159,255,.1);color:var(--blue)}
+.pill.neu{background:rgba(245,197,66,.08);color:var(--amber)}
+.pill.offline{background:rgba(245,197,66,.12);color:var(--amber)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;flex-shrink:0}
+.dot.off{background:var(--muted2);animation:none}
+.dot.spin{background:var(--blue);animation:dspin .6s linear infinite}
+.dot.warn{background:var(--amber);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes dspin{to{transform:rotate(360deg)}}
+.ts{font-size:11px;color:var(--muted2)}
+.ts b{color:var(--green);font-weight:600}
+.btn{display:flex;align-items:center;gap:6px;background:var(--green2);border:1px solid rgba(99,248,88,.2);color:var(--green);padding:7px 14px;border-radius:var(--r);font-family:"Barlow",sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn:hover{background:rgba(99,248,88,.15);border-color:rgba(99,248,88,.4)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn svg{transition:transform .4s}
+.btn.spinning svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── VIEW BUTTONS ── */
+.view-btns{display:flex;align-items:center;gap:6px}
+.vbtn{padding:6px 14px;border-radius:20px;font-family:"Barlow",sans-serif;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;border:1px solid var(--border2);background:transparent;color:var(--muted);white-space:nowrap}
+.vbtn:hover{background:rgba(255,255,255,.06);color:var(--cream)}
+.vbtn.active-br{background:var(--green2);color:var(--green);border-color:rgba(99,248,88,.3)}
+.vbtn.active-us{background:rgba(77,159,255,.12);color:var(--blue);border-color:rgba(77,159,255,.3)}
+.vbtn.active-geral{background:rgba(167,139,250,.12);color:var(--purple);border-color:rgba(167,139,250,.3)}
+
+/* ── CONTENT / PAGES ── */
+.content{flex:1;overflow-y:auto;padding:20px 24px;scroll-behavior:smooth}
+.page{display:none}.page.active{display:block}
+
+/* ── OFFLINE BANNER ── */
+.offline-banner{background:rgba(245,197,66,.08);border:1px solid rgba(245,197,66,.2);border-radius:8px;padding:8px 14px;font-size:11px;color:var(--amber);display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.offline-banner svg{flex-shrink:0}
+.offline-banner.hidden{display:none}
+
+/* ── IMERSÃO CARD ── */
+.imersao-row{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}
+.im-card{background:var(--card);border-radius:var(--rl);border:1px solid var(--border);padding:20px 24px;display:flex;gap:16px;transition:border-color .2s;position:relative;overflow:hidden}
+.im-card::before{content:"";position:absolute;bottom:-15px;right:-15px;width:220px;height:160px;background-size:cover;background-position:center;border-radius:8px;opacity:.07;pointer-events:none;transform:rotate(-5deg)}
+.im-card.br::before{background-image:url('https://flagcdn.com/br.svg')}
+.im-card.us::before{background-image:url('https://flagcdn.com/us.svg')}
+.im-card.br{background:linear-gradient(135deg,#172616 0%,#1e2e1e 100%);border-color:rgba(99,248,88,.2)}
+.im-card.us{background:linear-gradient(135deg,#151c2e 0%,#1a2540 100%);border-color:rgba(77,159,255,.25)}
+.im-flag{font-size:28px;flex-shrink:0;line-height:1.2}
+.im-body{flex:1}
+.im-lbl{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.im-card.br .im-lbl{color:var(--green)}
+.im-card.us .im-lbl{color:var(--blue)}
+.im-desc{font-size:11px;color:var(--muted);margin-bottom:8px}
+.im-num{font-family:"Barlow Condensed",sans-serif;font-size:48px;font-weight:800;line-height:1}
+.im-card.br .im-num{color:var(--green)}
+.im-card.us .im-num{color:var(--blue)}
+.im-sub{font-size:11px;color:var(--muted2);margin-bottom:8px}
+.im-bar{background:rgba(255,255,255,.07);border-radius:4px;height:4px;overflow:hidden;margin-bottom:4px}
+.im-fill{height:100%;border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.im-card.br .im-fill{background:var(--green)}
+.im-card.us .im-fill{background:var(--blue)}
+.im-pct{font-size:11px;font-weight:600}
+.im-card.br .im-pct{color:var(--green)}
+.im-card.us .im-pct{color:var(--blue)}
+
+/* ── SECTION LABEL ── */
+.sl{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted2);margin:20px 0 10px;display:flex;align-items:center;gap:10px}
+.sl::after{content:"";flex:1;height:1px;background:var(--border)}
+
+/* ── CHART GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:1100px){.g3{grid-template-columns:1fr 1fr}.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* ── KPI CARDS ── */
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+.kpi:hover{border-color:var(--border2);transform:translateY(-1px)}
+.kpi::after{content:"";position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green2),transparent)}
+.kpi.hi::after{background:linear-gradient(90deg,var(--green),transparent)}
+.kpi.hi-b::after{background:linear-gradient(90deg,var(--blue),transparent)}
+.kpi.hi-a::after{background:linear-gradient(90deg,var(--amber),transparent)}
+.kpi.hi-r::after{background:linear-gradient(90deg,var(--red),transparent)}
+.kpi-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.kpi-val{font-family:"Barlow Condensed",sans-serif;font-size:32px;font-weight:800;line-height:1;color:var(--cream)}
+.kpi-val.g{color:var(--green)}.kpi-val.b{color:var(--blue)}.kpi-val.a{color:var(--amber)}.kpi-val.r{color:var(--red)}
+.kpi-sub{font-size:10px;color:var(--muted2);margin-top:5px}
+
+/* ── CHART CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;transition:border-color .2s}
+.card:hover{border-color:var(--border2)}
+.carf{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;margin-bottom:12px}
+.ct{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.cs{font-size:10px;color:var(--muted2);margin-bottom:12px}
+.leg{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;font-size:10px;color:var(--muted)}
+.leg span{display:flex;align-items:center;gap:4px}
+.ld{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+/* ── GERAL CARDS ── */
+.geral-header{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.geral-card{border-radius:var(--rl);padding:20px 24px;position:relative;overflow:hidden}
+.geral-card.br{background:linear-gradient(135deg,#172616 0%,#1d2f1d 100%);border:1px solid rgba(99,248,88,.2)}
+.geral-card.us{background:linear-gradient(135deg,#151c2e 0%,#1a2540 100%);border:1px solid rgba(77,159,255,.3)}
+/* Bandeira de fundo — pseudo-elemento before */
+.geral-card::before{content:"";position:absolute;bottom:-10px;right:-10px;width:200px;height:200px;background-size:cover;background-position:center;border-radius:12px;opacity:.08;pointer-events:none;transform:rotate(-8deg)}
+.geral-card.br::before{background-image:url('https://flagcdn.com/br.svg')}
+.geral-card.us::before{background-image:url('https://flagcdn.com/us.svg')}
+/* Bolha decorativa */
+.geral-card::after{content:"";position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;opacity:.05}
+.geral-card.br::after{background:var(--green)}.geral-card.us::after{background:var(--blue)}
+.geral-flag{font-size:36px;margin-bottom:6px}
+.geral-turma{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin-bottom:2px}
+.geral-card.br .geral-turma{color:var(--green)}.geral-card.us .geral-turma{color:var(--blue)}
+.geral-title{font-size:11px;color:var(--muted);margin-bottom:16px}
+.geral-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.geral-kpi{background:rgba(0,0,0,.2);border-radius:8px;padding:10px 12px}
+.geral-kpi-lbl{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.geral-kpi-val{font-family:"Barlow Condensed",sans-serif;font-size:28px;font-weight:800;line-height:1}
+.geral-card.br .geral-kpi-val{color:var(--green)}.geral-card.us .geral-kpi-val{color:var(--blue)}
+.geral-kpi-sub{font-size:9px;color:var(--muted2);margin-top:3px}
+.geral-compare{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:20px 24px;margin-bottom:12px}
+.geral-compare-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.compare-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.compare-lbl{font-size:11px;color:var(--muted);width:140px;flex-shrink:0}
+.compare-bars{flex:1;display:flex;flex-direction:column;gap:4px}
+.compare-bar-wrap{display:flex;align-items:center;gap:8px}
+.compare-bar-bg{flex:1;background:rgba(255,255,255,.06);border-radius:3px;height:6px;overflow:hidden}
+.compare-bar-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.compare-bar-fill.br{background:var(--green)}.compare-bar-fill.us{background:var(--blue)}
+.compare-val{font-family:"Barlow Condensed",sans-serif;font-size:14px;font-weight:700;width:36px;text-align:right;flex-shrink:0}
+.compare-val.br{color:var(--green)}.compare-val.us{color:var(--blue)}
+.compare-pct{font-size:10px;color:var(--muted2);width:32px;flex-shrink:0}
+
+/* ── FAQ ── */
+.faq-hero{background:linear-gradient(135deg,var(--green2),#1a2a1a);border:1px solid rgba(99,248,88,.15);border-radius:var(--rl);padding:32px;margin-bottom:20px;text-align:center}
+/* ── DIAGNÓSTICO EXECUTIVO ── */
+.diag-wrap{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:4px}
+.diag-card{border-radius:var(--rl);padding:20px 22px;border:1px solid var(--border)}
+.diag-card.main{background:linear-gradient(135deg,rgba(99,248,88,.06),rgba(99,248,88,.02));border-color:rgba(99,248,88,.2)}
+.diag-card.risk{background:rgba(255,95,95,.04);border-color:rgba(255,95,95,.2)}
+.diag-card.opp{background:rgba(77,159,255,.04);border-color:rgba(77,159,255,.2)}
+.diag-title{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px}
+.diag-card.main .diag-title{color:var(--green)}
+.diag-card.risk .diag-title{color:var(--red)}
+.diag-card.opp  .diag-title{color:var(--blue)}
+.diag-text{font-size:12px;color:var(--muted);line-height:1.7}
+.diag-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:12px;color:var(--muted)}
+.diag-dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+/* ── PALESTRANTE ── */
+.pales-wrap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:4px}
+.pales-card{border-radius:var(--rl);padding:20px 22px;border:1px solid var(--border);background:var(--card)}
+.pales-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.pales-quote{font-size:14px;color:var(--cream);line-height:1.6;font-style:italic}
+.pales-insight{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:6px;font-size:12px;color:var(--muted)}
+/* ── CLUSTERS ── */
+.cluster-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cluster-item{border-radius:10px;padding:14px 16px;border:1px solid var(--border);position:relative;overflow:hidden}
+.cluster-label{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.cluster-pct{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:800;line-height:1}
+.cluster-n{font-size:11px;color:var(--muted);margin-top:2px}
+.cluster-bar{height:3px;border-radius:2px;margin-top:10px;opacity:.6}
+/* ── DORES ── */
+.dores-list{display:flex;flex-direction:column;gap:8px}
+.dor-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(255,95,95,.05);border:1px solid rgba(255,95,95,.12);border-radius:8px}
+.dor-rank{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--red);width:22px;text-align:center;flex-shrink:0}
+.dor-info{flex:1}
+.dor-nome{font-size:13px;font-weight:700;color:var(--cream)}
+.dor-pct{font-size:11px;color:var(--muted);margin-top:2px}
+.dor-bar-bg{height:4px;background:rgba(255,95,95,.12);border-radius:2px;margin-top:6px;overflow:hidden}
+.dor-bar-fill{height:100%;border-radius:2px;background:var(--red)}
+/* ── METAS ── */
+.meta-list{display:flex;flex-direction:column;gap:8px}
+.meta-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(99,248,88,.04);border:1px solid rgba(99,248,88,.12);border-radius:8px}
+.meta-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.meta-info{flex:1}
+.meta-nome{font-size:13px;font-weight:700;color:var(--cream)}
+.meta-bar-bg{height:4px;background:rgba(99,248,88,.1);border-radius:2px;margin-top:6px;overflow:hidden}
+.meta-bar-fill{height:100%;border-radius:2px;background:var(--green)}
+/* ── DEPENDÊNCIA ── */
+.dep-wrap{display:flex;flex-direction:column;gap:12px}
+.dep-meter{text-align:center;padding:16px}
+.dep-pct{font-family:'Barlow Condensed',sans-serif;font-size:64px;font-weight:800;line-height:1}
+.dep-label{font-size:11px;color:var(--muted);margin-top:4px}
+.dep-bars{display:flex;flex-direction:column;gap:8px}
+.dep-bar-row{display:flex;align-items:center;gap:10px;font-size:12px}
+/* ── EMOCIONAL ── */
+.emoc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.emoc-card{border-radius:10px;padding:14px 16px;border:1px solid var(--border);background:var(--card);text-align:center}
+.emoc-icon{font-size:28px;margin-bottom:6px}
+.emoc-label{font-size:11px;font-weight:700;color:var(--cream);margin-bottom:4px}
+.emoc-pct{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800}
+.emoc-desc{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4}
+/* ── FAMÍLIA ── */
+.familia-list{display:flex;flex-direction:column;gap:8px}
+.familia-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px}
+.familia-icon{font-size:18px;width:28px;text-align:center}
+.persona-wrap{display:flex;flex-direction:column;gap:12px}
+.persona-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border)}
+.persona-icon{font-size:22px;width:36px;text-align:center;flex-shrink:0}
+.persona-info{flex:1}
+.persona-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.persona-value{font-size:14px;font-weight:700;color:var(--cream)}
+.persona-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.07);margin-top:6px;overflow:hidden}
+.persona-bar-fill{height:100%;border-radius:2px;background:var(--green);transition:width 1s ease}
+/* ── MAPA DE CALOR ── */
+.mapa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px}
+.mapa-cell{border-radius:8px;padding:8px 6px;text-align:center;cursor:default;transition:transform .15s;border:1px solid rgba(255,255,255,.06)}
+.mapa-cell:hover{transform:scale(1.06)}
+.mapa-uf{font-size:13px;font-weight:800;font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em}
+.mapa-n{font-size:11px;font-weight:600;margin-top:2px}
+.mapa-legend{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:11px;color:var(--muted)}
+.mapa-legend-bar{display:flex;gap:2px;align-items:center}
+.mapa-legend-sq{width:14px;height:14px;border-radius:3px}
+/* ── TOP EMPRESAS ── */
+.emp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.emp-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;transition:border-color .2s}
+.emp-card:hover{border-color:rgba(99,248,88,.25)}
+.emp-rank{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--muted2);width:28px;text-align:center;flex-shrink:0}
+.emp-rank.top{color:var(--green)}
+.emp-info{flex:1;min-width:0}
+.emp-name{font-size:13px;font-weight:700;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.emp-count{font-size:11px;color:var(--muted);margin-top:3px}
+.emp-badge{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--green);flex-shrink:0}
+.faq-hero-title{font-family:"Barlow Condensed",sans-serif;font-size:32px;font-weight:800;color:var(--green);margin-bottom:8px}
+.faq-hero-sub{font-size:14px;color:var(--muted);line-height:1.6}
+.faq-item{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:8px;overflow:hidden}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;font-size:13px;font-weight:600;color:var(--cream);transition:background .15s}
+.faq-q:hover{background:rgba(255,255,255,.03)}
+.faq-q svg{flex-shrink:0;transition:transform .2s;color:var(--green)}
+.faq-item.open .faq-q svg{transform:rotate(180deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s;font-size:13px;color:var(--muted);line-height:1.7;padding:0 20px}
+.faq-item.open .faq-a{max-height:300px;padding:0 20px 18px}
+
+/* ── BR IMERSÃO FULL CARD ── */
+.imersao-full{background:linear-gradient(135deg,#172616 0%,#1e2e1e 100%);border:1px solid rgba(99,248,88,.2);border-radius:var(--rl);padding:28px 32px;margin-bottom:14px;position:relative;overflow:hidden}
+.imersao-full::before{content:"";position:absolute;bottom:-20px;right:-20px;width:280px;height:200px;background-image:url('https://flagcdn.com/br.svg');background-size:cover;background-position:center;border-radius:10px;opacity:.06;pointer-events:none;transform:rotate(-6deg)}
+</style>
+</head>
+<body>
+
+<!-- HOMOLOG BANNER -->
+<div style="background:linear-gradient(90deg,#f5a623,#e07b0a);color:#1A1A18;text-align:center;font-family:'Barlow',sans-serif;font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;padding:6px;flex-shrink:0">
+  ⚠️ AMBIENTE DE HOMOLOGAÇÃO — NÃO É PRODUÇÃO ⚠️
+</div>
+
+<!-- TICKER BAR -->
+<div class="ticker">
+  <div class="ticker-track" id="ticker-track"></div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="logo-mark" style="background:#3d2e0a;border-color:rgba(245,166,35,.3)">
+        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="8,8 26,8 32,14 20,14 20,20 32,20 26,32 8,32 14,26 26,26 26,20 14,20"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <div class="logo-tag">Febracis</div>
+        <div class="logo-title">PCE</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" id="nav-dash" onclick="switchPage('dash')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span class="nav-label">Dashboard</span>
+        <span class="nav-badge" id="badge-total">—</span>
+      </div>
+      <div class="nav-item" id="nav-perfil" onclick="switchPage('perfil')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="nav-label">Perfil da Turma</span>
+      </div>
+      <div class="nav-section">Recursos</div>
+      <div class="nav-item" id="nav-faq" onclick="switchPage('faq')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="nav-label">FAQ — PCE</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <svg class="collapse-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>Recolher</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="page-title" id="page-title">Dashboard</div>
+        <div class="view-btns" id="view-btns-container">
+          <button class="vbtn active-br" id="vbtn-br" onclick="switchView('br')">🇧🇷 T14 Brasil</button>
+          <button class="vbtn" id="vbtn-us" onclick="switchView('us')">🇺🇸 T13 Orlando</button>
+          <button class="vbtn" id="vbtn-geral" onclick="switchView('geral')">📊 PCE Geral</button>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="ts">Atualizado: <b id="ts">—</b></span>
+        <div class="pill" id="pill"><span class="dot" id="dot"></span><span id="pill-txt">Conectando...</span></div>
+        <button class="btn" id="btnR" onclick="refreshManual()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M8 16H3v5"/>
+          </svg>
+          Atualizar
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══ DASHBOARD ══ -->
+      <div class="page active" id="page-dash">
+        <!-- Banner de modo offline -->
+        <div class="offline-banner hidden" id="offline-banner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Modo cache — exibindo dados estáticos. Clique em Atualizar para buscar dados ao vivo.
+        </div>
+
+        <!-- KPIs -->
+        <div class="g4" id="kpi-dash"></div>
+
+        <!-- IMERSÕES -->
+        <div class="sl">Confirmados por Imersão</div>
+        <div id="imersao-container"></div>
+
+        <!-- Presença & Onboarding -->
+        <div class="sl">Presença &amp; Onboarding</div>
+        <div class="g2">
+          <div class="card"><div class="ct">Presença na turma</div><div class="cs">Todos os status de confirmação</div><div style="position:relative;height:220px"><canvas id="cPres"></canvas></div><div class="leg" id="lPres"></div></div>
+          <div class="card"><div class="ct">Onboarding</div><div class="cs">Status de realização</div><div style="position:relative;height:220px"><canvas id="cOnb"></canvas></div><div class="leg" id="lOnb"></div></div>
+        </div>
+
+        <!-- Engajamento -->
+        <div class="sl">Engajamento Operacional</div>
+        <div class="g3">
+          <div class="card"><div class="ct">WhatsApp</div><div class="cs">Adicionado no grupo</div><div style="position:relative;height:150px"><canvas id="cW"></canvas></div><div class="leg" id="lW"></div></div>
+          <div class="card"><div class="ct">Typeform</div><div class="cs">Formulário preenchido</div><div style="position:relative;height:150px"><canvas id="cTf"></canvas></div><div class="leg" id="lTf"></div></div>
+          <div class="card"><div class="ct">Contrato</div><div class="cs">Assinatura confirmada</div><div style="position:relative;height:150px"><canvas id="cCt"></canvas></div><div class="leg" id="lCt"></div></div>
+        </div>
+
+        <!-- Composição -->
+        <div class="sl">Composição da Turma</div>
+        <div class="g2">
+          <div class="card"><div class="ct">Tipo de matrícula</div><div class="cs">Classificação dos participantes</div><div style="position:relative;height:200px"><canvas id="cMat"></canvas></div></div>
+          <div class="card"><div class="ct">Evento</div><div class="cs">Brasil vs Orlando + Brasil</div><div style="position:relative;height:200px"><canvas id="cEv"></canvas></div><div class="leg" id="lEv"></div></div>
+        </div>
+        <div class="carf"><div class="ct">Entradas por data</div><div class="cs">Volume de registros ao longo do tempo</div><div style="position:relative;height:130px"><canvas id="cEnt"></canvas></div></div>
+      </div>
+
+      <!-- ══ PERFIL DA TURMA ══ -->
+      <div class="page" id="page-perfil">
+        <div id="kpi-perf" style="display:none"></div>
+
+        <!-- ❤️ COMPORTAMENTO EMOCIONAL — carrossel topo -->
+        <div class="sl">❤️ Comportamento Emocional</div>
+        <div class="carf" style="margin-bottom:12px"><div id="emocional-section"></div></div>
+
+        <!-- 💰 FAIXA DE FATURAMENTO + ETÁRIA/GÊNERO -->
+        <div id="fat-section"></div>
+
+        <!-- DIAGNÓSTICO EXECUTIVO -->
+        <div class="sl" style="margin-top:16px">📌 Diagnóstico Executivo</div>
+        <div id="diagnostico-exec" style="margin-bottom:12px"></div>
+
+        <!-- NUVEM DE PALAVRAS -->
+        <div class="sl">☁️ Inteligência da Turma</div>
+        <div id="palestrante-section" style="margin-bottom:12px"></div>
+
+        <!-- PERSONA + TOP ESTADOS -->
+        <div class="g2">
+          <div class="card"><div class="ct">👤 Perfil do Empresário</div><div class="cs">Dados do Salesforce + Dossiê</div><div id="persona-body" style="margin-top:14px"></div></div>
+          <div class="card"><div class="ct">📍 Top Estados</div><div class="cs">Concentração geográfica — Salesforce</div><div style="position:relative;height:320px;margin-top:8px"><canvas id="cEstTop"></canvas></div></div>
+        </div>
+
+        <!-- DORES + METAS -->
+        <div class="sl" style="margin-top:16px">Análise Estratégica <span style="font-size:10px;color:var(--muted);margin-left:8px">— NLP sobre respostas do Dossiê</span></div>
+        <div class="g2">
+          <div class="card"><div class="ct">💣 Top Dores da Turma</div><div class="cs">Principais problemas identificados</div><div id="dores-body" style="margin-top:12px"></div></div>
+          <div class="card"><div class="ct">🚀 O que eles querem</div><div class="cs">Clusters de intenção — metas</div><div id="metas-body" style="margin-top:12px"></div></div>
+        </div>
+
+        <!-- DEPENDÊNCIA DO DONO -->
+        <div class="carf" style="margin-top:12px">
+          <div class="ct">🚨 Dependência do Dono</div>
+          <div class="cs">Risco operacional detectado via NLP nos "5 maiores problemas"</div>
+          <div id="dependencia-body"></div>
+        </div>
+
+        <!-- ORIGEM DOS PARTICIPANTES -->
+        <div id="comercial-section"></div>
+
+        <!-- SEGMENTO + MODELO -->
+        <div class="sl">Negócio &amp; Perfil</div>
+        <div class="g2">
+          <div class="card"><div class="ct">Segmento de negócio</div><div class="cs">Distribuição por setor — Salesforce</div><div style="position:relative;height:280px"><canvas id="cSeg"></canvas></div></div>
+          <div class="card"><div class="ct">Modelo de negócio</div><div class="cs">B2B, B2C, B2B2C — Dossiê</div><div style="position:relative;height:200px"><canvas id="cModelo"></canvas></div><div class="leg" id="lModelo" style="margin-top:8px"></div></div>
+        </div>
+
+        <!-- GÊNERO + RELIGIÃO + FAMÍLIA -->
+        <div class="sl">Perfil Pessoal &amp; Diversidade</div>
+        <div class="g3">
+          <div class="card"><div class="ct">Gênero</div><div class="cs">Dossiê</div><div style="position:relative;height:160px"><canvas id="cGen"></canvas></div><div class="leg" id="lGen"></div></div>
+          <div class="card"><div class="ct">Religião / Crença</div><div class="cs">Dossiê</div><div style="position:relative;height:160px"><canvas id="cRelig"></canvas></div><div class="leg" id="lRelig"></div></div>
+          <div class="card"><div class="ct">Estrutura familiar</div><div class="cs">Dossiê</div><div id="familia-body" style="margin-top:12px"></div></div>
+        </div>
+      </div>
+
+      <!-- ══ FAQ ══ -->
+      <div class="page" id="page-faq">
+        <div class="faq-hero">
+          <div class="faq-hero-title">FAQ — PCE</div>
+          <div class="faq-hero-sub">Perguntas frequentes sobre o Programa de Crescimento Empresarial</div>
+        </div>
+        <div id="faq-list"></div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// [PCE] LAYER 0 — CONSTANTS, CONFIG & STATIC DATA
+// Versão: 3.0 | Engenharia de Produção Elite
+// ═══════════════════════════════════════════════════════════
+
+// ── Versão do sistema ──
+const PCE_VERSION = '3.0.0';
+const API_SCHEMA_VERSION = '1.0'; // Validado contra payloads recebidos
+
+// ── Configuração de fontes de dados ──
+// Estrutura genérica — suporta N turmas sem hardcode
+const DATA_SOURCES = {
+  br: {
+    id:          'br',
+    label:       'T14 Brasil',
+    flag:        '🇧🇷',
+    color:       '#63F858',
+    url:         'https://script.google.com/macros/s/AKfycbwrY6mVo17nXmpM7zlxpc5eNUZzFSABPY-1_Nxjx7RV-Y3412hWY-mgMCh3EBoaJVFC/exec',
+    type:        'full',
+    timeout:     8000,
+    retries:     1,
+    retryDelay:  1500,
+  },
+  us: {
+    id:          'us',
+    label:       'T13 Orlando',
+    flag:        '🇺🇸',
+    color:       '#4d9fff',
+    url:         'https://script.google.com/macros/s/AKfycbzzfV6Agp-AExPKx4w5jpoF5uzhHxfF7ySsDA3bvrxZMqnxaXtkAL99FvWVxvCcHtI/exec',
+    type:        'summary',
+    timeout:     8000,
+    retries:     1,
+    retryDelay:  1500,
+  },
+  mat: {
+    id:          'mat',
+    label:       'Matriculados T14',
+    flag:        '📊',
+    color:       '#a78bfa',
+    url:         'https://script.google.com/macros/s/AKfycbySm8tsKIwuxKBGH-kCg9JXs3267UpNno57CbO4s3bhCoPFYloIMZhr6yjDYausmmF3/exec',
+    type:        'matriculados',
+    timeout:     8000,
+    retries:     1,
+    retryDelay:  1500,
+  },
+  dossie: {
+    id:          'dossie',
+    label:       'Dossiê PCE Brasil',
+    flag:        '📋',
+    color:       '#2dd4bf',
+    url:         'https://script.google.com/macros/s/AKfycbwid7eKuKeYHeh8XLqJFt2GUDuOIVTPeRxkm42TaEE5LPeCxR8RnuVANUiGHxlFWeem/exec',
+    type:        'dossie',
+    timeout:     8000,
+    retries:     1,
+    retryDelay:  1500,
+  }
+};
+
+// ── Schema mínimo exigido nos payloads (validação defensiva) ──
+const SCHEMA = {
+  br: {
+    requiredFields: ['rows', 'total'],
+    rowRequiredFields: ['nome', 'presenca', 'tipo'],
+    minRows: 1,
+  },
+  us: {
+    requiredFields: ['total', 'confirmados'],
+    minTotal: 0,
+  }
+};
+
+// ── FALLBACK versionado — dados offline com metadados ──
+const FALLBACK_META = {
+  version:     '3.0.0',
+  capturedAt:  '2026-03-27T18:00:00.000Z',
+  totalRows:   192,
+  isOffline:   true,
+  source:      'static_embedded',
+};
+const FALLBACK = [{"tipo":"Taxa de Transferência Isento","evento":"ORLANDO + BRASIL","nome":"Alexandre Fouani","presenca":"SEM RETORNO","onboarding":"NÃO INICIADO","whats":"NÃO","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"Raquel Afonso Ribeiro Correia","presenca":"PROXIMA TURMA","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"Brasíliano Correia Filho","presenca":"PROXIMA TURMA","onboarding":"REALIZADO","whats":"NÃO","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"Rogerio Eduardo Ferreira de Oliveira","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"ANGÉLICA BERNARDES YOSHIDA","presenca":"CANCELAMENTO","onboarding":"NÃO INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"ORLANDO + BRASIL","nome":"Yara Assaad","presenca":"SEM RETORNO","onboarding":"NÃO INICIADO","whats":"NÃO","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"IVANI DE SOUSA FREITAS","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Clécio Sidnei Gonçalves","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"GECY ALVES NE NETO","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Talge Celuppi Gonçalves","presenca":"CANCELAMENTO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Flavio Ratzke","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"RODRIGO DE PAULA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"FERNANDA RANGEL DE AZEVEDO DE PAULA","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"REGIS BOSQUEROLLI PRESTES","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"GABRIELA RODRIGUES COELHO","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"DIONE COELHO","presenca":"PROXIMA TURMA","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"JULIENE SOARES COELHO RODRIGUES HERCULINO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"ANA KARLA LIMA BARROS DE CARVALHO E SA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Jéferson Rodrigues da Silva","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Igor Nonato Almeida Pereira","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"ANDRE LOPES TEIXEIRA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"CARINE RODRIGUES","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Lucas Asato Britto Lopes","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Shirley de Carvalho Santos","presenca":"PROXIMA TURMA","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"RENATO DA SILVA UCHOA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Antônio Edson De Oliveira Marinho Júnior","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"ANTONIO MARCOS PIRES CONDE","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"JUCELIA MARTINI","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"BRASIL","nome":"IGOR GOMES PIRES","presenca":"PROXIMA TURMA","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"BRASIL","nome":"William Avancini","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Daniel Carneiro da Frota","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Germany Araujo","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"ENVIADO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Milene Teixeira Cruz","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 02 2026 12:54:42 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"JOAO LUCAS DE FIGUEIREDO BEDA PICCIRILLO","presenca":"PROXIMA TURMA","onboarding":"NÃO INICIADO","whats":"SIM","data":"Wed Mar 04 2026 10:11:34 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"MATEUS Oliveira de Azambuja","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Wed Mar 04 2026 10:11:34 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"ERLAINE VIEIRA DOS SANTOS AGUDO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Wed Mar 04 2026 10:11:34 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Diego Oliveira Censi","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 06 2026 10:21:32 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"GABRIELE SOUZA DE OLIVEIRA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 06 2026 15:37:30 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"ALYSSON MATARELI DE CASTRO ABREU","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:45 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"EVANDRO LUIZ MOREIRA","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"MARCOS ROSENDO DA SILVA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"tarlis faé","presenca":"PROXIMA TURMA","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"EVILLEN SCHULZE DE CARVALHO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"EDUARDO HENRIQUE DE PROSPERO AMUI","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"GISELE FREIRE DA FONSECA TEIXEIRA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Elisa Ermida Ramos","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"PAULO CESAR MENDES BORGES","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Roberson Sidnei Callegaro","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Felipe Alvarenga Rolf Reichle","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"OTAVIO BEHLING JUNIOR","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"júlia caroline","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"KLEBER ROBERTO DA SILVA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Fabiano Macias Montoro Faga","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Bruno Cunha","presenca":"BR + US CONFIRMAOD","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"DAVID LACERDA DANTAS COUTO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"DIEGO EDUARDO GARCIA","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"DAVID LACERDA DANTAS COUTO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Mariana Pimentel","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"ENVIADO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Matusalem de oliveira","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"LUCIANO ARTIFON","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 11:06:47 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"FABIO HENRIK VALENCA CRISOSTIMO","presenca":"SEM RETORNO","onboarding":"NÃO INICIADO","whats":"NÃO","data":"Mon Mar 09 2026 13:40:30 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"Ediney Rodrigues","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 09 2026 13:40:30 GMT-0300 (Horário Padrão de Brasília)","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Matrícula","evento":"BRASIL","nome":"LUANA LINARES MOSTACHIO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 09 2026 13:40:30 GMT-0300 (Horário Padrão de Brasília)","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Claudia Laysa de Aragão Torres Guimarães","presenca":"PROXIMA TURMA","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Ayarla Pereira de Souza","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"FERNANDO HENRIQUE JOHANN","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Aristides da Costa Braga Junior","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"ELISANGELA BATISTA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Carla Cooper","presenca":"PROXIMA TURMA","onboarding":"NÃO INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Rodrigo Pereira de Freitas","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CHRISTIANO AUGUSTO DOS SANTOS","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"FERNANDO DE MEDEIROS PENACHIN","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Roberto Chiamente","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Samantha Busnello","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Diogo Rezende de Almeida","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Anderson Fernando Gasparetto","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Vandeilson Paulino de Araujo","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Rony Franchin","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Evandro Vieira","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"André Rodrigo Lui","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CARLOS REIS VALENTIM DA SILVA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 11:33:31 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"SYNARA BUSNELLO GAVIAO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 12:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"TACIANA MICHELLY ROSADO TAVORA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"LARISSA VITORIA LOPES FIRMINO","presenca":"BR + US CONFIRMAOD","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"NORMA JEAN LOPES","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Daiane da Silva Almeida","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Marla Honorato Braga Andrade","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ROGERIO FERNANDES GUIMARAES","presenca":"BR + US CONFIRMAOD","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Eliel Andrade Carapiá","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ROSELAINE FERNANDES","presenca":"SEM RETORNO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Tue Mar 10 2026 16:29:29 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ALEXANDRE LISBOA FLORES","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"RODRIGO LENGENFELDER AGUDO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:30 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Mariana Zboralski Pires Bicalho","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Carlos Felipe Távora","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 10 2026 16:29:30 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Rosa de Fátima Surek","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:31 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Carina Andres","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"FERNANDO CARPES BRAGA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"SHARON DOS SANTOS SILVA","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ELIZABETE DA CONCEICAO BARBOSA DE AVILA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Fernanda Garcia Redondo","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Michel Santana das Neves","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"VANESSA LILIAM ZBORALSKI","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ROBERTO DE LACERDA RUSSO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"JHOSEPH CARLOS DAROSCI DA SILVA","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"Taxa de Transferência","evento":"BRASIL","nome":"MARA RIBASKI","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"Taxa de Transferência","evento":"BRASIL","nome":"Gabriella Tucumantel","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Veronica Alves","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Cibele  Lopes da Silva","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"GIORGIO BERTACHINI D ANGELO","presenca":"BR + US CONFIRMAOD","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Fabiola Franca Azzi Paranhos","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Erica Rangel","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Nathasha Gonçalves Nunes Cadorna","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ANA PAULA PACHECO NAMMUR","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Fábio Quintanilha","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CELSO DA SILVA BATISTA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Zaquiely Guzatti Klafke Rodrigues","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Bruno Garcia Redondo","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Danielle Felix","presenca":"PROXIMA TURMA","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ROBERTO TROMBETTA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"soraya schmitz","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"luiz fernando bortolanza","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Joseline Tome","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"RICARDO TONIN","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"RAFAEL FERNANDO DAL BOSCO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Cláudio Márcio borges","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"SANDRO AUGUSTO GOLIN","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"GEOVANNE GHIZONI","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"VALDICIR BERTOL","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"GELIANDRO FELTRIN","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"marco antonio scariot","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Marlon Nardi Molon","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Marlete Chagas","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"GABRIELA MOURA BAPTISTETTI","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Eli Moraes","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Camile Hermes Lago","presenca":"CANCELAMENTO","onboarding":"NÃO INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Marcos Soligo","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"FRANCIELE PAULA MULLER","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"RONALDO DE BRITO LEITE FILHO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"DANILO VENDRUSCOLO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"DIEGO DE LARA SENDESKI","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"CLAYTON PIZA PINHEIRO","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Aline Fernandes De Matto","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"MICHAEL SELVO DO NASCIMENTO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Rodrigo Pasa","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"RAFAEL XAVIER MAZO","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Giovane Zembruski","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ELIZANGELA DE SOUZA SILVA","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ALCIMAR Moretti","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"WALBRAM MARIO MORAES COELHO","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Mon Mar 16 2026 14:12:32 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"JULIANA CORSO","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Thu Mar 19 2026 10:23:10 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"MARINILSE PIASSESKI CORSO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Thu Mar 19 2026 10:23:10 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"GILMAR BISPO DA SILVA JUNIOR","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Thu Mar 19 2026 10:23:10 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CRISTIANE APARECIDA SILVA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Thu Mar 19 2026 10:23:10 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"Alexandre Marcos Bertagnolli","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Thu Mar 19 2026 10:23:10 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Antonio Cassiano da Cunha filho","presenca":"BR CONFIRMADO","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Thu Mar 19 2026 10:23:36 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"JOSUÉ ALVES SANDRI","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Thu Mar 19 2026 10:24:13 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Vanessa Quintanilha","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:19 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"MARIA JONILDE SUREK ASSERMANN","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:19 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"Cortesia","evento":"BRASIL","nome":"LUCIO CARLOS DE CARVALHO BOGGIAN","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"Cortesia","evento":"BRASIL","nome":"Flavia Cristina Teixeira Silva","presenca":"SEM RETORNO","onboarding":"NÃO INICIADO","whats":"NÃO","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"THARYAN LUCCA ANDRADE","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CIBELE MAGALHÃES DE SOUZA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"STEFANY DO NASCIMENTO BARRETO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"","nome":"GILNEI ANTONIO SCHMITZ","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"MAYARA CRISTINE SILVA BEHLING","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"LEANDRO MARTINS DA SILVA","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Samara Lilian da silva","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Cleber Márcio Ganassini","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Débora Tamires Fernandes dos Santos","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Fátima Eurides Silva Araújo","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"PAULO SERGIO REICHLE","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"DOUGLAS BELLAN","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"CAIO TADEU DO CARMO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"MAURILIO KALLEB COSTA LINS","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"DIEGO PEROSA","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"FERNANDA ZEMBRUSKI","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"RAUL GABRIEL BALBINO PINHEIRO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"LUAN ARIEL GUZATTI KLAFKE","presenca":"BR CONFIRMADO","onboarding":"NÃO INICIADO","whats":"NÃO","data":"Fri Mar 20 2026 16:32:20 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"BRASIL","nome":"Candida Campos","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:21 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"Matrícula","evento":"ORLANDO + BRASIL","nome":"MAYARA COSTA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Fri Mar 20 2026 16:32:21 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"LUCIANA REZENDE ALMEIDA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 24 2026 09:12:24 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ANA CLAUDIA VENANCIO DOS SANTOS","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 24 2026 09:12:24 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"pedro henrique Barella Golin","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 24 2026 09:12:24 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"SANDRA MARIA BARELLA GOLIN","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 24 2026 15:15:19 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"ALINE ROSSETTO","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 24 2026 15:15:19 GMT-0300","typeform":"NÃO PREENCHEU","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Angela Alves Pereira","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Tue Mar 24 2026 15:15:19 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"COMPRADOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Marcelo Marcon de Vargas","presenca":"BR + US CONFIRMAOD","onboarding":"INICIADO - PENDENTE ACOMPANHATE","whats":"SIM","data":"Tue Mar 24 2026 15:15:19 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"ORLANDO + BRASIL","nome":"Luiz Ernesto Silva Saggiorato","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Tue Mar 24 2026 17:07:34 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"Taxa de Transferência","evento":"BRASIL","nome":"BARBARA PASCOTTO DE OSTE LOCATELLI","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Wed Mar 25 2026 15:22:27 GMT-0300","typeform":"ENVIADO","contrato":""},{"tipo":"Taxa de Transferência Isento","evento":"BRASIL","nome":"FERNANDO HENRIQUE M LOCATELLI","presenca":"BR CONFIRMADO","onboarding":"INICIADO","whats":"SIM","data":"Wed Mar 25 2026 15:22:27 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"GUSTAVO MILANO","presenca":"BR CONFIRMADO","onboarding":"REALIZADO","whats":"SIM","data":"Wed Mar 25 2026 15:22:27 GMT-0300","typeform":"PREENCHIDO","contrato":""},{"tipo":"CONSUMIDOR DE VAGAS","evento":"BRASIL","nome":"LUANNA ALVES SILVA","presenca":"SEM RETORNO","onboarding":"INICIADO","whats":"SIM","data":"Wed Mar 25 2026 15:22:28 GMT-0300","typeform":"ENVIADO","contrato":""}];
+const PERFIL = [
+["Juliene Coelho","Laboratório PETRI","Feminino","Petrolina Pernambuco","Saúde e Bem-Estar","Pessoa Jurídica e Pessoa Física","Sim","6","03/03/2026"],
+["Daniel Frota","Clínica Renovo","Masculino","Fortaleza Ceará","Saúde e Bem-Estar","Pessoa Física","Sim","8","04/03/2026"],
+["Ana Karla Barros","Laboratório Petri","Feminino","Pernambuco","Saúde e Bem-Estar","Pessoa Jurídica e Pessoa Física","Sim","8","04/03/2026"],
+["Erlaine Agudo","MAMA FLORA PAISAGISMO","Feminino","São Paulo SP","Comércio","Pessoa Jurídica e Pessoa Física","Sim","8","04/03/2026"],
+["Rodrigo Agudo","Mama Flora Paisagismo","Masculino","São Paulo SP","Comércio","Pessoa Jurídica e Pessoa Física","Sim","5","05/03/2026"],
+["Felipe Siviero","Tf.representações","Masculino","São Paulo","Serviços","Pessoa Jurídica e Pessoa Física","Sim","8","09/03/2026"],
+["Eliel Carapiá","MHL Seguros","Masculino","São Paulo","Finanças e Seguros","Pessoa Jurídica e Pessoa Física","Sim","7","09/03/2026"],
+["Diego Garcia","Gepac Soluções Integradas","Masculino","Jundiai SP","Tecnologia e Inovação","Pessoa Jurídica","Sim","8","09/03/2026"],
+["Alysson Matareli","MR Soluções","Masculino","Sabará MG","Indústria","Pessoa Jurídica","Sim","5","09/03/2026"],
+["David Couto","Granja Lacerds","Masculino","Frei Paulo SE","Agroindústria","Pessoa Jurídica","Sim","7","10/03/2026"],
+["Tarlis Faé","TSM Fae Treinamentos","Feminino","Maringá PR","Saúde e Bem-Estar","Pessoa Física","Sim","8","10/03/2026"],
+["Conde","Grupo Tagma","Masculino","Curitiba PR","Serviços","Pessoa Jurídica e Pessoa Física","Sim","8","10/03/2026"],
+["Jucelia Martini","Grupo Tagma","Feminino","Curitiba PR","Comércio","Pessoa Jurídica","Sim","6","10/03/2026"],
+["Kleber Silva","KS Tubos","Masculino","Paulinia SP","Comércio","Pessoa Jurídica e Pessoa Física","Sim","7","10/03/2026"],
+["Antônio Edson Marinho","Oliveira Marinho Advocacia","Masculino","Óbidos PA","Serviços","Pessoa Física","Sim","9","11/03/2026"],
+["Rogerio Oliveira","Indústria Baiana de Vidros","Masculino","Santo Antônio de Jesus BA","Indústria","Pessoa Jurídica e Pessoa Física","Sim","8","11/03/2026"],
+["Rogério Guimarães","KS Tubos","Masculino","Paulinia SP","Comércio","Pessoa Jurídica e Pessoa Física","Sim","5","11/03/2026"],
+["Luana Mostachio","KidSaber","Feminino","Mundo Novo MS","Educação","Pessoa Jurídica e Pessoa Física","Sim","6","11/03/2026"],
+["Stefany Barreto","Granja Lacerds","Feminino","Frei Paulo SE","Agroindústria","Pessoa Jurídica","Sim","5","11/03/2026"],
+["Flavio Ratzke","Grupo Tagma","Masculino","Curitiba PR","Serviços","Pessoa Jurídica","Sim","5","11/03/2026"],
+["Otavio Behling","Behling Corretora de Seguros","Masculino","Cuiabá MT","Finanças e Seguros","Pessoa Jurídica e Pessoa Física","Não","0","12/03/2026"],
+["Mayara Behling","AGOM Corretora de Seguros","Feminino","Cuiabá MT","Finanças e Seguros","Pessoa Jurídica e Pessoa Física","Sim","5","12/03/2026"],
+["Ivani de Sousa","Nutriranch","Masculino","Boa Viagem CE","Agroindústria","Pessoa Jurídica e Pessoa Física","Sim","5","12/03/2026"],
+["Rodrigo","RPODONTO","Masculino","Itaperuna RJ","Saúde e Bem-Estar","Pessoa Física","Sim","9","12/03/2026"],
+["Renato Uchoa","Armazem Renato","Masculino","Boa Viagem CE","Comércio","Pessoa Jurídica e Pessoa Física","Sim","8","13/03/2026"],
+["Ricardo Tonin","Ultravolt","Masculino","Iporã do Oeste SC","Energia e Utilidades","Pessoa Jurídica e Pessoa Física","Não","8","13/03/2026"],
+["Norma Jean Lopes","Agnus Life","Feminino","São Paulo SP","Serviços","Pessoa Jurídica","Sim","9","13/03/2026"],
+["Geovanne Ghizoni","Sollis Construtora","Masculino","Francisco Beltrão PR","Construção e Imobiliário","Pessoa Jurídica","Sim","8","14/03/2026"],
+["Marco Scariot","Queijos Perosa","Masculino","Maravilha SC","Alimentação e Bebidas","Pessoa Jurídica","Não","8","14/03/2026"],
+["Evandro Moreira","Duemed","Masculino","Santo Ângelo RS","Saúde e Bem-Estar","Pessoa Física","Não","5","15/03/2026"],
+["Aline Fernandes","4Person","Feminino","Cascavel PR","Educação","Pessoa Jurídica","Sim","10","16/03/2026"],
+["Eurides Araujo","Clínica Renovo","Feminino","Fortaleza CE","Saúde e Bem-Estar","Pessoa Física","Sim","8","16/03/2026"],
+["Débora Fernandes","Gepac Soluções","Feminino","Jundiaí SP","Tecnologia e Inovação","Pessoa Jurídica","Sim","7","16/03/2026"],
+["Jéferson Rodrigues","BS Advogados","Masculino","Porto Alegre RS","Serviços","Pessoa Física","Sim","7","16/03/2026"],
+["Rony Franchin","Solisteam","Masculino","Sertãozinho SP","E-commerce","Pessoa Jurídica","Sim","7","17/03/2026"],
+["Douglas Bellan","EnerVolt","Masculino","Iporã Do Oeste SC","Comércio","Pessoa Jurídica e Pessoa Física","Sim","6","17/03/2026"],
+["Marcelia Bruna Marinho","Oliveira Marinho Advocacia","Feminino","Óbidos PA","Serviços","Pessoa Física","Sim","9","17/03/2026"],
+["Cristiane Silva","Vinícola Pericó","Feminino","São Joaquim SC","Alimentação e Bebidas","Pessoa Jurídica e Pessoa Física","Não","7","17/03/2026"],
+["Soraya Schmitz","Grupo Dass","Feminino","Saudades SC","Indústria","Pessoa Jurídica","Sim","7","17/03/2026"],
+["Nathasha Cadorna","Cadorna Advocacia","Feminino","Itabuna BA","Serviços","Pessoa Física","Sim","8","17/03/2026"],
+["Cibele Lopes","Lopes e Martins Advogados","Feminino","Belo Horizonte MG","Serviços","Pessoa Física","Sim","4","17/03/2026"],
+["Rosa Surek","Surek Calçados","Feminino","Quedas do Iguaçu PR","Comércio","Pessoa Física","Sim","7","17/03/2026"],
+["Giovane Zembruski","HG Business School","Masculino","Chapecó SC","Educação","Pessoa Jurídica e Pessoa Física","Sim","8","17/03/2026"],
+["Diego Censi","Vinícola Pericó","Masculino","São Joaquim SC","Alimentação e Bebidas","Pessoa Jurídica","Não","7","17/03/2026"],
+["Andy Gasparetto","Valorize Negócios Imobiliários","Masculino","Cascavel PR","Construção e Imobiliário","Pessoa Jurídica e Pessoa Física","Sim","7","17/03/2026"],
+["Cleber Ganassini","4Person","Masculino","Cascavel PR","Serviços","Pessoa Jurídica e Pessoa Física","Sim","9","17/03/2026"],
+["Fernanda Zembruski","HG Business School","Feminino","Chapecó SC","Educação","Pessoa Jurídica e Pessoa Física","Sim","6","17/03/2026"],
+["Tharyan Andrade","Kidsaber","Masculino","Mundo Novo MS","Saúde e Bem-Estar","Pessoa Física","Sim","8","18/03/2026"],
+["Diego Perosa","Laticínios Perosa","Masculino","Iraceminha SC","Agroindústria","Pessoa Jurídica e Pessoa Física","Não","9","18/03/2026"],
+["Marcos Soligo","Ademicon","Masculino","Chapecó SC","Finanças e Seguros","Pessoa Jurídica e Pessoa Física","Sim","8","18/03/2026"],
+["Marinilse Corso","Veja Bem Ótica","Feminino","Xanxerê SC","Comércio","Pessoa Física","Sim","6","18/03/2026"],
+["William Avancini","WJTI & Kadosh","Masculino","São Paulo SP","Serviços","Pessoa Jurídica","Sim","5","18/03/2026"],
+["Regis Prestes","BS Advogados","Masculino","Porto Alegre RS","Serviços","Pessoa Física","Sim","9","18/03/2026"],
+["Jonilde Surek","SUREK Calçados","Feminino","Quedas do Iguaçu PR","Comércio","Pessoa Física","Sim","7","19/03/2026"],
+["Fernando Johann","Valorize Negócios Imobiliários","Masculino","Cascavel PR","Construção e Imobiliário","Pessoa Jurídica e Pessoa Física","Sim","7","19/03/2026"],
+["Roberto Chiamente","Beto Imóveis Litoral","Masculino","Itapema SC","Construção e Imobiliário","Pessoa Física","Não","5","19/03/2026"],
+["Bruno Elicker","Referência Cell","Masculino","Embu das Artes SP","Comércio","Pessoa Física","Não","7","19/03/2026"],
+["Caio Tadeu","Tave Pharma","Masculino","Salvador BA","Saúde e Bem-Estar","Pessoa Física","Sim","8","19/03/2026"],
+["Paulo Reichle","Grupo Millenium","Masculino","Criciúma SC","Serviços","Pessoa Jurídica e Pessoa Física","Sim","8","19/03/2026"],
+["Felipe Reichle","Millenium Crematório","Masculino","Criciúma SC","Serviços","Pessoa Jurídica e Pessoa Física","Não","4","19/03/2026"],
+["Gilmar Bispo","Cadorna Advocacia","Masculino","Itabuna BA","Serviços","Pessoa Jurídica e Pessoa Física","Sim","7","19/03/2026"],
+["Raul Pinheiro","Ademicon","Masculino","Chapecó SC","Finanças e Seguros","Pessoa Jurídica e Pessoa Física","Sim","8","19/03/2026"],
+["Fabio Quintanilha","Síndicos de Valor","Masculino","São José SC","Educação","Pessoa Jurídica e Pessoa Física","Sim","8","20/03/2026"],
+["Cibele Magalhães","MR Soluções","Feminino","Sabará MG","Serviços","Pessoa Jurídica","Sim","6","20/03/2026"],
+["Vanessa Quintanilha","Síndicos de Valor","Feminino","São José SC","Educação","Pessoa Jurídica e Pessoa Física","Sim","8","20/03/2026"],
+["Ana Venâncio","VilaGreen","Feminino","Tangará da Serra MT","Meio Ambiente","Pessoa Jurídica e Pessoa Física","Não","7","20/03/2026"],
+["Mara Ribaski","Farmácias Rio Branco","Feminino","Paraná PR","Saúde e Bem-Estar","Pessoa Jurídica e Pessoa Física","Sim","7","20/03/2026"],
+["Juliana Corso","Veja Bem Ótica","Feminino","Xanxerê SC","Comércio","Pessoa Jurídica e Pessoa Física","Sim","7","20/03/2026"],
+["Simone Kostaneski","LS Clínica Médica","Feminino","Erechim RS","Serviços","Pessoa Jurídica e Pessoa Física","Não","5","21/03/2026"],
+["Luciano Artifon","LS Centro Clínico","Masculino","Erechim RS","Serviços","Pessoa Jurídica","Não","5","21/03/2026"],
+["Schmitz","Grupo Dass","Feminino","Saudades SC","Indústria","Pessoa Jurídica","Sim","6","22/03/2026"],
+["Leonardo Soares","Sollis Construtora","Masculino","Francisco Beltrão PR","Construção e Imobiliário","Pessoa Física","Sim","7","23/03/2026"],
+["Zboralski","Clinica Mariana Zboralski","Feminino","Rio Verde GO","Saúde e Bem-Estar","Pessoa Física","Sim","8","23/03/2026"],
+["Almeida","Macan Projetos Ambientais","Masculino","Cuiabá MT","Meio Ambiente","Pessoa Física","Sim","7","23/03/2026"],
+["Marcelo de Vargas","Axdoc Tecnologia","Masculino","Francisco Beltrão PR","Tecnologia e Inovação","Pessoa Jurídica","Não","9","23/03/2026"],
+["Joseline Schmitz","Constrular Imóveis","Feminino","Pinhalzinho SC","Serviços","Pessoa Física","Sim","8","24/03/2026"]
+];
+const FAQ_DATA = [
+  {q:"O que é o PCE — Programa de Crescimento Empresarial?", a:"O PCE é um programa intensivo da Febracis voltado para empresários que desejam escalar seus negócios com estrutura, liderança e crescimento sustentável. Ao longo do programa, os participantes passam por imersões, mentorias e ferramentas práticas de gestão."},
+  {q:"Quais são as imersões do PCE T14?", a:"O PCE T14 possui duas imersões: a Imersão Brasil (BR Confirmado), realizada em território nacional, e a Imersão Brasil + Orlando (BR + US Confirmado), que inclui também uma imersão presencial em Orlando, nos Estados Unidos."},
+  {q:"O que significa o status 'BR + US CONFIRMADO'?", a:"Significa que o participante confirmou presença nas duas imersões: a imersão no Brasil e a imersão em Orlando, EUA. Esses participantes têm acesso a uma experiência ampliada do programa."},
+  {q:"O que é o Onboarding do PCE?", a:"O onboarding é o processo de integração dos participantes ao programa. Inclui o preenchimento do formulário Typeform, assinatura do contrato, inclusão no grupo do WhatsApp e realização do formulário de perfil da turma."},
+  {q:"O que é o status 'Próxima Turma'?", a:"Participantes com status 'Próxima Turma' foram matriculados mas optaram por migrar para uma edição futura do programa. Não farão parte da T14."},
+  {q:"Como os dados deste dashboard são atualizados?", a:"Os dados são buscados diretamente da planilha de gestão via Google Apps Script. Ao clicar em 'Atualizar', o sistema busca as informações mais recentes em tempo real. A atualização também acontece automaticamente a cada 5 minutos."},
+];
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] OBSERVABILITY — Sistema de Logs Padronizado
+// Todos os logs têm: timestamp, origem, nível, contexto
+// ═══════════════════════════════════════════════════════════
+
+const Logger = (() => {
+  const prefix = '[PCE]';
+  const ts = () => new Date().toISOString().slice(11, 23); // HH:MM:SS.mmm
+
+  return {
+    info:  (origin, msg, ctx={}) => console.log(  `${prefix} ${ts()} ℹ️  [${origin}] ${msg}`, Object.keys(ctx).length ? ctx : ''),
+    warn:  (origin, msg, ctx={}) => console.warn( `${prefix} ${ts()} ⚠️  [${origin}] ${msg}`, Object.keys(ctx).length ? ctx : ''),
+    error: (origin, msg, ctx={}) => console.error(`${prefix} ${ts()} 🔴 [${origin}] ${msg}`, Object.keys(ctx).length ? ctx : ''),
+    debug: (origin, msg, ctx={}) => {
+      if (window._PCE_DEBUG) console.debug(`${prefix} ${ts()} 🔍 [${origin}] ${msg}`, Object.keys(ctx).length ? ctx : '');
+    },
+    perf:  (origin, label, startMs) => console.log(`${prefix} ${ts()} ⚡ [${origin}] ${label} — ${Date.now()-startMs}ms`),
+  };
+})();
+
+// Ativar modo debug: window._PCE_DEBUG = true no console
+window._PCE_DEBUG = false;
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] LAYER 1 — SCHEMA VALIDATION + NORMALIZATION
+// Valida estrutura antes de normalizar — nunca confia na API
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * validateBrPayload(raw) — validação defensiva do payload Brasil
+ * Verifica campos obrigatórios, tipos e tamanho mínimo
+ * @returns {{ valid: boolean, errors: string[] }}
+ */
+function validateBrPayload(raw) {
+  const errors = [];
+  if (!raw || typeof raw !== 'object')        { errors.push('payload nulo ou não-objeto'); return { valid: false, errors }; }
+  if (!Array.isArray(raw.rows))               errors.push('rows deve ser um array');
+  if (typeof raw.total !== 'number')          errors.push('total deve ser number');
+  if (Array.isArray(raw.rows) && raw.rows.length < SCHEMA.br.minRows) {
+    errors.push(`rows.length=${raw.rows.length} < mínimo=${SCHEMA.br.minRows}`);
+  }
+  // Verifica amostra das primeiras 3 rows
+  if (Array.isArray(raw.rows) && raw.rows.length > 0) {
+    const sample = raw.rows.slice(0, 3);
+    for (const field of SCHEMA.br.rowRequiredFields) {
+      if (!sample.every(r => field in r)) errors.push(`campo obrigatório ausente em row: ${field}`);
+    }
+  }
+  // Valida versão do schema se presente
+  if (raw.version && raw.version !== API_SCHEMA_VERSION) {
+    Logger.warn('SCHEMA', `Versão do schema incompatível: esperado=${API_SCHEMA_VERSION} recebido=${raw.version}`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * validateUsPayload(raw) — validação defensiva do payload Orlando
+ */
+function validateUsPayload(raw) {
+  const errors = [];
+  if (!raw || typeof raw !== 'object')            { errors.push('payload nulo'); return { valid: false, errors }; }
+  if (typeof raw.total !== 'number')              errors.push('total deve ser number');
+  if (typeof raw.confirmados !== 'number')        errors.push('confirmados deve ser number');
+  if (raw.total < SCHEMA.us.minTotal)             errors.push(`total inválido: ${raw.total}`);
+  if (raw.version && raw.version !== API_SCHEMA_VERSION) {
+    Logger.warn('SCHEMA', `Versão do schema Orlando incompatível: ${raw.version}`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * normalizeStatus(raw) — corrige typos e padroniza casing
+ */
+function normalizeStatus(raw) {
+  if (!raw || typeof raw !== 'string') return '';
+  const s = raw.toUpperCase().trim();
+  if (s === 'BR + US CONFIRMAOD') return 'BR + US CONFIRMADO'; // typo intencional planilha
+  if (s === 'BR + US CONFIRMADO') return 'BR + US CONFIRMADO';
+  if (s === 'PROXIMA TURMA')      return 'PROXIMA TURMA';
+  if (s === 'PRÓXIMA TURMA')      return 'PROXIMA TURMA';
+  if (s === 'SEM RETORNO')        return 'SEM RETORNO';
+  if (s === 'BR CONFIRMADO')      return 'BR CONFIRMADO';
+  if (s === 'US CONFIRMADO')      return 'US CONFIRMADO';
+  if (s === 'CONFIRMADO')         return 'CONFIRMADO';
+  if (s === 'CANCELAMENTO')       return 'CANCELAMENTO';
+  return s;
+}
+
+/**
+ * normalizeOnboarding(raw)
+ */
+function normalizeOnboarding(raw) {
+  if (!raw || typeof raw !== 'string') return 'NAO_INICIADO';
+  const s = raw.toUpperCase().trim();
+  if (s === 'REALIZADO')          return 'REALIZADO';
+  if (s.includes('PENDENTE'))     return 'PENDENTE';
+  if (s === 'INICIADO')           return 'INICIADO';
+  return 'NAO_INICIADO';
+}
+
+/**
+ * computeStatsFromRows(rows) — calcula stats quando backend não fornece
+ * Proteção contra Data Drift: funciona mesmo se colunas mudarem de ordem
+ */
+function computeStatsFromRows(rows) {
+  const presenca   = { brConfirmado:0, brUs:0, usConfirmado:0, confirmado:0, semRetorno:0, cancelamento:0, proximaTurma:0, totalConfirmados:0 };
+  const onboarding = { realizado:0, iniciado:0, pendente:0, naoIniciado:0 };
+  const operacional= { whatsOk:0, typeformOk:0, typeformEnv:0, contratoOk:0 };
+  const eventos    = { brasil:0, orlando:0 };
+
+  for (const r of rows) {
+    const p = normalizeStatus(r.presenca);
+    if      (p === 'BR CONFIRMADO')       presenca.brConfirmado++;
+    else if (p === 'BR + US CONFIRMADO')  presenca.brUs++;
+    else if (p === 'US CONFIRMADO')       presenca.usConfirmado++;
+    else if (p === 'CONFIRMADO')          presenca.confirmado++;
+    else if (p === 'SEM RETORNO')         presenca.semRetorno++;
+    else if (p === 'CANCELAMENTO')        presenca.cancelamento++;
+    else if (p === 'PROXIMA TURMA')       presenca.proximaTurma++;
+
+    const ob = normalizeOnboarding(r.onboarding);
+    if      (ob === 'REALIZADO')  onboarding.realizado++;
+    else if (ob === 'PENDENTE')   onboarding.pendente++;
+    else if (ob === 'INICIADO')   onboarding.iniciado++;
+    else                          onboarding.naoIniciado++;
+
+    if ((r.whats||'').toUpperCase() === 'SIM') operacional.whatsOk++;
+    const tf = (r.typeform||'').toUpperCase();
+    if      (tf === 'PREENCHIDO') operacional.typeformOk++;
+    else if (tf === 'ENVIADO')    operacional.typeformEnv++;
+    if ((r.contrato||'').toUpperCase() === 'SIM') operacional.contratoOk++;
+
+    const ev = (r.evento||'').toUpperCase();
+    if (ev.includes('ORLANDO')) eventos.orlando++; else eventos.brasil++;
+  }
+
+  presenca.totalConfirmados = presenca.brConfirmado + presenca.brUs + presenca.usConfirmado + presenca.confirmado;
+  return { presenca, onboarding, operacional, eventos };
+}
+
+/**
+ * normalizeBrPayload(raw) — valida schema + normaliza dados Brasil
+ * Retorna null se inválido — nunca lança exceção para fora
+ */
+function normalizeBrPayload(raw) {
+  try {
+    const t0 = Date.now();
+    const { valid, errors } = validateBrPayload(raw);
+    if (!valid) {
+      Logger.error('NORMALIZE', 'Payload Brasil inválido — descartando', { errors, raw: typeof raw });
+      return null;
+    }
+    const rows  = raw.rows;
+    const stats = (raw.stats && raw.stats.presenca) ? raw.stats : computeStatsFromRows(rows);
+    if (!stats.presenca) {
+      Logger.warn('NORMALIZE', 'stats.presenca ausente — recalculando', { total: rows.length });
+    }
+    const result = {
+      rows,
+      stats,
+      total:     rows.length,
+      updated:   raw.updated || new Date().toISOString(),
+      version:   raw.version || 'unknown',
+      source:    'api_live',
+    };
+    Logger.perf('NORMALIZE', 'normalizeBrPayload', t0);
+    return result;
+  } catch(e) {
+    Logger.error('NORMALIZE', 'Exceção em normalizeBrPayload', { message: e.message });
+    return null;
+  }
+}
+
+/**
+ * normalizeUsPayload(raw) — valida schema + normaliza dados Orlando
+ */
+function normalizeUsPayload(raw) {
+  try {
+    const { valid, errors } = validateUsPayload(raw);
+    if (!valid) {
+      Logger.error('NORMALIZE', 'Payload Orlando inválido — descartando', { errors });
+      return null;
+    }
+    const total      = raw.total;
+    const confirmados = raw.confirmados;
+    const stats      = raw.stats || { confirmado: confirmados, semRetorno: 0, cancelamento: 0, outros: 0 };
+    return {
+      rows:       raw.rows || [],
+      total,
+      confirmados,
+      stats,
+      updated:    raw.updated || new Date().toISOString(),
+      version:    raw.version || 'unknown',
+      source:     'api_live',
+    };
+  } catch(e) {
+    Logger.error('NORMALIZE', 'Exceção em normalizeUsPayload', { message: e.message });
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] LAYER 2 — STATE STORE
+// Estado granular, controlado e auditável
+// ═══════════════════════════════════════════════════════════
+const store = {
+  br: {
+    rows:    null,
+    stats:   null,
+    updated: null,
+    version: null,
+    source:  null,
+  },
+  us: {
+    data:    null,
+    updated: null,
+    version: null,
+    source:  null,
+  },
+  mat: {
+    data:    null,
+    stats:   null,
+    updated: null,
+    source:  null,
+  },
+  dossie: {
+    rows:    null,
+    updated: null,
+    source:  null,
+  },
+  meta: {
+    brLoading:   false,
+    usLoading:   false,
+    matLoading:  false,
+    isOffline:   false,
+    currentView: 'br',
+    lastFetchAt: null,
+    fetchCount:  0,
+    fetchToken:  0,
+  }
+};
+
+function storeUpdateBr(payload) {
+  if (!payload) { Logger.warn('STORE', 'storeUpdateBr: payload nulo'); return false; }
+  store.br.rows    = payload.rows;
+  store.br.stats   = payload.stats;
+  store.br.updated = payload.updated;
+  store.br.version = payload.version;
+  store.br.source  = payload.source || 'api_live';
+  Logger.info('STORE', 'Brasil atualizado', { total: payload.rows.length, source: store.br.source });
+  return true;
+}
+
+function storeUpdateUs(payload) {
+  if (!payload) { Logger.warn('STORE', 'storeUpdateUs: payload nulo'); return false; }
+  store.us.data    = payload;
+  store.us.updated = payload.updated;
+  store.us.version = payload.version;
+  store.us.source  = payload.source || 'api_live';
+  Logger.info('STORE', 'Orlando atualizado', { total: payload.total, confirmados: payload.confirmados });
+  return true;
+}
+
+function storeUpdateMat(payload) {
+  if (!payload) { Logger.warn('STORE', 'storeUpdateMat: payload nulo'); return false; }
+  store.mat.data    = payload.rows;
+  store.mat.stats   = payload.stats;
+  store.mat.updated = payload.updated;
+  store.mat.source  = 'api_live';
+  Logger.info('STORE', 'Matriculados atualizado', { total: payload.total });
+  return true;
+}
+
+function storeUpdateDossie(payload) {
+  if (!payload || !Array.isArray(payload.rows)) { Logger.warn('STORE', 'storeUpdateDossie: payload nulo'); return false; }
+  store.dossie.rows    = payload.rows;
+  store.dossie.updated = payload.updated;
+  store.dossie.source  = 'api_live';
+  Logger.info('STORE', 'Dossiê atualizado', { total: payload.rows.length });
+  return true;
+}
+
+function storeSetOffline(isOffline) {
+  store.meta.isOffline = isOffline;
+  const banner = document.getElementById('offline-banner');
+  if (banner) banner.classList.toggle('hidden', !isOffline);
+}
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] LAYER 3 — DATA LAYER
+// JSONP com retry exponencial + controle de concorrência
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * jsonp(url, name, timeoutMs) — JSONP com cleanup total garantido
+ */
+function jsonp(url, name, timeoutMs = 15000) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_pce_cb_' + name + '_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    let done = false;
+
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      cleanup();
+      reject(new Error('Timeout JSONP: ' + name));
+    }, timeoutMs);
+
+    function cleanup() {
+      clearTimeout(timer);
+      try { delete window[cbName]; } catch(e) {}
+      const el = document.getElementById('jsonp_' + cbName);
+      if (el) el.remove();
+    }
+
+    window[cbName] = function(data) {
+      if (done) return;
+      done = true;
+      cleanup();
+      resolve(data);
+    };
+
+    const script = document.createElement('script');
+    script.id = 'jsonp_' + cbName;
+    script.onerror = () => {
+      if (done) return;
+      done = true;
+      cleanup();
+      reject(new Error('Script error JSONP: ' + name));
+    };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
+    document.head.appendChild(script);
+  });
+}
+
+/**
+ * fetchWithRetry(sourceConfig, token) — JSONP com retry exponencial
+ * Estratégia: 1ª tentativa imediata → aguarda delay*2^n → nova tentativa
+ * Abandona se token de concorrência mudou (fetch mais novo em andamento)
+ *
+ * @param {object} sourceConfig - configuração da fonte (DATA_SOURCES.br/us)
+ * @param {number} token        - token de concorrência — abandona se mudou
+ * @returns {Promise<object>}   - dados brutos da API
+ */
+async function fetchWithRetry(sourceConfig, token) {
+  const { id, url, timeout, retries, retryDelay, label } = sourceConfig;
+  let lastError;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    // ── Controle de concorrência: abandona se há fetch mais novo ──
+    if (store.meta.fetchToken !== token) {
+      Logger.debug('FETCH', `[${id}] Fetch cancelado — token obsoleto`, { expected: token, current: store.meta.fetchToken });
+      throw new Error('CANCELLED');
+    }
+
+    if (attempt > 0) {
+      const delay = retryDelay * Math.pow(2, attempt - 1); // backoff exponencial: 2s, 4s
+      Logger.warn('FETCH', `[${id}] Retry ${attempt}/${retries} em ${delay}ms`, { lastError: lastError?.message });
+      await new Promise(r => setTimeout(r, delay));
+
+      // Checa novamente após o delay
+      if (store.meta.fetchToken !== token) throw new Error('CANCELLED');
+    }
+
+    try {
+      const t0 = Date.now();
+      Logger.info('FETCH', `[${id}] Tentativa ${attempt + 1}/${retries + 1} — ${label}`);
+      const data = await jsonp(url, id + '_' + attempt, timeout);
+      Logger.perf('FETCH', `[${id}] Resposta recebida`, t0);
+      return data;
+    } catch(e) {
+      lastError = e;
+      Logger.warn('FETCH', `[${id}] Tentativa ${attempt + 1} falhou`, { error: e.message });
+    }
+  }
+
+  throw new Error(`[${id}] Todas as ${retries + 1} tentativas falharam. Último erro: ${lastError?.message}`);
+}
+
+/**
+ * fetchAllData(silent) — orquestra fetches de todas as fontes em paralelo
+ * Controle de concorrência: cada chamada gera um token único.
+ * Se um fetch mais novo chegar, o anterior é abandonado ao verificar o token.
+ */
+async function fetchAllData(silent = false) {
+  // ── Controle de concorrência: gera token único para este fetch ──
+  const token = ++store.meta.fetchToken;
+
+  Logger.info('FETCH', 'Iniciando fetch paralelo', { token, silent, fetchCount: ++store.meta.fetchCount });
+
+  store.meta.brLoading  = true;
+  store.meta.usLoading  = true;
+  store.meta.matLoading = true;
+  const t0 = Date.now();
+
+  const btn = document.getElementById('btnR');
+  if (!silent) {
+    if (btn) { btn.disabled = true; btn.classList.add('spinning'); }
+    setStatus('load', 'Buscando...');
+  }
+
+  // ── Fetch paralelo das 4 fontes ──
+  const [resBr, resUs, resMat, resDossie] = await Promise.allSettled([
+    fetchWithRetry(DATA_SOURCES.br,     token),
+    fetchWithRetry(DATA_SOURCES.us,     token),
+    fetchWithRetry(DATA_SOURCES.mat,    token),
+    fetchWithRetry(DATA_SOURCES.dossie, token),
+  ]);
+
+  if (store.meta.fetchToken !== token) {
+    Logger.warn('FETCH', 'Resultado descartado — token obsoleto', { token });
+    return;
+  }
+
+  store.meta.brLoading  = false;
+  store.meta.usLoading  = false;
+  store.meta.matLoading = false;
+  store.meta.lastFetchAt = new Date().toISOString();
+
+  // ── Processa Brasil ──
+  let brOk = false;
+  if (resBr.status === 'fulfilled') {
+    const normalized = normalizeBrPayload(resBr.value);
+    brOk = storeUpdateBr(normalized);
+  } else if (resBr.reason?.message !== 'CANCELLED') {
+    Logger.error('FETCH', 'Falha definitiva API Brasil', { error: resBr.reason?.message });
+  }
+
+  // ── Processa Orlando ──
+  let usOk = false;
+  if (resUs.status === 'fulfilled') {
+    const normalized = normalizeUsPayload(resUs.value);
+    usOk = storeUpdateUs(normalized);
+  } else if (resUs.reason?.message !== 'CANCELLED') {
+    Logger.error('FETCH', 'Falha definitiva API Orlando', { error: resUs.reason?.message });
+  }
+
+  // ── Processa Matriculados ──
+  let matOk = false;
+  if (resMat.status === 'fulfilled') {
+    const raw = resMat.value;
+    if (raw && raw.rows && raw.stats) {
+      matOk = storeUpdateMat(raw);
+    } else {
+      Logger.warn('FETCH', 'Matriculados: payload inválido');
+    }
+  } else if (resMat.reason?.message !== 'CANCELLED') {
+    Logger.warn('FETCH', 'API Matriculados indisponível', { error: resMat.reason?.message });
+  }
+
+  // ── Processa Dossiê ──
+  if (resDossie.status === 'fulfilled') {
+    storeUpdateDossie(resDossie.value);
+  } else if (resDossie.reason?.message !== 'CANCELLED') {
+    Logger.warn('FETCH', 'API Dossiê indisponível', { error: resDossie.reason?.message });
+  }
+
+  // ── Decide estado offline ──
+  if (!brOk && !usOk) {
+    Logger.error('FETCH', 'Ambas as APIs falharam — modo offline');
+    if (!store.br.rows) {
+      Logger.info('FETCH', 'Carregando FALLBACK estático', { rows: FALLBACK.length, capturedAt: FALLBACK_META.capturedAt });
+      const fb = normalizeBrPayload({ rows: FALLBACK, stats: null });
+      if (fb) { fb.source = 'static_embedded'; storeUpdateBr(fb); }
+    }
+    storeSetOffline(true);
+    setStatus('err', 'Cache local');
+    updateTimestamp('(cache)');
+  } else {
+    storeSetOffline(false);
+    const brLabel = brOk ? `${store.br.rows.length} registros` : '⚠️ cache';
+    const usLabel = usOk ? `${store.us.data.confirmados} conf.` : '⚠️ offline';
+    setStatus('ok', `🇧🇷 ${brLabel} · 🇺🇸 ${usLabel}`);
+    updateTimestamp();
+  }
+
+  Logger.perf('FETCH', 'fetchAllData completo', t0);
+
+  // ── Renderiza view atual + Perfil da Turma (usa dados mais frescos) ──
+  renderCurrentView();
+  if (store.meta.currentView !== 'perfil') {
+    setTimeout(() => { try { buildPerfil(); } catch(e){} }, 50);
+  } else {
+    buildPerfil();
+  }
+
+  if (!silent && btn) { btn.disabled = false; btn.classList.remove('spinning'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] LAYER 4 — CHART ENGINE
+// Isolamento de falhas: cada gráfico falha individualmente
+// ═══════════════════════════════════════════════════════════
+const G='#f5a623',G2='#3d2e0a',G3='#e09018',AM='#f5c542',RD='#ff5f5f',BL='#4d9fff',CR='#EAE5E1';
+const PAL=[G,BL,AM,RD,'#a78bfa','#f472b6','#2dd4bf','#fb923c',G2,'#facc15','#34d399','#60a5fa'];
+const CHART_REGISTRY = {};
+const LC='#4a4a47', GC='rgba(255,255,255,.035)';
+const TOOLTIP_DEFAULTS = {
+  backgroundColor:'#1a1a18',borderColor:'rgba(99,248,88,.12)',borderWidth:1,
+  titleColor:CR,bodyColor:'#7a7a76',
+  titleFont:{family:'Barlow',weight:'600',size:12},bodyFont:{family:'Barlow',size:12},padding:10
+};
+
+function destroyChart(id) {
+  if (CHART_REGISTRY[id]) { try { CHART_REGISTRY[id].destroy(); } catch(e){} delete CHART_REGISTRY[id]; }
+}
+
+function safeEl(id) {
+  const el = document.getElementById(id);
+  if (!el) Logger.debug('UI', `Elemento não encontrado: ${id}`);
+  return el;
+}
+
+/**
+ * safeRender(name, fn) — wrapper de isolamento de falhas de UI
+ * Um gráfico com erro nunca quebra os outros nem a página
+ */
+function safeRender(name, fn) {
+  try {
+    fn();
+  } catch(e) {
+    Logger.error('UI', `Falha isolada ao renderizar: ${name}`, { message: e.message });
+    // Tenta mostrar placeholder de erro no elemento correspondente
+    const el = document.getElementById(name);
+    if (el) el.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:20px;text-align:center">⚠️ Erro ao renderizar</div>';
+  }
+}
+
+function renderLegend(id, labels, data, colors) {
+  safeRender('legend_' + id, () => {
+    const el = safeEl(id);
+    if (!el) return;
+    const total = data.reduce((a,b) => a+b, 0);
+    el.innerHTML = labels.map((l,i) =>
+      `<span><span class="ld" style="background:${colors[i%colors.length]}"></span>${l}: <strong style="color:${CR}">${data[i]}</strong> <span style="color:#4a4a47">(${Math.round(data[i]/total*100)}%)</span></span>`
+    ).join('');
+  });
+}
+
+function renderDonut(id, labels, data, colors) {
+  safeRender(id, () => {
+    destroyChart(id);
+    const el = safeEl(id);
+    if (!el) return;
+    CHART_REGISTRY[id] = new Chart(el, {
+      type:'doughnut',
+      data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#252523',borderWidth:3}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{display:false},tooltip:TOOLTIP_DEFAULTS}}
+    });
+  });
+}
+
+function renderHBar(id, labels, data, palette) {
+  safeRender(id, () => {
+    destroyChart(id);
+    const el = safeEl(id);
+    if (!el) return;
+    CHART_REGISTRY[id] = new Chart(el, {
+      type:'bar',
+      data:{labels,datasets:[{data,backgroundColor:labels.map((_,i)=>palette[i%palette.length]),borderColor:'transparent',borderRadius:5,borderSkipped:false}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TOOLTIP_DEFAULTS},
+        scales:{x:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:11}},border:{color:'transparent'}},
+                y:{grid:{display:false},ticks:{color:'#7a7a76',font:{family:'Barlow',size:11},padding:4},border:{color:'transparent'}}}}
+    });
+  });
+}
+
+function renderVBar(id, labels, data, colors) {
+  safeRender(id, () => {
+    destroyChart(id);
+    const el = safeEl(id);
+    if (!el) return;
+    CHART_REGISTRY[id] = new Chart(el, {
+      type:'bar',
+      data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'transparent',borderRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TOOLTIP_DEFAULTS,callbacks:{title:c=>`Nota ${c[0].label}`}}},
+        scales:{x:{grid:{display:false},ticks:{color:LC,font:{family:'Barlow',size:11}},border:{color:'transparent'}},
+                y:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:10},stepSize:1},border:{color:'transparent'},min:0}}}
+    });
+  });
+}
+
+function renderLine(id, labels, data, color) {
+  safeRender(id, () => {
+    destroyChart(id);
+    const el = safeEl(id);
+    if (!el) return;
+    const ctx = el.getContext('2d');
+    const gr = ctx.createLinearGradient(0,0,0,120);
+    gr.addColorStop(0,color+'30'); gr.addColorStop(1,color+'00');
+    CHART_REGISTRY[id] = new Chart(ctx, {
+      type:'line',
+      data:{labels,datasets:[{data,borderColor:color,borderWidth:2.5,pointBackgroundColor:color,pointRadius:data.map(v=>v>1?4:2),fill:true,backgroundColor:gr,tension:.4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TOOLTIP_DEFAULTS,callbacks:{label:c=>` ${c.parsed.y} reg.`}}},
+        scales:{x:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:9},maxRotation:35},border:{color:'transparent'}},
+                y:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:9},stepSize:1},border:{color:'transparent'},min:0}}}
+    });
+  });
+}
+
+function countBy(arr) { return arr.reduce((o,v)=>{o[v]=(o[v]||0)+1;return o;},{}); }
+function topN(obj, n=12) { return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n); }
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] TICKER — Contrato fixo buildTicker(items[])
+// ═══════════════════════════════════════════════════════════
+function buildTicker(items) {
+  if (!Array.isArray(items) || items.length === 0) { Logger.warn('TICKER', 'items vazio'); return; }
+  const html = items.map(i => `
+    <div class="ticker-item">
+      <div>
+        <div class="t-label">${i.lbl}</div>
+        <div style="display:flex;align-items:baseline;gap:4px">
+          <span class="t-val ${i.cls||'w'}">${i.val}</span>
+          ${i.tag ? `<span class="t-tag ${i.tag.cls}">${i.tag.txt}</span>` : ''}
+        </div>
+      </div>
+    </div>`).join('');
+  const track = safeEl('ticker-track');
+  if (!track) return;
+  track.innerHTML = html + html;
+  track.style.animationDuration = Math.max(items.length * 4, 20) + 's';
+}
+
+function buildTickerBr(stats, total) {
+  const pr = stats.presenca || {};
+  const op = stats.operacional || {};
+  const t100 = v => total > 0 ? Math.round(v/total*100) : 0;
+  buildTicker([
+    {lbl:'🇧🇷 Total da Turma T14',   val:total,               cls:'w', tag:null},
+    {lbl:'🇧🇷 Confirmados',          val:pr.brConfirmado||0,   cls:'g', tag:{txt:`${t100(pr.brConfirmado||0)}%`,cls:'up'}},
+    {lbl:'🇧🇷 Sem Retorno',          val:pr.semRetorno||0,     cls:'r', tag:{txt:`${t100(pr.semRetorno||0)}%`,cls:'dn'}},
+    {lbl:'🇧🇷 Próxima Turma',        val:pr.proximaTurma||0,   cls:'a', tag:null},
+    {lbl:'🇧🇷 Cancelamentos',        val:pr.cancelamento||0,   cls:'r', tag:null},
+    {lbl:'🇧🇷 Onboarding Realizado', val:stats.onboarding?.realizado||0, cls:'w', tag:{txt:`${t100(stats.onboarding?.realizado||0)}%`,cls:'neu'}},
+    {lbl:'🇧🇷 WhatsApp',             val:op.whatsOk||0,        cls:'g', tag:{txt:`${t100(op.whatsOk||0)}%`,cls:'up'}},
+    {lbl:'🇧🇷 Typeform Preenchido',  val:op.typeformOk||0,     cls:'a', tag:{txt:`${t100(op.typeformOk||0)}%`,cls:'neu'}},
+    {lbl:'🇧🇷 Contrato Assinado',    val:op.contratoOk||0,     cls:'w', tag:{txt:`${t100(op.contratoOk||0)}%`,cls:'neu'}},
+  ]);
+}
+
+function buildTickerUs(data) {
+  const total = data.total || 0;
+  const conf  = data.confirmados || 0;
+  const stats = data.stats || {};
+  const t100  = v => total > 0 ? Math.round(v/total*100) : 0;
+  buildTicker([
+    {lbl:'🇺🇸 Total T13 Orlando',    val:total,                cls:'w', tag:null},
+    {lbl:'🇺🇸 Confirmados',          val:conf,                 cls:'b', tag:{txt:`${t100(conf)}%`,cls:'up'}},
+    {lbl:'🇺🇸 Sem Retorno',          val:stats.semRetorno||0,  cls:'r', tag:{txt:`${t100(stats.semRetorno||0)}%`,cls:'dn'}},
+    {lbl:'🇺🇸 Cancelamentos',        val:stats.cancelamento||0,cls:'r', tag:null},
+    {lbl:'🇺🇸 Taxa Confirmação',      val:t100(conf)+'%',      cls:'b', tag:null},
+  ]);
+}
+
+function buildTickerGeral(brStats, brTotal, usData) {
+  const brPr  = brStats.presenca || {};
+  const usTotal = usData.total || 0;
+  const usConf  = usData.confirmados || 0;
+  buildTicker([
+    {lbl:'🇧🇷 T14 Total',      val:brTotal,             cls:'g', tag:null},
+    {lbl:'🇧🇷 Confirmados',    val:brPr.totalConfirmados||0,cls:'g',tag:{txt:`${brTotal>0?Math.round((brPr.totalConfirmados||0)/brTotal*100):0}%`,cls:'up'}},
+    {lbl:'🇧🇷 Sem Retorno',    val:brPr.semRetorno||0,  cls:'r', tag:null},
+    {lbl:'🇺🇸 T13 Total',      val:usTotal,             cls:'b', tag:null},
+    {lbl:'🇺🇸 Confirmados',    val:usConf,              cls:'b', tag:{txt:`${usTotal>0?Math.round(usConf/usTotal*100):0}%`,cls:'up'}},
+    {lbl:'🇺🇸 Sem Retorno',    val:usData.stats?.semRetorno||0,cls:'r',tag:null},
+    {lbl:'📊 Total Geral',      val:brTotal+usTotal,     cls:'w', tag:null},
+  ]);
+}
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] LAYER 4 — UI RENDERERS
+// safeRender() isola cada bloco — falha nunca propaga
+// ═══════════════════════════════════════════════════════════
+
+function renderViewBr() {
+  const rows  = store.br.rows;
+  const stats = store.br.stats;
+  if (!rows || rows.length === 0) { Logger.warn('UI', 'renderViewBr: sem dados'); return; }
+
+  const total        = rows.length;
+  const pr           = stats.presenca    || {};
+  const ob           = stats.onboarding  || {};
+  const op           = stats.operacional || {};
+  const brOnly       = pr.brConfirmado    || 0;
+  const brUs         = pr.brUs            || 0;
+  const semRet       = pr.semRetorno      || 0;
+  const proxTurma    = pr.proximaTurma    || 0;
+  const cancelamento = pr.cancelamento    || 0;
+  const totalConf    = pr.totalConfirmados|| (brOnly + brUs);
+  const onbReal      = ob.realizado       || 0;
+  const onbIni       = ob.iniciado        || 0;
+  const onbPend      = ob.pendente        || 0;
+  const onbNao       = ob.naoIniciado     || 0;
+  const whatsOk      = op.whatsOk         || 0;
+  const tfOk         = op.typeformOk      || 0;
+  const tfEnv        = op.typeformEnv     || 0;
+  const ctOk         = op.contratoOk      || 0;
+
+  Logger.info('UI', 'renderViewBr', { total, totalConf, brOnly, brUs, source: store.br.source });
+
+  // ── KPIs ──
+  safeRender('kpi-dash', () => {
+    document.getElementById('kpi-dash').innerHTML = `
+      <div class="kpi hi"><div class="kpi-lbl">Total da turma</div><div class="kpi-val g">${total}</div><div class="kpi-sub">participantes registrados</div></div>
+      <div class="kpi hi"><div class="kpi-lbl">Total confirmados</div><div class="kpi-val g">${totalConf}</div><div class="kpi-sub">${total>0?Math.round(totalConf/total*100):0}% confirmados</div></div>
+      <div class="kpi hi-b"><div class="kpi-lbl">Onboarding feito</div><div class="kpi-val b">${onbReal}</div><div class="kpi-sub">${total>0?Math.round(onbReal/total*100):0}% realizado</div></div>
+      <div class="kpi hi-r"><div class="kpi-lbl">Sem retorno</div><div class="kpi-val r">${semRet}</div><div class="kpi-sub">${total>0?Math.round(semRet/total*100):0}% do total</div></div>
+    `;
+  });
+
+  // ── Card de Imersão Full Width ──
+  const brPct  = totalConf > 0 ? Math.round(brOnly/totalConf*100) : 0;
+  const brusPct = totalConf > 0 ? Math.round(brUs/totalConf*100) : 0;
+
+  safeRender('imersao-container', () => {
+    document.getElementById('imersao-container').innerHTML = `
+      <div class="imersao-full">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:24px">
+          <div style="display:flex;align-items:center;gap:16px">
+            <span style="font-size:36px">🇧🇷</span>
+            <div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--green);margin-bottom:3px">T14 — Imersão Brasil</div>
+              <div style="font-size:13px;color:var(--muted)">Programa de Crescimento Empresarial · Febracis</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:32px">
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Total da turma</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;line-height:1;color:var(--cream)">${total}</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:3px">participantes</div>
+            </div>
+            <div style="width:1px;height:48px;background:rgba(255,255,255,.1)"></div>
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Total confirmados</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;line-height:1;color:var(--green)">${totalConf}</div>
+              <div style="font-size:10px;color:var(--muted2);margin-top:3px">confirmados</div>
+            </div>
+          </div>
+        </div>
+        <div style="width:100%;height:1px;background:rgba(255,255,255,.07);margin-bottom:24px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0;width:100%;align-items:center">
+          <div style="padding-right:32px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <div style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;box-shadow:0 0 8px rgba(99,248,88,.5)"></div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green)">Imersão Brasil</div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Somente no Brasil</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:800;line-height:1;color:var(--green)">${brOnly}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:14px">participantes confirmados</div>
+            <div style="background:rgba(99,248,88,.08);border-radius:6px;height:6px;overflow:hidden;margin-bottom:8px">
+              <div style="height:100%;border-radius:6px;background:var(--green);width:${brPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:var(--green)">${brPct}% dos confirmados</div>
+          </div>
+          <div style="background:rgba(255,255,255,.07);height:120px;margin:0 4px"></div>
+          <div style="padding:0 32px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <div style="width:10px;height:10px;border-radius:50%;background:#a78bfa;flex-shrink:0;box-shadow:0 0 8px rgba(167,139,250,.4)"></div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#a78bfa">Brasil + Orlando</div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Confirmados nos dois eventos</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:800;line-height:1;color:#a78bfa">${brUs}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:14px">participantes confirmados</div>
+            <div style="background:rgba(167,139,250,.08);border-radius:6px;height:6px;overflow:hidden;margin-bottom:8px">
+              <div style="height:100%;border-radius:6px;background:#a78bfa;width:${brusPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:#a78bfa">${brusPct}% dos confirmados</div>
+          </div>
+          <div style="background:rgba(255,255,255,.07);height:120px;margin:0 4px"></div>
+          <div style="padding-left:32px;display:flex;flex-direction:column;gap:16px">
+            <div style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Distribuição dos confirmados</div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="font-size:11px;color:var(--green)">🇧🇷 Brasil</span>
+                <span style="font-size:11px;font-weight:700;color:var(--green)">${brPct}%</span>
+              </div>
+              <div style="background:rgba(255,255,255,.06);border-radius:4px;height:8px;overflow:hidden">
+                <div style="height:100%;border-radius:4px;background:var(--green);width:${brPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="font-size:11px;color:#a78bfa">🇺🇸 Brasil + Orlando</span>
+                <span style="font-size:11px;font-weight:700;color:#a78bfa">${brusPct}%</span>
+              </div>
+              <div style="background:rgba(255,255,255,.06);border-radius:4px;height:8px;overflow:hidden">
+                <div style="height:100%;border-radius:4px;background:#a78bfa;width:${brusPct}%;transition:width 1.2s cubic-bezier(.4,0,.2,1)"></div>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--muted2);margin-top:4px">% sobre o total de confirmados</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  // ── Gráficos — cada um isolado com safeRender ──
+  safeRender('cPres', () => {
+    const pL=['BR Confirmado','Brasil+Orlando','Próxima Turma','Sem Retorno','Cancelamento'];
+    const pD=[brOnly,brUs,proxTurma,semRet,cancelamento];
+    const pC=[G,'#a78bfa',AM,RD,'#fb923c'];
+    const pF=pL.filter((_,i)=>pD[i]>0),pDF=pD.filter(v=>v>0),pCF=pC.filter((_,i)=>pD[i]>0);
+    renderDonut('cPres',pF,pDF,pCF); renderLegend('lPres',pF,pDF,pCF);
+  });
+
+  safeRender('cOnb', () => {
+    const oL=['Realizado','Iniciado','Pendente','Não iniciado'];
+    const oD=[onbReal,onbIni,onbPend,onbNao].map(v=>v||0);
+    const oF=oL.filter((_,i)=>oD[i]>0),oDF=oD.filter(v=>v>0);
+    renderDonut('cOnb',oF,oDF,[G,BL,AM,RD]); renderLegend('lOnb',oF,oDF,[G,BL,AM,RD]);
+  });
+
+  safeRender('cW', () => {
+    renderDonut('cW',['Sim','Não'],[whatsOk,Math.max(0,total-whatsOk)],[G,RD]);
+    renderLegend('lW',['Sim','Não'],[whatsOk,Math.max(0,total-whatsOk)],[G,RD]);
+  });
+
+  safeRender('cTf', () => {
+    renderDonut('cTf',['Preenchido','Enviado','Não preencheu'],[tfOk,tfEnv,Math.max(0,total-tfOk-tfEnv)],[G,BL,RD]);
+    renderLegend('lTf',['Preenchido','Enviado','Não preencheu'],[tfOk,tfEnv,Math.max(0,total-tfOk-tfEnv)],[G,BL,RD]);
+  });
+
+  safeRender('cCt', () => {
+    renderDonut('cCt',['Sim','Não'],[ctOk,Math.max(0,total-ctOk)],[G,RD]);
+    renderLegend('lCt',['Sim','Não'],[ctOk,Math.max(0,total-ctOk)],[G,RD]);
+  });
+
+  safeRender('cMat', () => {
+    const mE=topN(countBy(rows.map(r=>r.tipo||'Não informado')),8);
+    renderHBar('cMat',mE.map(e=>e[0]),mE.map(e=>e[1]),PAL);
+  });
+
+  safeRender('cEv', () => {
+    const evE=topN(countBy(rows.map(r=>r.evento||'Não informado')),6);
+    renderDonut('cEv',evE.map(e=>e[0]),evE.map(e=>e[1]),PAL);
+    renderLegend('lEv',evE.map(e=>e[0]),evE.map(e=>e[1]),PAL);
+  });
+
+  safeRender('cEnt', () => {
+    const dateMap={};
+    rows.forEach(r=>{
+      const raw=r.data||'';
+      const m=raw.match(/\b(\w{3})\s+(\w{3})\s+(\d{2})\s+(\d{4})/);
+      if(m){const months={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+        const k=`${m[4]}-${months[m[2]]||'01'}-${m[3]}`;dateMap[k]=(dateMap[k]||0)+1;}
+    });
+    const sd=Object.keys(dateMap).sort();
+    renderLine('cEnt',sd.map(d=>{const[,mo,dy]=d.split('-');return`${dy}/${mo}`;}),sd.map(k=>dateMap[k]),G);
+  });
+
+  document.getElementById('badge-total').textContent = total;
+  buildTickerBr(stats, total);
+}
+
+function renderViewUs() {
+  const data = store.us.data;
+  if (!data) {
+    Logger.warn('UI', 'renderViewUs: sem dados de Orlando');
+    safeRender('kpi-dash', () => {
+      document.getElementById('kpi-dash').innerHTML = `
+        <div class="kpi hi-b" style="grid-column:1/-1;text-align:center">
+          <div class="kpi-lbl">T13 Orlando</div>
+          <div style="font-size:14px;color:var(--muted);padding:20px">Dados indisponíveis. Clique em Atualizar.</div>
+        </div>`;
+    });
+    return;
+  }
+
+  const total  = data.total    || 0;
+  const conf   = data.confirmados || 0;
+  const stats  = data.stats    || {};
+  const semRet = stats.semRetorno   || 0;
+  const cancel = stats.cancelamento || 0;
+  const outros = Math.max(0, total - conf - semRet - cancel);
+
+  Logger.info('UI', 'renderViewUs', { total, conf, source: store.us.source });
+
+  safeRender('kpi-dash', () => {
+    document.getElementById('kpi-dash').innerHTML = `
+      <div class="kpi hi-b"><div class="kpi-lbl">Total T13 Orlando</div><div class="kpi-val b">${total}</div><div class="kpi-sub">participantes registrados</div></div>
+      <div class="kpi hi-b"><div class="kpi-lbl">Confirmados</div><div class="kpi-val b">${conf}</div><div class="kpi-sub">${total>0?Math.round(conf/total*100):0}% confirmados</div></div>
+      <div class="kpi hi-r"><div class="kpi-lbl">Sem retorno</div><div class="kpi-val r">${semRet}</div><div class="kpi-sub">${total>0?Math.round(semRet/total*100):0}% do total</div></div>
+      <div class="kpi"><div class="kpi-lbl">Cancelamentos</div><div class="kpi-val a">${cancel}</div><div class="kpi-sub">${total>0?Math.round(cancel/total*100):0}% do total</div></div>
+    `;
+  });
+
+  const confPct = total > 0 ? Math.round(conf/total*100) : 0;
+  safeRender('imersao-container', () => {
+    document.getElementById('imersao-container').innerHTML = `
+      <div class="im-card us">
+        <div class="im-flag">🇺🇸</div>
+        <div class="im-body">
+          <div class="im-lbl">Imersão Orlando — T13</div>
+          <div class="im-desc">Total de participantes registrados</div>
+          <div class="im-num">${total}</div>
+          <div class="im-sub">participantes registrados</div>
+          <div style="margin-top:12px">
+            <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:6px">Confirmados</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:48px;font-weight:800;color:var(--blue)">${conf}</div>
+            <div class="im-bar"><div class="im-fill" style="width:${confPct}%"></div></div>
+            <div class="im-pct">${confPct}% do total</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  safeRender('cPres', () => {
+    const pL=['Confirmado','Sem Retorno','Cancelamento','Outros'];
+    const pD=[conf,semRet,cancel,outros];
+    const pC=[BL,RD,'#fb923c',AM];
+    const pF=pL.filter((_,i)=>pD[i]>0),pDF=pD.filter(v=>v>0),pCF=pC.filter((_,i)=>pD[i]>0);
+    renderDonut('cPres',pF,pDF,pCF); renderLegend('lPres',pF,pDF,pCF);
+  });
+
+  ['cOnb','cW','cTf','cCt','cMat'].forEach(id => safeRender(id, ()=>destroyChart(id)));
+  ['lOnb','lW','lTf','lCt'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=''; });
+
+  safeRender('cEv', () => {
+    renderDonut('cEv',['Confirmado','Outros'],[conf,Math.max(0,total-conf)],[BL,RD]);
+    renderLegend('lEv',['Confirmado','Outros'],[conf,Math.max(0,total-conf)],[BL,RD]);
+  });
+
+  document.getElementById('badge-total').textContent = total;
+  buildTickerUs(data);
+}
+
+function renderViewGeral() {
+  const brRows  = store.br.rows;
+  const brStats = store.br.stats;
+  const usData  = store.us.data;
+  if (!brRows) { Logger.warn('UI', 'renderViewGeral: dados Brasil indisponíveis'); return; }
+
+  const brPr     = brStats.presenca    || {};
+  const brTotal  = brRows.length;
+  const brConf   = brPr.totalConfirmados || 0;
+  const brSem    = brPr.semRetorno      || 0;
+  const brOnb    = brStats.onboarding?.realizado || 0;
+  const brCancel = brPr.cancelamento    || 0;
+  const brProx   = brPr.proximaTurma    || 0;
+  const usTotal  = usData?.total        || 0;
+  const usConf   = usData?.confirmados  || 0;
+  const usSem    = usData?.stats?.semRetorno   || 0;
+  const usCancel = usData?.stats?.cancelamento || 0;
+  const usOutros = usData?.stats?.outros       || 0;
+
+  Logger.info('UI', 'renderViewGeral', { brTotal, usTotal });
+
+  safeRender('kpi-dash', () => {
+    document.getElementById('kpi-dash').innerHTML = `
+      <div class="kpi hi"><div class="kpi-lbl">🇧🇷 Total T14</div><div class="kpi-val g">${brTotal}</div><div class="kpi-sub">participantes</div></div>
+      <div class="kpi hi"><div class="kpi-lbl">🇧🇷 Confirmados T14</div><div class="kpi-val g">${brConf}</div><div class="kpi-sub">${brTotal>0?Math.round(brConf/brTotal*100):0}% do total</div></div>
+      <div class="kpi hi-b"><div class="kpi-lbl">🇺🇸 Total T13</div><div class="kpi-val b">${usTotal||'—'}</div><div class="kpi-sub">participantes</div></div>
+      <div class="kpi hi-b"><div class="kpi-lbl">🇺🇸 Confirmados T13</div><div class="kpi-val b">${usConf||'—'}</div><div class="kpi-sub">${usTotal>0?Math.round(usConf/usTotal*100):0}% do total</div></div>
+    `;
+  });
+
+  safeRender('imersao-container', () => {
+    document.getElementById('imersao-container').innerHTML = `
+      <div class="geral-header">
+        <div class="geral-card br">
+          <div class="geral-flag">🇧🇷</div>
+          <div class="geral-turma">PCE T14 — Brasil</div>
+          <div class="geral-title">Programa de Crescimento Empresarial</div>
+          <div class="geral-kpis">
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Total</div><div class="geral-kpi-val">${brTotal}</div><div class="geral-kpi-sub">participantes</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Confirmados</div><div class="geral-kpi-val">${brConf}</div><div class="geral-kpi-sub">${brTotal>0?Math.round(brConf/brTotal*100):0}% do total</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Sem Retorno</div><div class="geral-kpi-val" style="color:var(--red)">${brSem}</div><div class="geral-kpi-sub">${brTotal>0?Math.round(brSem/brTotal*100):0}% do total</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Onboarding</div><div class="geral-kpi-val">${brOnb}</div><div class="geral-kpi-sub">${brTotal>0?Math.round(brOnb/brTotal*100):0}% realizado</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Próxima Turma</div><div class="geral-kpi-val" style="color:var(--amber)">${brProx}</div><div class="geral-kpi-sub">migrados</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Cancelamentos</div><div class="geral-kpi-val" style="color:var(--red)">${brCancel}</div><div class="geral-kpi-sub">cancelados</div></div>
+          </div>
+        </div>
+        <div class="geral-card us">
+          <div class="geral-flag">🇺🇸</div>
+          <div class="geral-turma">PCE T13 — Orlando</div>
+          <div class="geral-title">Imersão Internacional</div>
+          <div class="geral-kpis">
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Total</div><div class="geral-kpi-val">${usTotal||'—'}</div><div class="geral-kpi-sub">participantes</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Confirmados</div><div class="geral-kpi-val">${usConf||'—'}</div><div class="geral-kpi-sub">${usTotal>0?Math.round(usConf/usTotal*100):0}% do total</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Sem Retorno</div><div class="geral-kpi-val" style="color:var(--red)">${usSem}</div><div class="geral-kpi-sub">${usTotal>0?Math.round(usSem/usTotal*100):0}% do total</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Cancelamentos</div><div class="geral-kpi-val" style="color:var(--red)">${usCancel}</div><div class="geral-kpi-sub">cancelados</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Taxa Confirm.</div><div class="geral-kpi-val">${usTotal>0?Math.round(usConf/usTotal*100):0}%</div><div class="geral-kpi-sub">do total</div></div>
+            <div class="geral-kpi"><div class="geral-kpi-lbl">Outros</div><div class="geral-kpi-val" style="color:var(--amber)">${usOutros}</div><div class="geral-kpi-sub">status</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="geral-compare">
+        <div class="geral-compare-title">Comparativo — T14 Brasil vs T13 Orlando</div>
+        ${[
+          {lbl:'Confirmados',br:brConf,us:usConf,brT:brTotal,usT:usTotal},
+          {lbl:'Sem Retorno', br:brSem, us:usSem, brT:brTotal,usT:usTotal},
+          {lbl:'Cancelamentos',br:brCancel,us:usCancel,brT:brTotal,usT:usTotal},
+        ].map(r=>`
+          <div class="compare-row">
+            <div class="compare-lbl">${r.lbl}</div>
+            <div class="compare-bars">
+              <div class="compare-bar-wrap">
+                <div style="font-size:9px;color:var(--green);width:14px">🇧🇷</div>
+                <div class="compare-bar-bg"><div class="compare-bar-fill br" style="width:${r.brT>0?Math.round(r.br/r.brT*100):0}%"></div></div>
+                <div class="compare-val br">${r.br}</div>
+                <div class="compare-pct">${r.brT>0?Math.round(r.br/r.brT*100):0}%</div>
+              </div>
+              <div class="compare-bar-wrap">
+                <div style="font-size:9px;color:var(--blue);width:14px">🇺🇸</div>
+                <div class="compare-bar-bg"><div class="compare-bar-fill us" style="width:${r.usT>0?Math.round(r.us/r.usT*100):0}%"></div></div>
+                <div class="compare-val us">${r.us}</div>
+                <div class="compare-pct">${r.usT>0?Math.round(r.us/r.usT*100):0}%</div>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="g2" style="margin-bottom:12px">
+        <div class="card"><div class="ct">🇧🇷 T14 Brasil — Presença</div><div class="cs">Status de confirmação</div><div style="position:relative;height:200px"><canvas id="cGeralBR"></canvas></div><div class="leg" id="lGeralBR"></div></div>
+        <div class="card"><div class="ct">🇺🇸 T13 Orlando — Presença</div><div class="cs">Status de confirmação</div><div style="position:relative;height:200px"><canvas id="cGeralUS"></canvas></div><div class="leg" id="lGeralUS"></div></div>
+      </div>
+    `;
+  });
+
+  safeRender('cGeralBR', () => {
+    const brPL=['BR Confirmado','BR+US','Sem Retorno','Próx. Turma','Cancelamento'];
+    const brPD=[brPr.brConfirmado||0,brPr.brUs||0,brSem,brProx,brCancel];
+    const brPC=[G,'#a78bfa',RD,AM,'#fb923c'];
+    const brF=brPL.filter((_,i)=>brPD[i]>0),brDF=brPD.filter(v=>v>0),brCF=brPC.filter((_,i)=>brPD[i]>0);
+    renderDonut('cGeralBR',brF,brDF,brCF); renderLegend('lGeralBR',brF,brDF,brCF);
+  });
+
+  if (usData) {
+    safeRender('cGeralUS', () => {
+      const usPL=['Confirmado','Sem Retorno','Cancelamento','Outros'];
+      const usPD=[usConf,usSem,usCancel,usOutros];
+      const usPC=[BL,RD,'#fb923c',AM];
+      const usF=usPL.filter((_,i)=>usPD[i]>0),usDF=usPD.filter(v=>v>0),usCF=usPC.filter((_,i)=>usPD[i]>0);
+      renderDonut('cGeralUS',usF,usDF,usCF); renderLegend('lGeralUS',usF,usDF,usCF);
+    });
+  }
+
+  document.getElementById('badge-total').textContent = brTotal;
+  buildTickerGeral(brStats, brTotal, usData || {total:0,confirmados:0,stats:{}});
+}
+
+function renderCurrentView() {
+  const v = store.meta.currentView;
+  Logger.debug('UI', 'renderCurrentView', { view: v });
+  safeRender('view_' + v, () => {
+    if      (v === 'br')     renderViewBr();
+    else if (v === 'us')     renderViewUs();
+    else if (v === 'geral')  renderViewGeral();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] UI HELPERS
+// ═══════════════════════════════════════════════════════════
+function setStatus(type, txt) {
+  const p=document.getElementById('pill'), d=document.getElementById('dot'), t=document.getElementById('pill-txt');
+  if (!p||!d||!t) return;
+  const cls ={ok:'',err:' err',load:' loading',neu:' neu',offline:' offline'};
+  const dcls={ok:'',err:' off',load:' spin',neu:' warn',offline:' warn'};
+  p.className='pill'+(cls[type]||'');
+  d.className='dot'+(dcls[type]||'');
+  t.textContent=txt;
+}
+
+function updateTimestamp(suffix='') {
+  const el=document.getElementById('ts'); if (!el) return;
+  el.textContent=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+(suffix?' '+suffix:'');
+}
+
+function switchView(v) {
+  if (!['br','us','geral'].includes(v)) { Logger.error('UI','switchView inválida',{v}); return; }
+  store.meta.currentView = v;
+  const labels={br:'active-br',us:'active-us',geral:'active-geral'};
+  ['br','us','geral'].forEach(id=>{ const btn=document.getElementById('vbtn-'+id); if(btn) btn.className='vbtn'+(id===v?' '+labels[id]:''); });
+  const titles={br:'Dashboard — T14 Brasil',us:'Dashboard — T13 Orlando',geral:'PCE — Visão Geral'};
+  const titleEl=document.getElementById('page-title'); if(titleEl) titleEl.textContent=titles[v];
+  renderCurrentView();
+}
+
+function switchPage(p) {
+  ['dash','perfil','faq'].forEach(pg=>{
+    const el=document.getElementById('page-'+pg); if(el) el.classList.toggle('active',pg===p);
+    const nav=document.getElementById('nav-'+pg); if(nav) nav.classList.toggle('active',pg===p);
+  });
+  const viewBtns=document.getElementById('view-btns-container'); if(viewBtns) viewBtns.style.display=p==='dash'?'flex':'none';
+  const titles={dash:'Dashboard',perfil:'Perfil da Turma',faq:'FAQ — PCE'};
+  const titleEl=document.getElementById('page-title'); if(titleEl) titleEl.textContent=titles[p]||'';
+}
+
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+function refreshManual() {
+  const btn = document.getElementById('btnR');
+  if (btn) { btn.disabled = true; btn.classList.add('spinning'); }
+  // Garante que o botão é liberado em no máximo 10s — nunca trava
+  const safetyTimer = setTimeout(() => {
+    if (btn) { btn.disabled = false; btn.classList.remove('spinning'); }
+    setStatus('neu', 'Pronto');
+  }, 10000);
+  fetchAllData(false).finally(() => {
+    clearTimeout(safetyTimer);
+    if (btn) { btn.disabled = false; btn.classList.remove('spinning'); }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] PERFIL DA TURMA — Enriquecido com dados de Matriculados
+// ═══════════════════════════════════════════════════════════
+function buildPerfil() {
+  safeRender('kpi-perf', () => {
+    // ════════════════════════════════════
+    // FONTES DE DADOS
+    // ════════════════════════════════════
+    const mRows  = store.mat?.data    || [];
+    const mStats = store.mat?.stats   || {};
+    const dos    = store.dossie?.rows || [];
+    const brRows = store.br.rows      || [];
+    const hasMAT = mRows.length > 0;
+    const hasDos = dos.length > 0;
+
+    // Confirmados do dashboard
+    const confirmados = new Set(['BR CONFIRMADO','BR + US CONFIRMADO','US CONFIRMADO','CONFIRMADO']);
+    const cpfsConf = new Set(brRows.filter(r=>confirmados.has(r.presenca)).map(r=>(r.cpf||'').replace(/\D/g,'')).filter(c=>c.length>=11));
+    const nomesConf = new Set(brRows.filter(r=>confirmados.has(r.presenca)).map(r=>(r.nome||'').toLowerCase().trim()));
+    const totalConf = cpfsConf.size || nomesConf.size || 1;
+
+    // Dossiê confirmados (cruzamento)
+    const dosConf = hasDos ? dos.filter(r=>{
+      const cpf=(r.cpf||'').replace(/\D/g,'');
+      return cpfsConf.has(cpf)||nomesConf.has((r.nome||'').toLowerCase().trim());
+    }) : [];
+    const dosBase = dosConf.length>0 ? dosConf : dos;
+    const n = dosBase.length || 1;
+
+    // Matriculados confirmados — usa SEMPRE mStats.setor/estado para segmento e estados
+    const mConf = hasMAT ? mRows.filter(r=>{
+      const cpf=(r.cpf||'').replace(/\D/g,'');
+      return cpfsConf.has(cpf)||nomesConf.has((r.nome||'').toLowerCase().trim());
+    }) : [];
+    const mBase = mConf.length>0 ? mConf : mRows;
+
+    Logger.info('PERFIL v3', 'Bases', {totalConf, dosBase:dosBase.length, mBase:mBase.length});
+
+    // ════════════════════════════════════
+    // SEGMENTO — sempre do Salesforce
+    // ════════════════════════════════════
+    function nSeg(s){ const l=(s||'').toLowerCase();
+      if(l.match(/saúde|saude|farmácia|farmacia|clínica|clinica|médic|odont|hospital/)) return'Saúde';
+      if(l.match(/comér|comer|varejo|loja|superm|atacad/)) return'Comércio/Varejo';
+      if(l.match(/serviç|consul|assessoria/))              return'Serviços';
+      if(l.match(/indúst|indust|manufat|fábric|fabrica/))  return'Indústria';
+      if(l.match(/educa|escola|curso|treinam|ensino/))     return'Educação';
+      if(l.match(/agro|pecuár|rural|agricultur/))          return'Agronegócio';
+      if(l.match(/finanç|financ|seguro|banco|invest|créd/))return'Finanças';
+      if(l.match(/constru|imobili|engenharia|reforma/))    return'Construção/Imóveis';
+      if(l.match(/tecnolog|softw|\bti\b|digital|app\b/))   return'Tecnologia';
+      if(l.match(/aliment|bebida|restaur|food|padaria/))   return'Alimentação';
+      if(l.match(/jurídic|advog|direito/))                 return'Jurídico';
+      if(l.match(/transport|logíst|logist|frete/))         return'Logística';
+      return s.length>0 ? s.substring(0,20) : 'Outros';}
+
+    // Segmento: sempre recalcula a partir dos confirmados (mConf)
+    // mStats.setor tem TODOS — não usar diretamente
+    const segMap = (() => {
+      const m={};
+      if(mConf.length>0){
+        mConf.forEach(r=>{if(r.setor){const k=nSeg(r.setor);m[k]=(m[k]||0)+1;}});
+      } else {
+        mBase.forEach(r=>{if(r.setor){const k=nSeg(r.setor);m[k]=(m[k]||0)+1;}});
+      }
+      return m;
+    })();
+
+    // Estado: sempre recalcula a partir dos confirmados (mConf)
+    // mStats.estado tem TODOS os matriculados — não usar para estados
+    const estMap = (() => {
+      const m={};
+      // Prioridade 1: mConf (confirmados do Salesforce)
+      if(mConf.length>0){
+        mConf.forEach(r=>{if(r.estado)m[r.estado]=(m[r.estado]||0)+1;});
+      }
+      // Prioridade 2: Dossiê confirmados (cidadeEst tem UF)
+      if(Object.keys(m).length===0 && dosConf.length>0){
+        dosConf.forEach(r=>{
+          const uf=(r.cidadeEst||'').match(/\b([A-Z]{2})\b/)?.[1]||'';
+          if(uf)m[uf]=(m[uf]||0)+1;
+        });
+      }
+      return m;
+    })();
+
+    // ════════════════════════════════════
+    // DADOS DO DOSSIÊ
+    // ════════════════════════════════════
+    const genMap={}, religMap={};
+    let conjCount=0, conjugeTrabCount=0, filhosCount=0;
+    dosBase.forEach(r=>{
+      if(r.genero) genMap[r.genero]=(genMap[r.genero]||0)+1;
+      const rel=(r.religiao||'').trim();
+      if(rel&&rel.length>2&&!/^não$|^nao$|^nenhum|^ningum|^sem /i.test(rel)){
+        const rKey=rel.length>20?rel.substring(0,20)+'...':rel;
+        religMap[rKey]=(religMap[rKey]||0)+1;
+      }
+      if(r.conjuge&&r.conjuge.trim().length>2) conjCount++;
+      if(/sim|trabalh/i.test(r.conjugeTrab||'')) conjugeTrabCount++;
+      if(r.filhos&&r.filhos.trim().length>2) filhosCount++;
+    });
+
+    // Avaliação
+    const avals=dosBase.map(r=>parseFloat(r.avaliacao)).filter(v=>!isNaN(v)&&v>=0&&v<=10);
+    const avgAval=avals.length>0?(avals.reduce((a,b)=>a+b,0)/avals.length).toFixed(1):'—';
+    const mvvCount=dosBase.filter(r=>/sim/i.test(r.mvv||'')).length;
+    const mvvPct=Math.round(mvvCount/n*100);
+
+    // Faixas: sempre dos confirmados
+    const fatMap={};
+    (mConf.length>0?mConf:mBase).forEach(r=>{if(r.faixaFat)fatMap[r.faixaFat]=(fatMap[r.faixaFat]||0)+1;});
+    const etMap={};
+    (mConf.length>0?mConf:mBase).forEach(r=>{if(r.faixaEt)etMap[r.faixaEt]=(etMap[r.faixaEt]||0)+1;});
+    const hasEt = Object.values(etMap).reduce((a,b)=>a+b,0) > 0;
+
+    // ════════════════════════════════════
+    // NLP ENGINE
+    // ════════════════════════════════════
+    const DORES_KW = {
+      'Processos & Gestão':       [/processo/i,/organiza/i,/gestão/i,/sistema/i,/controle/i,/operac/i,/rotina/i],
+      'Pessoas & Liderança':      [/equipe/i,/colaborad/i,/funcionár/i,/liderança/i,/delegar/i,/contratar/i,/rh\b/i],
+      'Financeiro':               [/financ/i,/caixa/i,/lucrativ/i,/faturament/i,/custos/i,/capital/i,/inadimpl/i,/dívida/i],
+      'Comercial & Vendas':       [/vend/i,/clientes/i,/comercial/i,/prospec/i,/marketing/i,/tráfego/i,/captação/i],
+      'Dependência do Dono':      [/depende de mim/i,/tudo passa por mim/i,/sem mim/i,/não consigo sair/i,/preso/i,/centraliz/i,/não delego/i,/tudo eu/i],
+      'Crescimento & Escala':     [/crescer/i,/crescimento/i,/escal/i,/expand/i,/ampliar/i],
+      'Planejamento & Estratégia':[/planejamento/i,/estratégi/i,/meta/i,/objetivo/i,/visão/i,/foco/i],
+    };
+    const METAS_KW = {
+      'Crescimento financeiro': {icon:'💰',keys:[/faturar/i,/faturamento/i,/receita/i,/lucro/i,/milhão/i,/crescer financ/i]},
+      'Estruturação':           {icon:'🏗️',keys:[/estrutur/i,/organiz/i,/processo/i,/sistema/i,/gestão/i]},
+      'Equipe & Liderança':     {icon:'👥',keys:[/equipe/i,/líder/i,/contratar/i,/delegar/i,/time/i]},
+      'Expansão & Escala':      {icon:'🚀',keys:[/expand/i,/escal/i,/franquia/i,/nova unidade/i,/novos mercad/i]},
+      'Liberdade & Tempo':      {icon:'🕊️',keys:[/liberdade/i,/tempo livre/i,/sair da operação/i,/viajar/i,/família/i]},
+      'Digitalização':          {icon:'💻',keys:[/digital/i,/tecnolog/i,/automaç/i,/online/i,/e-commerce/i]},
+    };
+    const EMOC_KW = {
+      'Sobrecarga':  {icon:'😮‍💨',color:'#ff5f5f',keys:[/sobrecarreg/i,/cansad/i,/exaust/i,/sozinho/i,/tudo eu/i,/não aguento/i]},
+      'Ambição':     {icon:'🔥',color:'#f5c542',keys:[/crescer/i,/grande empresa/i,/liderança/i,/referência/i,/top/i,/melhor/i,/maior/i]},
+      'Controle':    {icon:'🎯',color:'#4d9fff',keys:[/controle/i,/organizado/i,/previsível/i,/segurança/i,/estabilidade/i,/planejad/i]},
+      'Liberdade':   {icon:'🕊️',color:'#2dd4bf',keys:[/liberdade/i,/tempo livre/i,/não depender/i,/sair da operação/i,/viajar/i,/família/i]},
+      'Frustração':  {icon:'😤',color:'#a78bfa',keys:[/frustrad/i,/difícil/i,/não funciona/i,/travar/i,/parado/i,/não sair/i,/não consigo/i]},
+    };
+
+    function nlpCount(txts, kwMap){
+      const c={};Object.keys(kwMap).forEach(k=>c[k]=0);
+      txts.forEach(txt=>{const t=(txt||'').toLowerCase();
+        Object.entries(kwMap).forEach(([cat,cfg])=>{
+          const keys=Array.isArray(cfg)?cfg:cfg.keys;
+          if(keys.some(re=>re.test(t)))c[cat]++;
+        });
+      });return c;
+    }
+
+    const problTxts = dosBase.map(r=>r.problemas).filter(Boolean);
+    const metasTxts = dosBase.map(r=>r.metas).filter(Boolean);
+    const sonhosTxts= dosBase.map(r=>r.sonho).filter(Boolean);
+    const fraseTxts = dosBase.map(r=>r.frase).filter(Boolean);
+
+    const doresCounts = nlpCount(problTxts, DORES_KW);
+    const metasCounts = nlpCount(metasTxts, METAS_KW);
+    const emocCounts  = nlpCount([...problTxts,...sonhosTxts], EMOC_KW);
+
+    // Dependência do dono
+    const depCount = problTxts.filter(t=>/depende de mim|tudo passa por mim|tudo eu|não consigo sair|preso na operação|sem mim|não delego|centralizado/i.test(t||'')).length;
+    const depPct   = Math.round(depCount/n*100);
+    const depColor = depPct>=40?'#ff5f5f':depPct>=20?'#f5c542':'#63F858';
+    const depNivel = depPct>=40?'Alta':depPct>=20?'Média':'Baixa';
+
+    // Nuvem de palavras — combina sonhos + frases
+    const allTxts=[...sonhosTxts,...fraseTxts,...metasTxts].join(' ').toLowerCase();
+    const stopWords=new Set(['que','para','com','uma','minha','nossa','meu','meus','minhas','nossas','empresa','negócio','negocio','mais','muito','quero','ter','ser','das','dos','nos','nas','pela','pelo','esta','isso','como','por','sua','seu','seus','suas','num','numa','também','tambem','quando','onde','qual','quais','sobre','todos','todas','todo','toda','cada','pode','fazer','feito','feita','tem','têm','anos','ano','seja','este','essa','esses','essas','isso','aqui','isso','mesmo','mesma','ainda','então','entao','já','nao','não','sim','mas','ou','se','de','do','da','em','no','na','ao','a','o','e','é','um','uns','uns','umas']);
+    const wFreq={};
+    allTxts.split(/[\s,\.!?;:\-\(\)\/\\]+/).forEach(w=>{
+      w=w.replace(/[^a-záéíóúàâêîôûãõüç]/gi,'').trim();
+      if(w.length>4&&!stopWords.has(w)&&!/^\d+$/.test(w)) wFreq[w]=(wFreq[w]||0)+1;
+    });
+    const topWords=Object.entries(wFreq).sort((a,b)=>b[1]-a[1]).slice(0,30);
+    const maxWFreq=topWords[0]?.[1]||1;
+
+    // Gênero do Salesforce se Dossiê vazio
+    const genFinal = Object.keys(genMap).length>0 ? genMap : (() => {
+      const m={}; Object.entries(mStats?.sexo||{}).forEach(([k,v])=>{m[k]=(m[k]||0)+v;}); return m;
+    })();
+
+    // ════════════════════════════════════
+    // RENDER — ❤️ COMPORTAMENTO EMOCIONAL (carrossel)
+    // ════════════════════════════════════
+    safeRender('emocional-section', () => {
+      const emocOrder=Object.entries(emocCounts).sort((a,b)=>b[1]-a[1]);
+      const emocCards=emocOrder.map(([k,v],idx)=>{
+        const pct=Math.round(v/n*100);
+        const cfg=EMOC_KW[k];
+        return`<div class="emoc-card" style="border-color:${cfg.color}22;min-width:160px;flex-shrink:0">
+          <div class="emoc-icon">${cfg.icon}</div>
+          <div class="emoc-label">${k}</div>
+          <div class="emoc-pct" style="color:${cfg.color}">${pct}%</div>
+          <div class="emoc-desc">${v} de ${n} respostas</div>
+        </div>`;
+      }).join('');
+      document.getElementById('emocional-section').innerHTML=`
+        <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent">
+          ${emocCards}
+        </div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:8px">Base: ${n} respostas do Dossiê</div>`;
+    });
+
+    // ── 💰 FAIXA DE FATURAMENTO ──
+    safeRender('fat-section', () => {
+      const fatE=topN(fatMap,8);
+      document.getElementById('fat-section').innerHTML=`
+        <div class="g2" style="margin-bottom:0">
+          <div class="card"><div class="ct">💰 Faixa de Faturamento</div><div class="cs">Porte das empresas — ${mBase.length} matriculados</div><div style="position:relative;height:220px;margin-top:12px"><canvas id="cFaixaFat"></canvas></div></div>
+          ${hasEt?`<div class="card"><div class="ct">📅 Faixa Etária</div><div class="cs">Distribuição de idade</div><div style="position:relative;height:220px;margin-top:12px"><canvas id="cFaixaEt"></canvas></div></div>`
+          :`<div class="card"><div class="ct">👤 Gênero</div><div class="cs">Distribuição — ${dosBase.length} respostas Dossiê</div><div style="position:relative;height:220px;margin-top:12px"><canvas id="cGen"></canvas></div><div class="leg" id="lGen"></div></div>`}
+        </div>`;
+      if(fatE.length) renderHBar('cFaixaFat',fatE.map(e=>e[0].replace(/DE R\$ |A R\$ /gi,'').substring(0,22)),fatE.map(e=>e[1]),PAL);
+      if(hasEt){
+        const etE=Object.entries(etMap).sort((a,b)=>{const o=['Até 29 anos','30–39 anos','40–49 anos','50–59 anos','60+ anos'];return o.indexOf(a[0])-o.indexOf(b[0]);});
+        renderVBar('cFaixaEt',etE.map(e=>e[0]),etE.map(e=>e[1]),etE.map((_,i)=>[G,G3,BL,AM,RD][i]||BL));
+      } else {
+        const gL=Object.keys(genFinal),gD=gL.map(k=>genFinal[k]),gC=[BL,'#f472b6',G,'#f5c542'];
+        if(gL.length){renderDonut('cGen',gL,gD,gC);renderLegend('lGen',gL,gD,gC);}
+      }
+    });
+
+    // ── DIAGNÓSTICO EXECUTIVO ──
+    safeRender('diagnostico-exec', () => {
+      const topDor   = Object.entries(doresCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||'Processos & Gestão';
+      const topMeta  = Object.entries(metasCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||'Crescimento financeiro';
+      const topEst   = Object.entries(estMap).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
+      const topGen2  = Object.entries(genFinal).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
+      const depFmt   = depPct>0?`${depPct}% com sinais de dependência do dono.`:'';
+      const semRet   = store.br.stats?.presenca?.semRetorno||0;
+
+      const riscos=[];
+      if(depPct>=30)  riscos.push(`Dependência do dono em ${depPct}% — risco operacional crítico`);
+      if(mvvPct<50)   riscos.push(`Apenas ${mvvPct}% têm MVV — baixa maturidade estratégica`);
+      if(semRet>20)   riscos.push(`${semRet} sem retorno no onboarding — risco de churn`);
+      if(!riscos.length) riscos.push('Perfil saudável — monitorar engajamento contínuo');
+
+      const oports=[];
+      if(mvvPct<60)   oports.push(`${100-mvvPct}% sem MVV — alta receptividade a consultoria estratégica`);
+      const tm=Object.entries(metasCounts).sort((a,b)=>b[1]-a[1]);
+      if(tm[0])        oports.push(`${Math.round(tm[0][1]/n*100)}% focados em "${tm[0][0]}" — segmentação de conteúdo`);
+      if(topEst!=='—') oports.push(`Concentração em ${topEst} — oportunidade de evento presencial regional`);
+
+      document.getElementById('diagnostico-exec').innerHTML=`
+        <div class="diag-wrap">
+          <div class="diag-card main">
+            <div class="diag-title">📌 Diagnóstico da Turma</div>
+            <div class="diag-text">
+              <strong style="color:var(--green)">${totalConf} empresários confirmados</strong>,
+              maioria <strong style="color:var(--cream)">${topGen2.toLowerCase()}</strong>,
+              concentrados em <strong style="color:var(--cream)">${topEst}</strong>.
+              Principal dor: <strong style="color:var(--red)">${topDor}</strong>.
+              Principal desejo: <strong style="color:var(--green)">${topMeta}</strong>.
+              ${depFmt?`<br>⚠️ <strong style="color:var(--red)">${depFmt}</strong>`:''}
+            </div>
+          </div>
+          <div class="diag-card risk">
+            <div class="diag-title">⚠️ Riscos</div>
+            ${riscos.map(r=>`<div class="diag-item"><div class="diag-dot" style="background:var(--red)"></div>${r}</div>`).join('')}
+          </div>
+          <div class="diag-card opp">
+            <div class="diag-title">🚀 Oportunidades</div>
+            ${oports.map(o=>`<div class="diag-item"><div class="diag-dot" style="background:var(--blue)"></div>${o}</div>`).join('')}
+          </div>
+        </div>`;
+    });
+
+    // ── NUVEM DE PALAVRAS (palestrante) ──
+    safeRender('palestrante-section', () => {
+      const colors=['#63F858','#4d9fff','#f5c542','#a78bfa','#2dd4bf','#f472b6','#fb923c','#ff5f5f'];
+      const maxSize=32, minSize=11;
+      const words=topWords.map(([w,freq],i)=>{
+        const size=Math.round(minSize+(maxSize-minSize)*(freq/maxWFreq));
+        const color=colors[i%colors.length];
+        const rotate=i%3===0?-15:i%3===1?0:15;
+        return`<span style="font-size:${size}px;color:${color};font-weight:${freq>=3?'800':'600'};transform:rotate(${rotate}deg);display:inline-block;margin:4px 6px;line-height:1.2;font-family:'Barlow Condensed',sans-serif;opacity:${0.6+freq/maxWFreq*0.4}">${w}</span>`;
+      }).join('');
+      document.getElementById('palestrante-section').innerHTML=`
+        <div class="card" style="text-align:center;padding:24px 28px">
+          <div class="ct">☁️ Nuvem de Palavras da Turma</div>
+          <div class="cs" style="margin-bottom:16px">Extraída dos sonhos, frases e metas — ${dosBase.length} respostas do Dossiê</div>
+          <div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px;min-height:120px;padding:12px">
+            ${words}
+          </div>
+        </div>`;
+    });
+
+    // ── PERSONA ──
+    safeRender('persona-body', () => {
+      const topSeg  = Object.entries(segMap).sort((a,b)=>b[1]-a[1])[0];
+      const topEst2 = Object.entries(estMap).sort((a,b)=>b[1]-a[1])[0];
+      const topGen3 = Object.entries(genFinal).sort((a,b)=>b[1]-a[1])[0];
+      const topFat  = Object.entries(fatMap).sort((a,b)=>b[1]-a[1])[0];
+      const totSeg  = Object.values(segMap).reduce((a,b)=>a+b,0)||1;
+      const totEst  = Object.values(estMap).reduce((a,b)=>a+b,0)||1;
+      const totGen  = Object.values(genFinal).reduce((a,b)=>a+b,0)||1;
+      const totFat  = Object.values(fatMap).reduce((a,b)=>a+b,0)||1;
+
+      const rows=[
+        {icon:'🏭',label:'Setor dominante',        value:topSeg?.[0]||'—',   pct:topSeg?Math.round(topSeg[1]/totSeg*100):0,   color:'#63F858', fonte:`Salesforce (${mBase.length})`},
+        {icon:'📍',label:'Estado mais frequente',   value:topEst2?.[0]||'—',  pct:topEst2?Math.round(topEst2[1]/totEst*100):0, color:'#4d9fff', fonte:`Salesforce (${mBase.length})`},
+        {icon:'👤',label:'Gênero predominante',     value:topGen3?.[0]||'—',  pct:topGen3?Math.round(topGen3[1]/totGen*100):0, color:'#f472b6', fonte:`Dossiê (${dosBase.length})`},
+        {icon:'💰',label:'Faixa de faturamento',    value:(topFat?.[0]||'—').replace(/DE R\$ /gi,'').replace(/ A R\$ /gi,'→').substring(0,24), pct:topFat?Math.round(topFat[1]/totFat*100):0, color:'#a78bfa', fonte:`Salesforce (${mBase.length})`},
+        {icon:'🎯',label:'Têm MVV',                 value:`${mvvPct}% da turma`, pct:mvvPct,                                   color:'#fb923c', fonte:`Dossiê (${dosBase.length})`},
+        {icon:'🔗',label:'Dependência do dono',     value:`${depPct}% — Nível ${depNivel}`, pct:depPct,                        color:depColor,  fonte:`NLP (${n} respostas)`},
+      ];
+      document.getElementById('persona-body').innerHTML=`
+        <div class="persona-wrap">
+          ${rows.map(r=>`
+            <div class="persona-row">
+              <div class="persona-icon">${r.icon}</div>
+              <div class="persona-info">
+                <div class="persona-label">${r.label} <span style="font-size:9px;color:var(--muted2)">· ${r.fonte}</span></div>
+                <div class="persona-value" style="font-size:${r.value.length>22?'11px':'13px'}">${r.value}</div>
+                <div class="persona-bar"><div class="persona-bar-fill" style="width:${r.pct}%;background:${r.color}"></div></div>
+              </div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:${r.color}">${r.pct}%</div>
+            </div>`).join('')}
+        </div>`;
+    });
+
+    // ── TOP ESTADOS ──
+    safeRender('cEstTop', () => {
+      const estE=topN(estMap,15);if(!estE.length)return;
+      destroyChart('cEstTop');const el=safeEl('cEstTop');if(!el)return;
+      CHART_REGISTRY['cEstTop']=new Chart(el,{
+        type:'bar',
+        data:{labels:estE.map(e=>e[0]),datasets:[{data:estE.map(e=>e[1]),backgroundColor:estE.map((_,i)=>PAL[i%PAL.length]),borderColor:'transparent',borderRadius:5}]},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:{...TOOLTIP_DEFAULTS}},
+          scales:{x:{grid:{color:GC},ticks:{color:LC,font:{family:'Barlow',size:11}},border:{color:'transparent'}},
+                  y:{grid:{display:false},ticks:{color:'#9a9a96',font:{family:'Barlow',size:12},padding:4},border:{color:'transparent'}}},
+          animation:{onComplete:function(){
+            const ch=this,ctx2=ch.ctx;ctx2.save();ctx2.font='bold 11px Barlow';ctx2.fillStyle='#EAE5E1';ctx2.textBaseline='middle';
+            ch.data.datasets[0].data.forEach((v,i)=>{const b=ch.getDatasetMeta(0).data[i];if(b)ctx2.fillText(v,b.x+6,b.y);});
+            ctx2.restore();
+          }}
+        }
+      });
+    });
+
+    // ── DORES ──
+    safeRender('dores-body', () => {
+      const top=Object.entries(doresCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+      const max=top[0]?.[1]||1;
+      document.getElementById('dores-body').innerHTML=`
+        <div class="dores-list">
+          ${top.map(([k,v],i)=>`
+            <div class="dor-item">
+              <div class="dor-rank">${i+1}</div>
+              <div class="dor-info">
+                <div class="dor-nome">${k}</div>
+                <div class="dor-pct">${v} menções · ${Math.round(v/n*100)}%</div>
+                <div class="dor-bar-bg"><div class="dor-bar-fill" style="width:${Math.round(v/max*100)}%"></div></div>
+              </div>
+            </div>`).join('')}
+        </div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:8px">NLP sobre ${n} respostas do Dossiê</div>`;
+    });
+
+    // ── METAS ──
+    safeRender('metas-body', () => {
+      const top=Object.entries(metasCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+      const max=top[0]?.[1]||1;
+      document.getElementById('metas-body').innerHTML=`
+        <div class="meta-list">
+          ${top.map(([k,v])=>`
+            <div class="meta-item">
+              <div class="meta-icon">${METAS_KW[k]?.icon||'📌'}</div>
+              <div class="meta-info">
+                <div class="meta-nome">${k}</div>
+                <div style="font-size:11px;color:var(--muted)">${v} menções · ${Math.round(v/n*100)}%</div>
+                <div class="meta-bar-bg"><div class="meta-bar-fill" style="width:${Math.round(v/max*100)}%"></div></div>
+              </div>
+            </div>`).join('')}
+        </div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:8px">NLP sobre ${n} respostas do Dossiê</div>`;
+    });
+
+    // ── DEPENDÊNCIA DO DONO ──
+    safeRender('dependencia-body', () => {
+      const exemplos=problTxts.filter(t=>/depende de mim|tudo passa por mim|tudo eu|não consigo sair|preso|sem mim/i.test(t||'')).slice(0,2);
+      document.getElementById('dependencia-body').innerHTML=`
+        <div class="dep-wrap">
+          <div style="display:flex;align-items:center;gap:20px;padding:16px 0">
+            <div style="text-align:center;flex-shrink:0">
+              <div class="dep-pct" style="color:${depColor}">${depPct}%</div>
+              <div style="display:inline-block;padding:4px 14px;border-radius:20px;background:${depColor}22;color:${depColor};font-size:12px;font-weight:700;margin-top:6px">Nível ${depNivel}</div>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:12px;color:var(--muted);margin-bottom:12px">${depCount} de ${n} empresários com sinais detectados via NLP</div>
+              <div class="dep-bars">
+                ${[['Alta',depPct,'#ff5f5f'],['Média',Math.min(20,Math.max(0,30-depPct)),'#f5c542'],['Baixa',Math.max(0,100-depPct-Math.min(20,30-depPct)),'#63F858']].map(([l,p,c])=>`
+                  <div class="dep-bar-row">
+                    <span style="width:44px;color:var(--muted);font-size:11px">${l}</span>
+                    <div style="flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.max(0,p)}%;background:${c};border-radius:3px"></div></div>
+                    <span style="width:32px;text-align:right;color:${c};font-weight:700;font-size:11px">${Math.max(0,p)}%</span>
+                  </div>`).join('')}
+              </div>
+            </div>
+          </div>
+          ${exemplos.length>0?`<div style="font-size:10px;color:var(--muted2);border-top:1px solid var(--border);padding-top:10px;margin-top:4px">⚠️ Palavras-chave detectadas: "depende de mim", "tudo passa por mim", "não consigo sair"</div>`:''}
+        </div>`;
+    });
+
+    // ── ORIGEM DOS PARTICIPANTES (Promoções) ──
+    safeRender('comercial-section', () => {
+      const promoSrc=hasMAT
+        ? (() => {const m={};mBase.forEach(r=>{if(r.promocao)m[r.promocao]=(m[r.promocao]||0)+1;});return m;})()
+        : (mStats?.promocao||{});
+      const prE=topN(promoSrc,10);
+      document.getElementById('comercial-section').innerHTML=`
+        <div class="sl">Origem dos Participantes <span style="font-size:10px;color:var(--muted);margin-left:8px">— canal de venda</span></div>
+        <div class="carf">
+          <div class="ct">📡 Como chegaram ao PCE</div>
+          <div class="cs">Canal / promoção de origem — ${mBase.length} matriculados Salesforce</div>
+          <div style="position:relative;height:${Math.max(180,prE.length*30)}px;margin-top:12px"><canvas id="cPromo"></canvas></div>
+        </div>`;
+      if(prE.length) renderHBar('cPromo',prE.map(e=>e[0]),prE.map(e=>e[1]),PAL);
+    });
+
+    // ── SEGMENTO ──
+    safeRender('cSeg', () => {
+      const sE=topN(segMap,12);
+      if(sE.length) renderHBar('cSeg',sE.map(e=>e[0]),sE.map(e=>e[1]),PAL);
+    });
+
+    // ── MODELO DE NEGÓCIO ──
+    safeRender('cModelo', () => {
+      function nCli(s){if(!s)return null;
+        if(s.match(/jurídica e pessoa física|b2b.?b2c|ambos/i))return'B2B + B2C';
+        if(s.match(/jurídica|empresa|b2b/i))return'B2B';
+        if(s.match(/física|pessoa|consumidor|b2c/i))return'B2C';
+        return null;}
+      const modMap={};
+      dosBase.forEach(r=>{const k=nCli(r.tipoCliente||r.modeloNeg||'');if(k)modMap[k]=(modMap[k]||0)+1;});
+      const mL=Object.keys(modMap),mD=mL.map(k=>modMap[k]);
+      if(mL.length){renderDonut('cModelo',mL,mD,[AM,BL,G,RD]);renderLegend('lModelo',mL,mD,[AM,BL,G,RD]);}
+    });
+
+    // ── GÊNERO (se não foi usado acima) ──
+    safeRender('cGen', () => {
+      if(!document.getElementById('cGen')) return;
+      const gL=Object.keys(genFinal),gD=gL.map(k=>genFinal[k]);
+      if(gL.length){renderDonut('cGen',gL,gD,[BL,'#f472b6',G,'#f5c542']);renderLegend('lGen',gL,gD,[BL,'#f472b6',G,'#f5c542']);}
+    });
+
+    // ── RELIGIÃO ──
+    safeRender('cRelig', () => {
+      const rE=topN(religMap,6);
+      if(rE.length){renderDonut('cRelig',rE.map(e=>e[0]),rE.map(e=>e[1]),PAL);renderLegend('lRelig',rE.map(e=>e[0]),rE.map(e=>e[1]),PAL);}
+    });
+
+    // ── FAMÍLIA ──
+    safeRender('familia-body', () => {
+      const pct=v=>Math.round(v/n*100);
+      document.getElementById('familia-body').innerHTML=`
+        <div class="familia-list">
+          <div class="familia-row"><div class="familia-icon">💍</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--cream)">Com cônjuge</div><div style="font-size:11px;color:var(--muted)">${conjCount} · ${pct(conjCount)}%</div></div><div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#f472b6">${pct(conjCount)}%</div></div>
+          <div class="familia-row"><div class="familia-icon">🤝</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--cream)">Cônjuge na empresa</div><div style="font-size:11px;color:var(--muted)">${conjugeTrabCount} · ${pct(conjugeTrabCount)}%</div></div><div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#a78bfa">${pct(conjugeTrabCount)}%</div></div>
+          <div class="familia-row"><div class="familia-icon">👶</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--cream)">Têm filhos</div><div style="font-size:11px;color:var(--muted)">${filhosCount} · ${pct(filhosCount)}%</div></div><div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#f5c542">${pct(filhosCount)}%</div></div>
+          <div class="familia-row"><div class="familia-icon">🏢</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--cream)">Empresa familiar</div><div style="font-size:11px;color:var(--muted)">cônjuge trabalha junto</div></div><div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#2dd4bf">${pct(conjugeTrabCount)}%</div></div>
+        </div>`;
+    });
+  });
+}
+
+
+function buildFaq() {
+  safeRender('faq-list', () => {
+    document.getElementById('faq-list').innerHTML=FAQ_DATA.map((f,i)=>`
+      <div class="faq-item" id="faq-${i}">
+        <div class="faq-q" onclick="toggleFaq(${i})">
+          <span>${f.q}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="faq-a">${f.a}</div>
+      </div>`).join('');
+  });
+}
+
+function toggleFaq(i) { const el=document.getElementById('faq-'+i); if(el) el.classList.toggle('open'); }
+
+// ═══════════════════════════════════════════════════════════
+// [PCE] BOOT — Sequência determinística e resiliente
+// ═══════════════════════════════════════════════════════════
+(function boot() {
+  const t0 = Date.now();
+  Logger.info('BOOT', `PCE Dashboard v${PCE_VERSION} iniciando`);
+
+  // 1. Seed store com FALLBACK
+  const fb = normalizeBrPayload({ rows: FALLBACK, stats: null });
+  if (fb) {
+    fb.source = 'static_embedded';
+    storeUpdateBr(fb);
+    storeSetOffline(true);
+  }
+
+  // 2. Render IMEDIATO — dados do FALLBACK na tela antes de qualquer outra coisa
+  try { renderCurrentView(); } catch(e) { Logger.error('BOOT', 'Erro no render inicial', { message: e.message }); }
+  setStatus('neu', 'Atualizando...');
+
+  // 3. Páginas estáticas diferidas — não bloqueiam o render principal
+  setTimeout(() => {
+    try { buildPerfil(); } catch(e) { Logger.error('BOOT', 'Erro buildPerfil', { message: e.message }); }
+    try { buildFaq(); }    catch(e) { Logger.error('BOOT', 'Erro buildFaq',    { message: e.message }); }
+  }, 300);
+
+  // 4. Fetch real em background — começa logo após render inicial
+  setTimeout(() => {
+    fetchAllData(true).catch(e => Logger.error('BOOT', 'Erro fetch inicial', { message: e.message }));
+  }, 50);
+
+  // 5. Auto-refresh a cada 15 minutos
+  setInterval(() => {
+    fetchAllData(true).catch(e => Logger.warn('BOOT', 'Erro auto-refresh', { message: e.message }));
+  }, 15 * 60 * 1000);
+
+  Logger.perf('BOOT', 'Boot completo', t0);
+})();
+
+</script>
+</body>
+</html>
