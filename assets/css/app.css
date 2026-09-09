@@ -1625,6 +1625,8 @@ a:focus-visible,
   .nv-imstat{position:relative;flex:1;background:var(--cd2);border:1px solid var(--bd);border-radius:10px;padding:9px 6px;text-align:center}
   .nv-statedit{position:absolute;top:2px;right:3px;background:transparent;border:0;color:var(--mut);font-size:11px;line-height:1;padding:3px;cursor:pointer;border-radius:4px}
   .nv-statedit:hover{color:var(--g);background:rgba(255,255,255,.08)}
+  .nv-onledit{background:transparent;border:0;color:var(--mut);font-size:11px;line-height:1;padding:2px 3px;margin-left:5px;cursor:pointer;border-radius:4px;vertical-align:baseline}
+  .nv-onledit:hover{color:var(--g);background:rgba(255,255,255,.08)}
   .nv-cmbox .nv-cm-more{display:none}
   .nv-cmbox.cm-open .nv-cm-more{display:block}
   .nv-cmtoggle{margin-top:2px;background:transparent;border:1px solid var(--bd2);color:var(--mut);font-family:"Barlow",sans-serif;font-size:11px;font-weight:700;padding:5px 10px;border-radius:7px;cursor:pointer;width:100%}
