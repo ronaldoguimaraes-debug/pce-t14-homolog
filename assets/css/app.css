@@ -160,6 +160,10 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--cream);dis
 .view-btns{flex-shrink:0;display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border2);border-radius:11px;padding:4px}
 .float-bar{position:sticky;top:0;z-index:60;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px;padding:6px 0 12px;margin-bottom:2px;background:linear-gradient(180deg,var(--bg) 58%,rgba(26,26,24,0))}
 .float-bar .ts{flex-shrink:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fb-turma{margin-right:auto;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:6px 14px;background:var(--card);border:1px solid var(--border2);border-radius:11px}
+.fb-turma-tag{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--muted2)}
+.fb-turma-n{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:800;line-height:1;color:var(--green)}
+.fb-turma-m{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--cream)}
 .float-bar #btnR{flex-shrink:0}
 .month-bar{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 0 14px;padding:5px 16px;border-radius:9px;background:linear-gradient(90deg,rgba(245,166,35,.08),rgba(245,166,35,.04),rgba(245,166,35,.08));border:1px solid rgba(245,166,35,.22)}
 .mb-turma{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2)}
@@ -1927,6 +1931,10 @@ body.tw-a-vibrant .kpi-ribbon,body.tw-a-vibrant .seatmap-card{box-shadow:0 22px 
   .ticker-wrap,.ticker-row{overflow:hidden!important;max-width:100%}
   .float-bar{flex-wrap:wrap;gap:6px;padding:6px 0 10px}
   .float-bar .ts{font-size:10px}
+  .fb-turma{padding:4px 10px;gap:7px}
+  .fb-turma-tag{display:none}
+  .fb-turma-n{font-size:18px}
+  .fb-turma-m{font-size:10px}
   .kpi-ribbon{flex-wrap:wrap}
   .kr-cell{flex:1 1 calc(50% - 2px);min-width:0}
   .kr-cell+.kr-cell::before{display:none}
