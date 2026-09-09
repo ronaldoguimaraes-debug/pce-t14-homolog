@@ -105,7 +105,7 @@ body{font-family:"Barlow",sans-serif;background:var(--bg);color:var(--cream);dis
 .logo-mark:hover .logo-mark-img{filter:drop-shadow(0 0 6px rgba(245,166,35,0.4))}
 @media (max-width:768px){.logo-mark{width:28px;height:28px;border-radius:7px}.logo-mark-img{max-width:68%;max-height:68%}}
 @media (max-width:480px){.logo-mark{width:26px;height:26px;border-radius:6px}}
-.env-homologation .logo-mark-img{content:url('assets/img/logo-mark-homolog-9828507c.png');filter:drop-shadow(0 0 4px rgba(245,166,35,0.30))}
+.env-homologation .logo-mark-img{content:url('../img/logo-mark-homolog-9828507c.png');filter:drop-shadow(0 0 4px rgba(245,166,35,0.30))}
 .env-homologation .logo-mark:hover .logo-mark-img{filter:drop-shadow(0 0 6px rgba(245,166,35,0.45))}
 .env-homologation .logo-mark{background:rgba(245,166,35,0.08);border-color:rgba(245,166,35,.18)}
 .env-homologation .logo-mark:hover{background:rgba(245,166,35,0.14);border-color:rgba(245,166,35,.32)}
