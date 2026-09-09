@@ -16,7 +16,7 @@ const DATA_SOURCES = {
   },
   t16: {
     id:'t16',label:'T16 Brasil',flag:'🇧🇷',color:'#f5a623',
-    url:'https://script.google.com/macros/s/AKfycbxNFO9AOMSgcgdtUCPSHI8o6lXHJClNcujNYg2lL4PfzFyzYHACAIj9uwsrj7xmhIo_9w/exec',
+    url:'https://script.google.com/macros/s/AKfycbwseu9AlqFt1jlzER-qYrJB7g0cKs0sYJ399JdRunP0q3usubAifCASVIZ8OeWYdYkw/exec',
     type:'full',timeout:15000,retries:1,retryDelay:2000,
   },
 };
@@ -529,7 +529,7 @@ function normalizeOnboarding(raw){if(!raw||typeof raw!=='string')return'NAO_INIC
 function computeStatsFromRows(rows){const presenca={brConfirmado:0,brUs:0,usConfirmado:0,confirmado:0,semRetorno:0,cancelamento:0,proximaTurma:0,naoVaiParticipar:0,naoChamar:0,trocaCons:0,totalConfirmados:0,turmaValida:0};const onboarding={realizado:0,iniciado:0,pendente:0,naoIniciado:0};const operacional={whatsOk:0,typeformOk:0,typeformEnv:0,contratoOk:0,typeformOkConfirmados:0,typeformOkSemRetorno:0,typeformOkValida:0};const eventos={brasil:0,orlando:0};for(const r of rows){const p=normalizeStatus(r.presenca);const isConfirmado=(p==='BR CONFIRMADO'||p==='BR + US CONFIRMADO'||p==='US CONFIRMADO'||p==='CONFIRMADO');const isSemRetorno=(p==='SEM RETORNO');if(p==='BR CONFIRMADO')presenca.brConfirmado++;else if(p==='BR + US CONFIRMADO')presenca.brUs++;else if(p==='US CONFIRMADO')presenca.usConfirmado++;else if(p==='CONFIRMADO')presenca.confirmado++;else if(p==='SEM RETORNO')presenca.semRetorno++;else if(p==='CANCELAMENTO')presenca.cancelamento++;else if(p==='PROXIMA TURMA')presenca.proximaTurma++;else if(p==='NAO VAI PARTICIPAR')presenca.naoVaiParticipar++;else if(p==='NAO CHAMAR')presenca.naoChamar++;else if(p==='TROCA DE CONS')presenca.trocaCons++;const ob=normalizeOnboarding(r.onboarding);if(ob==='REALIZADO')onboarding.realizado++;else if(ob==='PENDENTE')onboarding.pendente++;else if(ob==='INICIADO')onboarding.iniciado++;else onboarding.naoIniciado++;if((r.whats||'').toUpperCase()==='SIM')operacional.whatsOk++;const tf=(r.typeform||'').toUpperCase();const tfPreenchido=(tf==='PREENCHIDO');if(tfPreenchido)operacional.typeformOk++;else if(tf==='ENVIADO')operacional.typeformEnv++;if(tfPreenchido&&isConfirmado)operacional.typeformOkConfirmados++;if(tfPreenchido&&isSemRetorno)operacional.typeformOkSemRetorno++;if((r.contrato||'').toUpperCase()==='SIM')operacional.contratoOk++;const ev=(r.evento||'').toUpperCase();if(ev.includes('ORLANDO'))eventos.orlando++;else eventos.brasil++;}presenca.totalConfirmados=presenca.brConfirmado+presenca.brUs+presenca.usConfirmado+presenca.confirmado;presenca.turmaValida=presenca.totalConfirmados+presenca.semRetorno;operacional.typeformOkValida=operacional.typeformOkConfirmados+operacional.typeformOkSemRetorno;return{presenca,onboarding,operacional,eventos};}
 function normalizeBrPayload(raw){try{const t0=Date.now();const{valid,errors}=validateBrPayload(raw);if(!valid){Logger.error('NORMALIZE','Payload Brasil inválido — descartando',{errors,raw:typeof raw});return null;}const rows=raw.rows;const stats=(raw.stats&&raw.stats.presenca)?raw.stats:computeStatsFromRows(rows);if(!stats.presenca){Logger.warn('NORMALIZE','stats.presenca ausente — recalculando',{total:rows.length});}const result={rows,stats,total:rows.length,updated:raw.updated||new Date().toISOString(),version:raw.version||'unknown',source:'api_live',pendingTransfers:Array.isArray(raw.pendingTransfers)?raw.pendingTransfers:undefined,pendingTransferCount:(typeof raw.pendingTransferCount==='number')?raw.pendingTransferCount:undefined,dossieForaOnboarding:Array.isArray(raw.dossieForaOnboarding)?raw.dossieForaOnboarding:undefined,cartas:(raw.cartas&&typeof raw.cartas==='object')?raw.cartas:undefined,frases:(raw.frases&&typeof raw.frases==='object')?raw.frases:undefined,conciliacao:(raw.conciliacao&&typeof raw.conciliacao==='object')?raw.conciliacao:undefined};Logger.perf('NORMALIZE','normalizeBrPayload',t0);return result;}catch(e){Logger.error('NORMALIZE','Exceção em normalizeBrPayload',{message:e.message});return null;}}
 function normalizeUsPayload(raw){try{const{valid,errors}=validateUsPayload(raw);if(!valid){Logger.error('NORMALIZE','Payload Orlando inválido — descartando',{errors});return null;}const total=raw.total;const confirmados=raw.confirmados;const stats=raw.stats||{confirmado:confirmados,semRetorno:0,cancelamento:0,outros:0};return{rows:raw.rows||[],total,confirmados,stats,updated:raw.updated||new Date().toISOString(),version:raw.version||'unknown',source:'api_live'};}catch(e){Logger.error('NORMALIZE','Exceção em normalizeUsPayload',{message:e.message});return null;}}
-const store={br:{rows:null,stats:null,updated:null,version:null,source:null},t15:{rows:null,stats:null,updated:null,version:null,source:null},t16:{rows:null,stats:null,updated:null,version:null,source:null},us:{data:null,updated:null,version:null,source:null},meta:{brLoading:false,isOffline:false,currentView:'t15',lastFetchAt:null,fetchCount:0,fetchToken:0}};
+const store={br:{rows:null,stats:null,updated:null,version:null,source:null},t15:{rows:null,stats:null,updated:null,version:null,source:null},t16:{rows:null,stats:null,updated:null,version:null,source:null},us:{data:null,updated:null,version:null,source:null},meta:{brLoading:false,isOffline:false,currentView:'t16',lastFetchAt:null,fetchCount:0,fetchToken:0}};
 /* Espelho somente leitura para diagnostico por console. Nao usar em logica. */
 try{window._PCE_STORE=store;}catch(e){}
 function storeUpdateT(key, payload){
@@ -570,7 +570,7 @@ async function fetchAllData(silent=false){
     const stale=function(){return store.meta.fetchToken!==token;};
 
     // BR — caminho rápido: pinta assim que chega, sem esperar T15/T16
-    const pBr=fetchWithRetry(DATA_SOURCES.br,token).then(function(v){
+    const pBr=DATA_SOURCES.br.url?fetchWithRetry(DATA_SOURCES.br,token).then(function(v){
       if(stale())return false;
       var ok=storeUpdateBr(normalizeBrPayload(v));
       if(ok){
@@ -582,7 +582,7 @@ async function fetchAllData(silent=false){
     }).catch(function(e){
       if(e&&e.message!=='CANCELLED')Logger.error('FETCH','Falha definitiva API Brasil',{error:e&&e.message});
       return false;
-    });
+    }):Promise.resolve(false);
 
     // T15 — pinta quando cair (independente do BR)
     const pT15=DATA_SOURCES.t15.url?fetchWithRetry(DATA_SOURCES.t15,token).then(function(v){
@@ -595,7 +595,16 @@ async function fetchAllData(silent=false){
     // T16 — idem
     const pT16=DATA_SOURCES.t16.url?fetchWithRetry(DATA_SOURCES.t16,token).then(function(v){
       if(stale())return;
-      var n=normalizeBrPayload(v);if(n){storeUpdateT('t16',n);renderActive();}
+      var n=normalizeBrPayload(v);
+      if(n){
+        storeUpdateT('t16',n);
+        /* Com o BR desligado, a turma ativa passa a ditar status e timestamp. */
+        if(!DATA_SOURCES.br.url){
+          store.meta.brLoading=false;store.meta.lastFetchAt=new Date().toISOString();
+          storeSetOffline(false);setStatus('ok','\u{1F1E7}\u{1F1F7} '+((store.t16.rows||[]).length)+' registros');updateTimestamp();
+        }
+        renderActive();
+      }
     }).catch(function(e){if(e&&e.message!=='CANCELLED')Logger.warn('FETCH','T16 falhou',{error:e&&e.message});}):Promise.resolve();
 
     var brOk=false;
@@ -605,8 +614,15 @@ async function fetchAllData(silent=false){
 
     store.meta.brLoading=false;
 
+    /* Saude do fetch: com o BR desligado, quem manda e a turma ativa. */
+    var _ativa=store[TURMA_ATIVA]||{};
+    var _ativaOk=!!(_ativa.rows&&_ativa.rows.length);
+    if(!DATA_SOURCES.br.url){
+      if(_ativaOk){storeSetOffline(false);}
+      else{storeSetOffline(true);setStatus('err','Cache local');updateTimestamp('(cache)');}
+    }
     // BR falhou e sem dados em memoria -> fallback estatico offline
-    if(!brOk){
+    else if(!brOk){
       if(!store.br.rows||!store.br.rows.length){
         Logger.info('FETCH','Carregando FALLBACK estatico',{rows:FALLBACK.length,capturedAt:FALLBACK_META.capturedAt});
         var fb=normalizeBrPayload({rows:FALLBACK,stats:null});
@@ -615,7 +631,7 @@ async function fetchAllData(silent=false){
       storeSetOffline(true);setStatus('err','Cache local');updateTimestamp('(cache)');
     }
 
-    await fetchNetworkingPV().catch(function(){});
+    if(DATA_SOURCES.br.url)await fetchNetworkingPV().catch(function(){});
     renderActive();
     Logger.perf('FETCH','fetchAllData completo',t0);
   } catch(err) {
@@ -817,6 +833,14 @@ function countBy(arr){return arr.reduce((o,v)=>{o[v]=(o[v]||0)+1;return o;},{});
 function topN(obj,n=12){return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);}
 function buildTicker(items){if(!Array.isArray(items)||items.length===0){Logger.warn('TICKER','items vazio');return;}const html=items.map(i=>`<div class="ticker-item"><div><div class="t-label">${i.lbl}</div><div style="display:flex;align-items:baseline;gap:4px"><span class="t-val ${i.cls||'w'}">${i.val}</span>${i.tag?`<span class="t-tag ${i.tag.cls}">${i.tag.txt}</span>`:''}</div></div></div>`).join('');const track=safeEl('ticker-track');if(!track)return;track.innerHTML=html+html;track.style.animationDuration=Math.max(items.length*4,20)+'s';}
 const PENDING_BY_TURMA={'T14':[],'T15':['Virgínia Horst Beckhauser','Leonardo Amancio Nunes','Paola kelly Binda','Gabriela Friedrichs Tonhá','TAIS NASCIMENTO','ALEX MESQUITA DA SILVA','Vanderson Paulino de Araujo','Erika costa guanaes Carassa','MARCELO CARASSA','tarlis faé','Elisa Ermida Ramos','FERNANDO CARPES BRAGA','Matusalem de oliveira','WALBRAM MARIO MORAES COELHO','LUCIO CARLOS DE CARVALHO BOGGIAN','Flavia Cristina Teixeira Silva','Mickael Manzela Santana Gomes','Natália Brianez Fioretti','ERICK FIORETTI','José Alexandre Borges de Figueiredo Junior','FLAVIO CUNHA LEMOS FILHO','ALEXANDRE SANTOS DE MOURA CEZAR','Alysson Santos Lisboa','BRUNA FRANCELINO','IVONE FLORENCIO BARROS LIMA','ROMARIO MARTINS DOS REIS','MARCELO ORIONE TOLENTINO LIMA JUNIOR','Vandeilson Paulino de Araujo','ronaldo ferreira'],'T16':['Shirley de Carvalho Santos','Raquel Barroso de Oliveira Figueiredo','André Rodrigo Lui']};
+/* ─── LOTE 2 · a imersao da T15 passou ────────────────────────────────────────
+   A T16 e a unica turma na tela. Zerar a url desliga a busca sem apagar a
+   configuracao: para reativar uma turma, basta devolver a url ao DATA_SOURCES.
+   Nada foi removido do codigo de T14 e T15. */
+const TURMA_ATIVA='t16';
+DATA_SOURCES.br.url='';
+DATA_SOURCES.t15.url='';
+
 function _normNome(s){return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
 function computePendingTransfer(entry,label){const liveCount=(entry&&typeof entry.pendingTransferCount==='number')?entry.pendingTransferCount:null;if(liveCount!=null)return liveCount;const liveList=(entry&&Array.isArray(entry.pendingTransfers))?entry.pendingTransfers:null;const rows=(entry&&entry.rows)||[];const list=liveList||PENDING_BY_TURMA[(label||'').toUpperCase()]||[];const rowNames=new Set(rows.map(r=>_normNome(r.nome)));const seen=new Set();return list.filter(n=>{const k=_normNome(n);if(!k||seen.has(k)||rowNames.has(k))return false;seen.add(k);return true;}).length;}
 function buildTickerBr(stats,total,label){const pr=stats.presenca||{};const op=stats.operacional||{};const t100=v=>total>0?Math.round(v/total*100):0;const _lbl=label||'T14';const conf=pr.totalConfirmados||pr.brConfirmado||0;buildTicker([{lbl:'🇧🇷 Total da Turma '+_lbl,val:total,cls:'w',tag:null},{lbl:'🇧🇷 Confirmados',val:conf,cls:'g',tag:{txt:`${t100(conf)}%`,cls:'up'}},{lbl:'🇧🇷 Sem Retorno',val:pr.semRetorno||0,cls:'r',tag:{txt:`${t100(pr.semRetorno||0)}%`,cls:'dn'}},{lbl:'🇧🇷 Próximas Turmas',val:pr.proximaTurma||0,cls:'a',tag:null},{lbl:'🇧🇷 Cancelamentos',val:pr.cancelamento||0,cls:'r',tag:null},{lbl:'🇧🇷 Onboarding Realizado',val:stats.onboarding?.realizado||0,cls:'w',tag:{txt:`${t100(stats.onboarding?.realizado||0)}%`,cls:'neu'}},{lbl:'🇧🇷 WhatsApp',val:op.whatsOk||0,cls:'g',tag:{txt:`${t100(op.whatsOk||0)}%`,cls:'up'}},{lbl:'🇧🇷 Typeform Preenchido',val:op.typeformOk||0,cls:'a',tag:{txt:`${t100(op.typeformOk||0)}%`,cls:'neu'}},{lbl:'🇧🇷 Contrato Assinado',val:op.contratoOk||0,cls:'w',tag:{txt:`${t100(op.contratoOk||0)}%`,cls:'neu'}}]);}
@@ -1369,7 +1393,10 @@ wrap.innerHTML=h;
 
 let dashMode='atual';
 function switchView(v){if(!['br','t15','t16','geral'].includes(v)){Logger.error('UI','switchView inválida',{v});return;}store.meta.currentView=v;const labels={br:'active-br',t15:'active-t15',t16:'active-t16',us:'active-us',geral:'active-geral'};['br','t15','t16','geral'].forEach(id=>{const btn=document.getElementById('vbtn-'+id);if(btn)btn.className='vbtn'+(id===v?' '+labels[id]:'');});const prefix=(dashMode==='turmas')?'Turmas':'Dashboard';const titles={br:prefix+' — T14 Brasil',t15:prefix+' — T15 Brasil',t16:prefix+' — T16 Brasil',geral:'PCE — Visão Geral'};const titleEl=document.getElementById('page-title');if(titleEl)titleEl.textContent=titles[v];const months={br:'Maio',t15:'Agosto',t16:'Novembro'};const mb=document.getElementById('month-bar');if(mb){if(months[v]){mb.innerHTML='<span class="mb-turma">'+(v==='br'?'T14':v.toUpperCase())+'</span><span class="mb-kicker">Imersão de</span><span class="mb-month">'+months[v]+'</span>';mb.style.display='flex';}else{mb.style.display='none';}}renderCurrentView();}
-function configTurmaButtons(mode){dashMode=(mode==='turmas')?'turmas':'atual';const turmas=(mode==='turmas');[['br',turmas],['t15',!turmas],['t16',!turmas],['geral',!turmas]].forEach(function(p){const b=document.getElementById('vbtn-'+p[0]);if(b)b.style.display=p[1]?'':'none';});let target;if(turmas)target='br';else target=(store.meta.currentView==='br')?'t15':store.meta.currentView;switchView(target);}
+/* LOTE 2 · so a T16 aparece. Os botoes de T14, T15 e PCE Geral ficam ocultos.
+   O codigo das outras visoes continua intacto: para trazer uma de volta, basta
+   devolve-la a lista de visiveis aqui. */
+function configTurmaButtons(mode){dashMode='atual';[['br',false],['t15',false],['t16',true],['geral',false]].forEach(function(p){const b=document.getElementById('vbtn-'+p[0]);if(b)b.style.display=p[1]?'':'none';});switchView(TURMA_ATIVA);}
 var PAGINAS_RESTRITAS={nps:'NPS — PCE',admin:'Painel ADM'};
 function gatedLogin(){
   var pr=(typeof window.__bootstrapManual==='function')?window.__bootstrapManual():Promise.resolve();
@@ -1395,15 +1422,17 @@ function switchPage(p){
   if(PAGINAS_RESTRITAS[p] && typeof authIsLogged==='function' && !authIsLogged()){showLockedPage(p);return;}
   /* Painel ADM: exige admin. Reforçado por RLS — aqui é só a UI. */
   if(p==='admin' && !(typeof authIsAdmin==='function' && authIsAdmin())){alert('Área restrita a administradores.');return;}
-  /* Turmas: em manutenção — só admin vê o módulo real (dados de T14/T15/T16); demais veem placeholder. */
-  if(p==='turmas' && !(typeof authIsAdmin==='function' && authIsAdmin())){
+  /* LOTE 2 · Turmas em reconstrucao: placeholder para todos, inclusive admin.
+     O modulo antigo continua no codigo, so nao e mais alcancado por aqui. */
+  if(p==='turmas'){
     window.__gatedPending=null;
     try{analyticsPageEnter(p);}catch(e){}
     ['dash','perfil','faq','insights','manual','manual-pce','nps','estoque','locked','admin'].forEach(function(pg){var el=document.getElementById('page-'+pg);if(el)el.classList.remove('active');});
     var mp=document.getElementById('page-manutencao');if(mp)mp.classList.add('active');
     var mLogged=(typeof authIsLogged==='function' && authIsLogged());
     var mBtn=document.getElementById('manutencao-login-btn');if(mBtn)mBtn.style.display=mLogged?'none':'';
-    var mMsg=document.getElementById('manutencao-msg');if(mMsg)mMsg.textContent=mLogged?'Esta área está em manutenção e correções. Acesso restrito ao administrador responsável.':'Esta área está em manutenção e correções. Login restrito a administradores.';
+    var mMsg=document.getElementById('manutencao-msg');if(mMsg)mMsg.textContent='Esta área está sendo reconstruída. Em breve com o novo formato.';
+    var mBtn2=document.getElementById('manutencao-login-btn');if(mBtn2)mBtn2.style.display='none';
     ['dash','turmas','perfil','faq','insights','manual','manual-pce','nps','estoque','admin'].forEach(function(nv){var nav=document.getElementById('nav-'+nv);if(nav)nav.classList.toggle('active',nv===p);});
     var vb=document.getElementById('view-btns-container');if(vb)vb.style.display='none';
     var mt=document.getElementById('page-title');if(mt)mt.textContent='Turmas — Histórico';
@@ -1411,7 +1440,7 @@ function switchPage(p){
     return;
   }
   window.__gatedPending=null;
-  try{analyticsPageEnter(p);}catch(e){}const isTurmas=(p==='turmas');const pageEl=isTurmas?'dash':p;const activePages=isTurmas?['dash','perfil','insights']:[pageEl];['dash','perfil','faq','insights','manual','manual-pce','nps','estoque','locked','admin'].forEach(pg=>{const el=document.getElementById('page-'+pg);if(el)el.classList.toggle('active',activePages.includes(pg));});const dashPg=document.getElementById('page-dash');if(dashPg){dashPg.classList.toggle('mode-turmas',isTurmas);dashPg.classList.toggle('mode-atual',!isTurmas);}var _pp=document.getElementById('page-perfil');if(_pp)_pp.classList.toggle('standalone',p==='perfil');var _pb=document.getElementById('perfil-body');if(_pb)_pb.style.display='';var _pi=document.getElementById('page-insights');if(_pi)_pi.classList.remove('as-subtab');['dash','turmas','perfil','faq','insights','manual','manual-pce','nps','estoque','admin'].forEach(nv=>{const nav=document.getElementById('nav-'+nv);if(nav)nav.classList.toggle('active',nv===p);});const isDashLike=(p==='dash'||isTurmas);const showSwitch=(isDashLike||p==='perfil'||p==='insights');const viewBtns=document.getElementById('view-btns-container');if(viewBtns)viewBtns.style.display=showSwitch?'flex':'none';const titles={dash:'Dashboard',turmas:'Turmas — Histórico',perfil:'Perfil da Turma',faq:'FAQ — PCE',insights:'Insights Correlacionais',manual:'Manual — Experts','manual-pce':'Manual — PCE','nps':'NPS — PCE','estoque':'Estoque PCE','admin':'Painel ADM'};const titleEl=document.getElementById('page-title');if(titleEl)titleEl.textContent=titles[p]||'';if(showSwitch)configTurmaButtons(isTurmas?'turmas':'dash');if(isTurmas){try{switchView('br');}catch(e){}setTimeout(()=>{try{buildPerfil();}catch(e){}try{if(window.renderInsightsCorrelacionais)window.renderInsightsCorrelacionais();}catch(e){}},150);}else if(p==='dash'){if(store.meta.currentView==='br'){try{switchView('t15');}catch(e){}}}else if(p==='perfil'){try{showPerfilSub('perfil');}catch(e){}try{buildPerfil();}catch(e){}}if(p==='manual'){manualBootCloud();}else if(p==='manual-pce'){if(typeof mpceBootCloud==='function')mpceBootCloud();}else if(p==='estoque'){if(typeof estoqueBootCloud==='function')estoqueBootCloud();}else if(p==='admin'){if(typeof admBoot==='function')admBoot();}}
+  try{analyticsPageEnter(p);}catch(e){}const isTurmas=(p==='turmas');const pageEl=isTurmas?'dash':p;const activePages=isTurmas?['dash','perfil','insights']:[pageEl];['dash','perfil','faq','insights','manual','manual-pce','nps','estoque','locked','admin'].forEach(pg=>{const el=document.getElementById('page-'+pg);if(el)el.classList.toggle('active',activePages.includes(pg));});const dashPg=document.getElementById('page-dash');if(dashPg){dashPg.classList.toggle('mode-turmas',isTurmas);dashPg.classList.toggle('mode-atual',!isTurmas);}var _pp=document.getElementById('page-perfil');if(_pp)_pp.classList.toggle('standalone',p==='perfil');var _pb=document.getElementById('perfil-body');if(_pb)_pb.style.display='';var _pi=document.getElementById('page-insights');if(_pi)_pi.classList.remove('as-subtab');['dash','turmas','perfil','faq','insights','manual','manual-pce','nps','estoque','admin'].forEach(nv=>{const nav=document.getElementById('nav-'+nv);if(nav)nav.classList.toggle('active',nv===p);});const isDashLike=(p==='dash'||isTurmas);const showSwitch=(isDashLike||p==='perfil'||p==='insights');const viewBtns=document.getElementById('view-btns-container');if(viewBtns)viewBtns.style.display=showSwitch?'flex':'none';const titles={dash:'Dashboard',turmas:'Turmas — Histórico',perfil:'Perfil da Turma',faq:'FAQ — PCE',insights:'Insights Correlacionais',manual:'Manual — Experts','manual-pce':'Manual — PCE','nps':'NPS — PCE','estoque':'Estoque PCE','admin':'Painel ADM'};const titleEl=document.getElementById('page-title');if(titleEl)titleEl.textContent=titles[p]||'';if(showSwitch)configTurmaButtons(isTurmas?'turmas':'dash');if(isTurmas){try{switchView('br');}catch(e){}setTimeout(()=>{try{buildPerfil();}catch(e){}try{if(window.renderInsightsCorrelacionais)window.renderInsightsCorrelacionais();}catch(e){}},150);}else if(p==='dash'){if(store.meta.currentView!==TURMA_ATIVA){try{switchView(TURMA_ATIVA);}catch(e){}}}else if(p==='perfil'){try{showPerfilSub('perfil');}catch(e){}try{buildPerfil();}catch(e){}}if(p==='manual'){manualBootCloud();}else if(p==='manual-pce'){if(typeof mpceBootCloud==='function')mpceBootCloud();}else if(p==='estoque'){if(typeof estoqueBootCloud==='function')estoqueBootCloud();}else if(p==='admin'){if(typeof admBoot==='function')admBoot();}}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
 function refreshManual(){Loader.show('Atualizando');const btn=document.getElementById('btnR');if(btn){btn.disabled=true;btn.classList.add('spinning');}const safetyTimer=setTimeout(()=>{if(btn){btn.disabled=false;btn.classList.remove('spinning');}setStatus('neu','Pronto');},10000);fetchAllData(false).finally(()=>{clearTimeout(safetyTimer);if(btn){btn.disabled=false;btn.classList.remove('spinning');}});}
 /* Perfil standalone (aba "Perfil da Turma") = template vazio para T15; Turmas = dados T14 */
@@ -1419,7 +1448,7 @@ function _isStandalonePerfil(){const np=document.getElementById('nav-perfil'),nt
 function _perfilSrc(){
   if(_isStandalonePerfil()){
     // Perfil ao vivo por turma ativa (confirmados+PREENCHIDO são filtrados no buildPerfil)
-    var v=(store.meta&&store.meta.currentView)||'t15';
+    var v=(store.meta&&store.meta.currentView)||TURMA_ATIVA;
     if(v==='t15' && store.t15 && store.t15.rows && store.t15.rows.length) return store.t15;
     if(v==='t16' && store.t16 && store.t16.rows && store.t16.rows.length) return store.t16;
     if(v==='geral'){

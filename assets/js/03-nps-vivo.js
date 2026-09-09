@@ -383,6 +383,43 @@
     h+='</div>';
     return {html:h,rank:rank,dims:dims,media:media};
   }
+  /* Painel enxuto para pesquisas sem nota em escala (Pre-PCE). Sem media, sem
+     ranking e sem grafico comparativo, porque nao ha o que ranquear: mostra
+     volume, participacao e os temas que aparecem nos comentarios. */
+  function hsPainelSemNota(list,tipoLbl){
+    var n=list.length,totResp=0,totPart=0,semPart=0,pos=[],neg=[];
+    list.forEach(function(e){
+      totResp+=(+e.n||0);
+      if(e.total!=null&&+e.total>0)totPart+=+e.total;else semPart++;
+      pos=pos.concat((e.comentarios&&e.comentarios.positivos)||[]);
+      neg=neg.concat((e.comentarios&&e.comentarios.melhoria)||[]);
+    });
+    var taxa=(totPart>0&&semPart===0)?Math.min(100,Math.round(totResp/totPart*100)):null;
+    var h='<div class="nv-card"><div class="nv-ct">Painel gerencial \u2014 '+esc(tipoLbl)+'</div>'
+      +'<div class="nv-cs">Esta pesquisa n\u00e3o tem pergunta de nota em escala, ent\u00e3o n\u00e3o h\u00e1 m\u00e9dia nem ranking de mentor. O que d\u00e1 para medir aqui \u00e9 alcance, participa\u00e7\u00e3o e o que as pessoas escreveram.</div>';
+    h+='<div class="nv-kpis">'
+      +kpiBox(n,'Encontros','')
+      +kpiBox(totPart||'\u2014','Participantes online','')
+      +kpiBox(totResp,'Respostas','')
+      +(taxa!=null?kpiBox(taxa+'%','Taxa de resposta',''):'')
+      +kpiBox(pos.length+neg.length,'Coment\u00e1rios abertos','')
+      +'</div>';
+    var tp=temas(pos,6),tn=temas(neg,6);
+    if(tp.length||tn.length){
+      h+='<div class="nv-tags" style="margin-top:14px">'
+        +tp.map(function(x){return '<span class="nv-tag">'+esc(x)+'</span>';}).join('')
+        +tn.map(function(x){return '<span class="nv-tag nv-tagneg">'+esc(x)+'</span>';}).join('')
+        +'</div>';
+    }
+    var P=[];
+    P.push('<b>'+n+' encontro'+(n>1?'s':'')+'</b> nesta modalidade, com <b>'+totResp+'</b> resposta'+(totResp===1?'':'s')
+      +(taxa!=null?' de <b>'+totPart+'</b> participantes (<b>'+taxa+'%</b> de resposta)':'')+'.');
+    P.push('Leitura poss\u00edvel: <b>'+pos.length+'</b> coment\u00e1rio(s) positivo(s) e <b>'+neg.length+'</b> ponto(s) de melhoria. '
+      +'Os cards abaixo trazem o texto na \u00edntegra.');
+    h+='<div class="nv-analise" style="margin-top:16px"><div class="nv-antitle">Leitura gerencial</div>'
+      +P.map(function(x){return '<div class="nv-anp">'+x+'</div>';}).join('')+'</div>';
+    return h+'</div>';
+  }
   function renderHotseat(list){
     var host=$('nv-content');
     if(!list.length){host.innerHTML='<div class="nv-empty">Nenhum hot seat deste tipo ainda.<br><b>Suba um CSV</b> ou clique em Carregar exemplo (Renata + Iane).</div>';return;}
@@ -391,7 +428,7 @@
     var _tipoLbl=(STATE.tipo==='hotseat_pre')?'Hot Seats Pré-PCE':'Hot Seats Pós-PCE';
     var _pn=hsPainel(list,key,_tipoLbl);
     var _rank=_pn.rank||[];
-    html+=_pn.html||'';
+    html+=_pn.html||hsPainelSemNota(list,_tipoLbl);
     list.forEach(function(enc,i){
       var prev=i>0?list[i-1]:null,an=hsAnalysis(enc,prev);
       var main=hsMain(enc),col=main?scoreColor(main.avg,main.scaleMax):'var(--mut)';
