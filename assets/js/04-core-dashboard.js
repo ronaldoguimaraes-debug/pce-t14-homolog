@@ -1392,7 +1392,15 @@ wrap.innerHTML=h;
 }
 
 let dashMode='atual';
-function switchView(v){if(!['br','t15','t16','geral'].includes(v)){Logger.error('UI','switchView inválida',{v});return;}store.meta.currentView=v;const labels={br:'active-br',t15:'active-t15',t16:'active-t16',us:'active-us',geral:'active-geral'};['br','t15','t16','geral'].forEach(id=>{const btn=document.getElementById('vbtn-'+id);if(btn)btn.className='vbtn'+(id===v?' '+labels[id]:'');});const prefix=(dashMode==='turmas')?'Turmas':'Dashboard';const titles={br:prefix+' — T14 Brasil',t15:prefix+' — T15 Brasil',t16:prefix+' — T16 Brasil',geral:'PCE — Visão Geral'};const titleEl=document.getElementById('page-title');if(titleEl)titleEl.textContent=titles[v];const months={br:'Maio',t15:'Agosto',t16:'Novembro'};const mb=document.getElementById('month-bar');if(mb){if(months[v]){mb.innerHTML='<span class="mb-turma">'+(v==='br'?'T14':v.toUpperCase())+'</span><span class="mb-kicker">Imersão de</span><span class="mb-month">'+months[v]+'</span>';mb.style.display='flex';}else{mb.style.display='none';}}renderCurrentView();}
+function switchView(v){if(!['br','t15','t16','geral'].includes(v)){Logger.error('UI','switchView inválida',{v});return;}store.meta.currentView=v;const labels={br:'active-br',t15:'active-t15',t16:'active-t16',us:'active-us',geral:'active-geral'};['br','t15','t16','geral'].forEach(id=>{const btn=document.getElementById('vbtn-'+id);if(btn)btn.className='vbtn'+(id===v?' '+labels[id]:'');});const prefix=(dashMode==='turmas')?'Turmas':'Dashboard';const titles={br:prefix+' — T14 Brasil',t15:prefix+' — T15 Brasil',t16:prefix+' — T16 Brasil',geral:'PCE — Visão Geral'};const titleEl=document.getElementById('page-title');if(titleEl)titleEl.textContent=titles[v];const months={br:'Maio',t15:'Agosto',t16:'Novembro'};
+/* Rotulo da turma ativa no cabecalho: com uma unica turma visivel, quem entra
+   precisa enxergar de cara de qual turma sao os numeros. */
+(function(){var _sig={br:'T14',t15:'T15',t16:'T16',geral:'PCE'}[v]||'';
+ var _ft=document.getElementById('fb-turma'),_fn=document.getElementById('fb-turma-n'),_fm=document.getElementById('fb-turma-m');
+ if(_fn)_fn.textContent=_sig;
+ if(_fm)_fm.textContent=(v==='geral')?'Vis\u00e3o geral':(months[v]||'');
+ if(_ft)_ft.style.display=_sig?'':'none';})();
+const mb=document.getElementById('month-bar');if(mb){if(months[v]){mb.innerHTML='<span class="mb-turma">'+(v==='br'?'T14':v.toUpperCase())+'</span><span class="mb-kicker">Imersão de</span><span class="mb-month">'+months[v]+'</span>';mb.style.display='flex';}else{mb.style.display='none';}}renderCurrentView();}
 /* LOTE 2 · so a T16 aparece. Os botoes de T14, T15 e PCE Geral ficam ocultos.
    O codigo das outras visoes continua intacto: para trazer uma de volta, basta
    devolve-la a lista de visiveis aqui. */
