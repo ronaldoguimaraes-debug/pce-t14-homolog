@@ -213,12 +213,26 @@
   }
   var STOP={};'a o e de da do das dos que com para por em no na nos nas um uma os as se ao aos foi ser sao são muito mais menos meu minha nosso nossa ele ela eles elas isso este esta the and eu voce você tudo todo toda todos todas ja já nao não sim como qual quais onde quando pra pro sobre entre tem ter teve era esta está fazer feito'.split(' ').forEach(function(w){STOP[w]=1;});
   function temas(list,n){n=n||4;var f={};list.forEach(function(t){norm(t).replace(/[^a-z\s]/g,' ').split(/\s+/).forEach(function(w){if(w.length>=4&&!STOP[w])f[w]=(f[w]||0)+1;});});return Object.keys(f).map(function(k){return [k,f[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,n).map(function(x){return x[0];});}
+  /* Nem toda pesquisa de hot seat tem pergunta de nota em escala. O Pre-PCE, por exemplo,
+     mede itens categoricos (dificuldade de preencher formulario, erro sistemico). Nesses casos
+     mainKey nao resolve para uma metrica numerica e o render precisa seguir sem media. */
+  function hsMain(enc){
+    var mm=(enc&&enc.metricas&&enc.mainKey)?enc.metricas[enc.mainKey]:null;
+    if(!mm||typeof mm.avg!=='number'||!isFinite(mm.avg)||!mm.scaleMax)return null;
+    return mm;
+  }
   function hsAnalysis(enc,prev){
-    var m=enc.metricas,main=m[enc.mainKey],P=[];
+    var m=enc.metricas||{},main=hsMain(enc),P=[];
     var _pres=(enc.total!=null&&+enc.total>0)?+enc.total:null;
     var _abre=_pres?('<b>'+_pres+'</b> participantes online · <b>'+enc.n+'</b> responderam ('+Math.min(100,pct((enc.n||0)/_pres))+'% de resposta).'):('<b>'+enc.n+' respostas.</b>');
+    if(!main){
+      P.push(_abre+' Esta pesquisa não traz pergunta de nota em escala, então não há média de satisfação para este encontro.');
+      var _tc0=((enc.comentarios&&enc.comentarios.positivos)||[]).length+((enc.comentarios&&enc.comentarios.melhoria)||[]).length;
+      P.push('Leitura possível: <b>'+_tc0+'</b> comentário(s) aberto(s) e a taxa de participação acima.');
+      return {paras:P,temasPos:temas((enc.comentarios&&enc.comentarios.positivos)||[]),temasNeg:temas((enc.comentarios&&enc.comentarios.melhoria)||[])};
+    }
     P.push(_abre+' '+main.label+' média de <b>'+fmt(main.avg)+'/'+main.scaleMax+'</b>, com <b>'+pct(main.topBox)+'%</b> de notas altas'+(main.lowBox>0?' e '+pct(main.lowBox)+'% de notas baixas':'')+'.');
-    if(prev&&prev.metricas[enc.mainKey]){var d=main.avg-prev.metricas[enc.mainKey].avg;var dir=d>0.05?'subiu':(d<-0.05?'caiu':'ficou estável');var cls=d>0.05?'nv-up':(d<-0.05?'nv-down':'');P.push('Frente ao encontro anterior (<b>'+(prev.mentor||prev.turma)+'</b>), a satisfação <span class="'+cls+'">'+dir+(Math.abs(d)>=0.05?' '+fmt(Math.abs(d))+' ponto(s)':'')+'</span>.');}
+    if(prev&&prev.metricas&&prev.metricas[enc.mainKey]){var d=main.avg-prev.metricas[enc.mainKey].avg;var dir=d>0.05?'subiu':(d<-0.05?'caiu':'ficou estável');var cls=d>0.05?'nv-up':(d<-0.05?'nv-down':'');P.push('Frente ao encontro anterior (<b>'+(prev.mentor||prev.turma)+'</b>), a satisfação <span class="'+cls+'">'+dir+(Math.abs(d)>=0.05?' '+fmt(Math.abs(d))+' ponto(s)':'')+'</span>.');}
     else P.push('Primeiro encontro deste tipo — vira a <b>linha de base</b> para os próximos.');
     var dims=enc.order.map(function(k){return m[k];}).filter(Boolean);
     if(dims.length>1){var t=dims.slice().sort(function(a,b){return b.avg-a.avg;})[0],b=dims.slice().sort(function(a,b){return a.avg-b.avg;})[0];P.push('Dimensão mais forte: <b>'+t.label+'</b> ('+fmt(t.avg)+'). Menor nota: <b>'+b.label+'</b> ('+fmt(b.avg)+').');}
@@ -318,7 +332,7 @@
     var dims=['satisfacao','relevancia','conteudo'].filter(function(k){return rank.some(function(e){return e.metricas[k];});});
     h+='<div class="nv-ranktbl"><table class="nv-rank"><thead><tr><th>#</th><th>Mentor</th><th>Turma</th><th>Data</th>'
       +dims.map(function(k){return '<th class="num">'+(SHORT_DIM[k]||k)+'</th>';}).join('')
-      +'<th class="num">Resp.</th></tr></thead><tbody>';
+      +'<th class="num">Resp.</th><th class="num">Online</th></tr></thead><tbody>';
     rank.forEach(function(e,i){
       var m=e.metricas[key];
       var pos=(i===0)?'\u{1F947}':(i===1)?'\u{1F948}':(i===2&&n>3)?'\u{1F949}':(i+1)+'\u00BA';
@@ -328,7 +342,11 @@
       h+='<tr'+(i===n-1&&n>2?' class="last"':'')+'><td class="pos">'+pos+'</td><td class="mt">'+esc(e.mentor||'—')+'</td><td><span class="nv-turma">'+esc(e.turma||'—')+'</span></td><td class="dt">'+(e.data_encontro||'—')+'</td>';
       dims.forEach(function(k){var mm=e.metricas[k];
         h+='<td class="num"'+(mm?' style="color:'+scoreColor(mm.avg,mm.scaleMax)+';font-weight:700"':'')+'>'+(mm?fmt(mm.avg):'—')+'</td>';});
-      h+='<td class="num">'+(e.n||'—')+'</td></tr>';
+      var _onl=(e.total!=null&&+e.total>0)?+e.total:null;
+      h+='<td class="num">'+(e.n||'—')+'</td>'
+        +'<td class="num">'+(_onl!=null?_onl:'—')
+        +(isAdm()?'<button class="nv-onledit" data-edit-total="'+e.id+'" title="Editar participantes online">✎</button>':'')
+        +'</td></tr>';
     });
     h+='</tbody></table></div>';
 
@@ -375,7 +393,8 @@
     var _rank=_pn.rank||[];
     html+=_pn.html||'';
     list.forEach(function(enc,i){
-      var prev=i>0?list[i-1]:null,an=hsAnalysis(enc,prev),main=enc.metricas[enc.mainKey],col=scoreColor(main.avg,main.scaleMax);
+      var prev=i>0?list[i-1]:null,an=hsAnalysis(enc,prev);
+      var main=hsMain(enc),col=main?scoreColor(main.avg,main.scaleMax):'var(--mut)';
       /* Participantes online do encontro (enc.total) x quem respondeu (enc.n). */
       var _hsTot=(enc.total!=null&&+enc.total>0)?+enc.total:null;
       var _hsRsp=(enc.n!=null&&+enc.n>0)?+enc.n:null;
@@ -386,12 +405,17 @@
         +(_hsTaxa!=null?'<div class="nv-imstat"><div class="nv-imstat-n">'+_hsTaxa+'%</div><div class="nv-imstat-l">Taxa de resposta</div></div>':'')
         +'</div>'
         +(_hsTot==null?'<div class="nv-imstat-warn" style="text-align:left;margin:-6px 0 12px">Participantes online não informados — clique no ✎ para incluir.</div>':'');
-      var circ=2*Math.PI*66,off=circ-circ*(main.avg/main.scaleMax);
-      var mrows=enc.order.map(function(k){return barRow(enc.metricas[k].label,enc.metricas[k].avg,enc.metricas[k].scaleMax);}).join('');
+      var circ=2*Math.PI*66,off=main?(circ-circ*(main.avg/main.scaleMax)):circ;
+      var mrows=(enc.order||[]).map(function(k){var mm=enc.metricas&&enc.metricas[k];
+        return (mm&&typeof mm.avg==='number'&&isFinite(mm.avg)&&mm.scaleMax)?barRow(mm.label||k,mm.avg,mm.scaleMax):'';}).join('');
+      var _hsHero=main
+        ? '<div class="nv-hero"><div class="nv-ring"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="66" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/><circle cx="75" cy="75" r="66" fill="none" stroke="'+col+'" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'"/></svg><div class="nv-ringc"><div class="nv-ringn" style="color:'+col+'">'+fmt(main.avg)+'</div><div class="nv-ringl">'+String(main.label||'').split(' ')[0]+' · /'+main.scaleMax+'</div></div></div><div style="display:flex;flex-direction:column">'+mrows+'</div></div>'
+        : (mrows?'<div class="nv-hero"><div style="display:flex;flex-direction:column;width:100%">'+mrows+'</div></div>':'')
+          +'<div class="nv-imstat-warn" style="text-align:left;margin:0 0 12px">Pesquisa sem pergunta de nota em escala — sem anel de satisfação. Participação e comentários abaixo.</div>';
       var _posArr=enc.comentarios.positivos||[],_negArr=enc.comentarios.melhoria||[];
       var pos=cmBox(_posArr,false,'Sem comentários.');
       var neg=cmBox(_negArr,true,'Nenhum ponto de melhoria.');
-      html+='<div class="nv-card"><div class="nv-enchead"><div><div class="nv-enctitle">'+(enc.mentor||'Encontro')+'</div><div class="nv-encmeta">'+(enc.turma||'')+' · '+(enc.tipo||'').replace('hotseat_pos','Hot Seat · Pós-PCE').replace('hotseat_pre','Hot Seat · Pré-PCE')+' · '+(enc.data_encontro||'')+(String(enc.id||'').indexOf('loc_')===0?' · <span class="nv-locbadge">SÓ NESTE NAVEGADOR</span>':'')+'</div></div>'+'<div class="nv-encacts"><button class="nv-encpng" data-png="'+enc.id+'" title="Baixar este relatório em PNG">\u2913 PNG</button>'+(isAdm()?'<button class="nv-encdel" data-del="'+enc.id+'">excluir</button>':'')+'</div></div>'+_hsStats+'<div class="nv-hero"><div class="nv-ring"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="66" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10"/><circle cx="75" cy="75" r="66" fill="none" stroke="'+col+'" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'"/></svg><div class="nv-ringc"><div class="nv-ringn" style="color:'+col+'">'+fmt(main.avg)+'</div><div class="nv-ringl">'+main.label.split(' ')[0]+' · /'+main.scaleMax+'</div></div></div><div style="display:flex;flex-direction:column">'+mrows+'</div></div><div class="nv-analise"><div class="nv-antitle">Análise automática</div>'+an.paras.map(function(p){return '<div class="nv-anp">'+p+'</div>';}).join('')+((an.temasPos.length||an.temasNeg.length)?'<div class="nv-tags">'+an.temasPos.map(function(x){return '<span class="nv-tag">'+x+'</span>';}).join('')+an.temasNeg.map(function(x){return '<span class="nv-tag nv-tagneg">'+x+'</span>';}).join('')+'</div>':'')+'</div><div class="nv-comments" style="margin-top:16px"><div>'+cmH('Positivos','#46d160',_posArr)+pos+'</div><div>'+cmH('Pontos de melhoria','#f5c542',_negArr)+neg+'</div></div></div>';
+      html+='<div class="nv-card"><div class="nv-enchead"><div><div class="nv-enctitle">'+(enc.mentor||'Encontro')+'</div><div class="nv-encmeta">'+(enc.turma||'')+' · '+(enc.tipo||'').replace('hotseat_pos','Hot Seat · Pós-PCE').replace('hotseat_pre','Hot Seat · Pré-PCE')+' · '+(enc.data_encontro||'')+(String(enc.id||'').indexOf('loc_')===0?' · <span class="nv-locbadge">SÓ NESTE NAVEGADOR</span>':'')+'</div></div>'+'<div class="nv-encacts"><button class="nv-encpng" data-png="'+enc.id+'" title="Baixar este relatório em PNG">\u2913 PNG</button>'+(isAdm()?'<button class="nv-encdel" data-del="'+enc.id+'">excluir</button>':'')+'</div></div>'+_hsStats+_hsHero+'<div class="nv-analise"><div class="nv-antitle">Análise automática</div>'+an.paras.map(function(p){return '<div class="nv-anp">'+p+'</div>';}).join('')+((an.temasPos.length||an.temasNeg.length)?'<div class="nv-tags">'+an.temasPos.map(function(x){return '<span class="nv-tag">'+x+'</span>';}).join('')+an.temasNeg.map(function(x){return '<span class="nv-tag nv-tagneg">'+x+'</span>';}).join('')+'</div>':'')+'</div><div class="nv-comments" style="margin-top:16px"><div>'+cmH('Positivos','#46d160',_posArr)+pos+'</div><div>'+cmH('Pontos de melhoria','#f5c542',_negArr)+neg+'</div></div></div>';
     });
     host.innerHTML=html;
     var canvas=$('nv-hs-cmp');
