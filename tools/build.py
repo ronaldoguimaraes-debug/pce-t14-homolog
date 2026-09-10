@@ -69,6 +69,13 @@ for i, m in enumerate(style_blocks, 1):
     label = ident.group(1) if ident else "bloco-%02d" % i
     css_parts.append("/* ===== %02d · %s ===== */\n%s\n" % (i, label, m.group(2).strip()))
 
+# url() no CSS resolve em relacao ao proprio arquivo .css, nao a raiz do site:
+# assets/img/x.png viraria assets/css/assets/img/x.png. Reescreve para ../img/.
+css_body = "\n".join(css_parts).replace("url('assets/img/", "url('../img/")\
+                                .replace('url("assets/img/', 'url("../img/')\
+                                .replace("url(assets/img/", "url(../img/")
+css_parts = [css_body]
+
 css = ("/* PCE 2.0 — folha unica, blocos na ordem original do documento.\n"
        "   Engenharia e fundacao: Ronaldo Ferreira. */\n\n" + "\n".join(css_parts))
 open(os.path.join(OUT, "assets/css/app.css"), "w", encoding="utf-8").write(css)

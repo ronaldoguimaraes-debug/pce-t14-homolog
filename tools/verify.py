@@ -20,7 +20,7 @@ css_novo = open(os.path.join(OUT, "assets/css/app.css"), encoding="utf-8").read(
 css_novo = re.sub(r'/\* ===== \d+ · .*? ===== \*/', '', css_novo)
 css_novo = re.sub(r'/\* PCE 2\.0 — folha unica.*?\*/', '', css_novo, flags=re.S)
 IMGRE = r'data:image/[a-z]+;base64,[A-Za-z0-9+/=]{200,}'
-PATHRE = r'assets/img/[A-Za-z0-9\-]+\.(?:png|webp)'
+PATHRE = r'(?:assets/img|\.\./img)/[A-Za-z0-9\-]+\.(?:png|webp)'
 css_orig = re.sub(IMGRE, '@IMG@', css_orig)
 css_novo = re.sub(PATHRE, '@IMG@', css_novo)
 if norm(css_orig) != norm(css_novo):
