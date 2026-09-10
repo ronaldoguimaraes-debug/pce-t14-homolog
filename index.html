@@ -94,6 +94,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         <span class="nav-label">NPS — PCE</span>
       </div>
+      <div class="nav-item" id="nav-experts" onclick="switchPage('experts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="nav-label">NPS — Experts</span>
+      </div>
       <div class="nav-item" id="nav-turmas" onclick="switchPage('turmas')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
         <span class="nav-label">Turmas</span>
@@ -393,10 +397,10 @@
                 <button onclick="switchPage('dash')" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:9px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;text-transform:uppercase">← Voltar ao Dashboard</button>
               </div>
             </div>
-            <div class="page" id="page-nps">
+            <div class="page" id="page-nps"><div id="nv-host-pce"></div>
 
 
-<div class="nv-wrap">
+<div class="nv-wrap" id="nv-wrap">
   <div class="nv-sl">NPS — Satisfação</div>
   <div class="nv-sub">Imersão e Hot Seats num só lugar. Cada turma da imersão é uma aba; cada hot seat é um card. Suba a pesquisa e tudo se atualiza e acumula.</div>
 
@@ -444,6 +448,9 @@
 <script src="assets/js/03-nps-vivo.js?v=3.0.0"></script>
 
       </div>
+
+      <!-- NPS Experts: hospeda o mesmo bloco #nv-wrap, movido pelo modulo. -->
+      <div class="page" id="page-experts"><div id="nv-host-experts"></div></div>
 
       <div class="page" id="page-faq">
         <div class="faq-hero">
