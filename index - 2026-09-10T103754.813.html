@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- BUILD:20260507230000-V55 -->
+<!-- v49 PROD — UX REFRESH 2026 (verde) -->
+<title>[HOMOLOG] PCE — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+<!-- Supabase + Sortable lazy-loaded sob demanda (só quando o Manual abre) — economiza ~250KB no boot -->
+<script src="assets/js/01-manual-deps.js?v=3.1.0"></script>
+<link rel="stylesheet" href="assets/css/app.css?v=3.1.0">
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     v49_sugestao — UX REFRESH 2025/2026
+     Tendências aplicadas: Linear-style cards, Stripe-grade typography,
+     Vercel/Notion microinteractions, Apple Bento KPIs.
+     Mantém 100% da lógica/dados — só refresh visual.
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+
+
+
+
+
+</head>
+<body class="env-homologation">
+<div class="homolog-banner">HOMOLOG · AMBIENTE DE TESTES — não é produção</div>
+<!-- ══ LOADING SCREEN ══ -->
+<div id="pce-loader">
+  <div class="pce-ring-wrap" style="width:160px;height:160px">
+    <svg id="pce-svg-ring" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="pce-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f5a623"/>
+          <stop offset="100%" stop-color="#f5a623"/>
+        </linearGradient>
+      </defs>
+      <circle id="pce-arc-bg"   cx="70" cy="70" r="65"/>
+      <circle id="pce-arc-fill" cx="70" cy="70" r="65"/>
+    </svg>
+    <div class="pce-logo-center">
+      <img src="assets/img/logo-pce-center-ee117996.png" alt="PCE" style="width:68px;height:68px;object-fit:contain;display:block;image-rendering:-webkit-optimize-contrast;filter:brightness(0) invert(1)"/>
+    </div>
+  </div>
+  <div id="pce-pct">0%</div>
+  <div id="pce-loader-txt">Carregando</div>
+  <div class="pce-dots"><span></span><span></span><span></span></div>
+</div>
+
+<div class="g-overlay" id="gOverlay" onclick="gModalClose()"></div>
+<div class="g-modal" id="gModal">
+  <button class="g-modal-x" onclick="gModalClose()">✕</button>
+  <div class="g-modal-mes" id="gMes"></div>
+  <div class="g-modal-flag" id="gFlag"></div>
+  <div class="g-modal-sub" id="gSub"></div>
+  <div class="g-modal-grid" id="gGrid"></div>
+</div>
+
+
+<div class="ticker">
+  <div class="ticker-track" id="ticker-track"></div>
+</div>
+<div class="layout">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="brand-wrapper">
+        <div class="logo-mark">
+          <img src="assets/img/logo-mark-808f56e5.png" alt="PCE — Programa de Crescimento Empresarial" class="logo-mark-img"/>
+        </div>
+      </div>
+      <div class="logo-text">
+        <div class="logo-tag">Febracis</div>
+        <div class="logo-title">PCE</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" id="nav-dash" onclick="switchPage('dash')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span class="nav-label">Dashboard</span>
+        <span class="nav-badge" id="badge-total">—</span>
+      </div>
+      <div class="nav-item" id="nav-perfil" onclick="switchPage('perfil')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="nav-label">Perfil da Turma T16 / Novembro</span>
+      </div>
+      <div class="nav-section">Recursos</div>
+      <div class="nav-item" id="nav-nps" onclick="switchPage('nps')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span class="nav-label">NPS — PCE</span>
+      </div>
+      <div class="nav-item" id="nav-experts" onclick="switchPage('experts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="nav-label">NPS — Experts</span>
+      </div>
+      <div class="nav-item" id="nav-turmas" onclick="switchPage('turmas')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        <span class="nav-label">Turmas</span>
+      </div>
+      <div class="nav-item" id="nav-faq" onclick="switchPage('faq')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="nav-label">FAQ — PCE</span>
+      </div>
+      <div class="nav-section">Manuais</div>
+      <div class="nav-item" id="nav-manual" onclick="switchPage('manual')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        <span class="nav-label">Manual — Experts</span>
+      </div>
+      <div class="nav-item" id="nav-manual-pce" onclick="switchPage('manual-pce')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span class="nav-label">Manual — PCE</span>
+      </div>
+      <div class="nav-section">Operações</div>
+      <div class="nav-item" id="nav-estoque" onclick="switchPage('estoque')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span class="nav-label">Estoque PCE</span>
+        <span class="nav-badge" id="badge-estoque">—</span>
+      </div>
+      <div class="nav-section" id="nav-section-admin" style="display:none">Administração</div>
+      <div class="nav-item" id="nav-admin" onclick="switchPage('admin')" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <span class="nav-label">Painel ADM</span>
+        <span class="nav-badge" id="badge-admin-pend" style="display:none">0</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <svg class="collapse-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>Recolher</span>
+      </button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="content">
+      <div class="float-bar" id="float-bar">
+        <!-- Turma ativa: com uma unica turma na tela, o cabecalho diz qual e. -->
+        <div class="fb-turma" id="fb-turma">
+          <span class="fb-turma-tag">Turma ativa</span>
+          <span class="fb-turma-n" id="fb-turma-n">T16</span>
+          <span class="fb-turma-m" id="fb-turma-m">Novembro</span>
+        </div>
+        <span class="ts">Atualizado: <b id="ts">—</b></span>
+        <button class="btn" id="btnR" onclick="refreshManual()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M8 16H3v5"/>
+          </svg>
+          Atualizar
+        </button>
+        <div class="view-btns" id="view-btns-container">
+          <button class="vbtn" id="vbtn-br" style="display:none" onclick="switchView('br')">T14<span>Maio</span></button>
+          <button class="vbtn" id="vbtn-t15" style="display:none" onclick="switchView('t15')">T15<span>Agosto</span></button>
+          <button class="vbtn active-t16" id="vbtn-t16" onclick="switchView('t16')">T16<span>Novembro</span></button>
+          <button class="vbtn" id="vbtn-geral" style="display:none" onclick="switchView('geral')">PCE<span>Geral</span></button>
+        </div>
+      </div>
+      <div id="legacy-chrome" style="display:none" aria-hidden="true">
+        <div class="page-title" id="page-title">Dashboard</div>
+        <div class="pill" id="pill"><span class="dot" id="dot"></span><span id="pill-txt">Conectando...</span></div>
+        <span class="user-chip" id="user-chip" title="Usuário logado">
+          <span class="user-chip-avatar" id="user-chip-avatar">?</span>
+          <span class="user-chip-name" id="user-chip-name">—</span>
+          <button class="user-chip-logout" onclick="authDoLogout()" title="Sair">⏻</button>
+        </span>
+      </div>
+      <div class="page active" id="page-dash">
+        <div class="offline-banner hidden" id="offline-banner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Modo cache — exibindo dados estáticos. Clique em Atualizar para buscar dados ao vivo.
+        </div>
+        <div class="g4" id="kpi-dash"><div class="kpi kpi-skeleton-card"><img class="kpi-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="kpi-skeleton-bars"><div class="kpi-skeleton-bar" style="width:70%"></div><div class="kpi-skeleton-bar" style="width:50%"></div></div><div class="kpi-skeleton-txt">CARREGANDO</div></div><div class="kpi kpi-skeleton-card"><img class="kpi-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="kpi-skeleton-bars"><div class="kpi-skeleton-bar" style="width:70%"></div><div class="kpi-skeleton-bar" style="width:50%"></div></div><div class="kpi-skeleton-txt">CARREGANDO</div></div><div class="kpi kpi-skeleton-card"><img class="kpi-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="kpi-skeleton-bars"><div class="kpi-skeleton-bar" style="width:70%"></div><div class="kpi-skeleton-bar" style="width:50%"></div></div><div class="kpi-skeleton-txt">CARREGANDO</div></div><div class="kpi kpi-skeleton-card"><img class="kpi-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="kpi-skeleton-bars"><div class="kpi-skeleton-bar" style="width:70%"></div><div class="kpi-skeleton-bar" style="width:50%"></div></div><div class="kpi-skeleton-txt">CARREGANDO</div></div></div>
+        <div class="month-bar" id="month-bar" style="display:none"></div>
+        <div class="np-faixa" id="np-faixa"><div class="np-faixa-icon">🎤</div><div class="np-faixa-text"><div class="np-faixa-title" id="np-faixa-title">Confirmados na Noite de Networking de Maio</div><div class="np-faixa-sub" id="np-faixa-sub"></div></div><div class="np-faixa-count" id="np-faixa-count">—</div></div>
+        <div id="seatmap-section" style="display:none"><div class="card seatmap-card"><div class="ct">Mapa do Evento - Holding</div><div class="cs" id="seatmap-sub">—</div><div class="seatmap-legend"><span><i style="background:#46d160"></i> Confirmado</span><span><i style="background:#ff5f5f"></i> Sem retorno</span><span><i style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2)"></i> Livre</span></div><div id="seatmap-floor" style="overflow-x:auto"></div></div></div>
+        <div id="br-funil-meta-wrap">
+          
+          <div class="sl">Preenchimento do Typeform</div>
+          <div class="g2">
+            <div class="card" style="grid-column:1/-1"><div class="ct">Preenchimento do Typeform</div><div class="cs">Meta = todos os confirmados com typeform preenchido</div><div id="meta-confirm" style="margin-top:12px"></div></div>
+          </div>
+          <div class="sl" id="prod-t15-sl" style="display:none">Produção T15 — Cartas Proféticas &amp; Frases do Cliente</div>
+          <div class="g2" id="prod-t15-grid" style="display:none">
+            <div class="card" id="prod-cartas-card"><div class="ct">📜 Cartas Proféticas — T15</div><div class="cs">Contagem por status da coluna ATIVIDADE · aba “Carta Profética - T15”</div><div id="prod-cartas" style="margin-top:12px"></div></div>
+            <div class="card" id="prod-frases-card"><div class="ct">💬 Frases do Cliente — T15</div><div class="cs">Contagem por status da coluna ATIVIDADE · aba “Frase do cliente - T15”</div><div id="prod-frases" style="margin-top:12px"></div></div>
+            
+          </div>
+        </div>
+        <div id="imersao-container"></div>
+        <div id="imersao-t14-wrap" style="display:none"></div>
+      </div>
+      <div class="page" id="page-perfil">
+        <div class="perfil-subtabs" id="perfil-subtabs">
+          <button class="psub active" id="psub-perfil" onclick="showPerfilSub('perfil')">Perfil da Turma</button>
+          <button class="psub" id="psub-insights" onclick="showPerfilSub('insights')">Insights</button>
+        </div>
+        <div id="perfil-body">
+        <div class="g4" id="kpi-perf"></div>
+        <div class="sl">Família &amp; Cultura</div>
+        <div class="g3">
+          <div class="card"><div class="ct">Estrutura Familiar</div><div class="cs">Cônjuge, filhos e envolvimento</div><div id="ins-familia" style="margin-top:8px"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
+          <div class="card"><div class="ct">Religião</div><div class="cs">Distribuição de crenças</div><div style="position:relative;height:160px"><canvas id="cReligiao"></canvas></div><div class="leg" id="lReligiao"></div></div>
+          <div class="card"><div class="ct">Intenções &amp; Metas</div><div class="cs">Clusters de objetivos declarados</div><div id="ins-intencoes" style="margin-top:8px"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
+        </div>
+        <div class="sl">Negócio &amp; Geografia</div>
+        <div class="g3">
+          <div class="card"><div class="ct">Segmento de negócio</div><div class="cs">Distribuição por setor</div><div style="position:relative;height:280px"><canvas id="cSeg"></canvas></div></div>
+          <div class="card"><div class="ct">Top estados</div><div class="cs">Concentração geográfica</div><div style="position:relative;height:280px"><canvas id="cEst"></canvas></div></div>
+          <div class="card"><div class="ct">Top 10 Maiores Faturamentos</div><div class="cs">Empresários com empresa de maior faixa de faturamento anual (R$/ano). Quando há empate de faixa, listamos em ordem alfabética.</div><div id="ins-top-fat" style="margin-top:8px;max-height:280px;overflow-y:auto"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
+        </div>
+        
+        <div class="sl">Gestão &amp; Estrutura</div>
+        <div class="g3">
+          <div class="card"><div class="ct">Nº de Colaboradores</div><div class="cs">Porte das empresas</div><div style="position:relative;height:200px"><canvas id="cColabs"></canvas></div></div>
+          <div class="card"><div class="ct">Organograma &amp; Lideranças</div><div class="cs">Estrutura organizacional declarada</div><div id="org-visual" style="margin-top:14px"></div></div>
+          <div class="card"><div class="ct">Canal de Aquisição</div><div class="cs">Principal canal de vendas hoje</div><div style="position:relative;height:200px"><canvas id="cCanal"></canvas></div></div>
+        </div>
+
+<div class="sl">Perfil dos Participantes</div>
+        <div class="g3">
+          <div class="card"><div class="ct">Gênero</div><div class="cs">Distribuição</div><div style="position:relative;height:160px"><canvas id="cGen"></canvas></div><div class="leg" id="lGen"></div></div>
+          <div class="card"><div class="ct">Perfil de cliente</div><div class="cs">B2B, B2C ou ambos</div><div style="position:relative;height:160px"><canvas id="cCli"></canvas></div><div class="leg" id="lCli"></div></div>
+          <div class="card"><div class="ct">Avaliação de Colaboração</div><div class="cs">Nota 0–10 que o empresário dá ao próprio time. Pergunta: <em>"Como você avalia o relacionamento e a colaboração entre seus colaboradores?"</em></div><div id="aval-visual" style="margin-top:12px"></div></div>
+        </div>
+
+        
+        <div class="g2" style="margin-top:0">
+          <div class="card"><div class="ct">Confirmação de Presença</div><div class="cs" id="cConf-sub">Resposta ao Typeform — participação confirmada na imersão</div><div style="position:relative;height:180px"><canvas id="cConf"></canvas></div><div class="leg" id="lConf"></div></div>
+          <div class="card"><div class="ct">Maturidade em IA</div><div class="cs">Nível de conhecimento e utilização de IA (1 = iniciante · 5 = avançado)</div><div style="position:relative;height:180px"><canvas id="cIA"></canvas></div></div>
+        </div>
+
+<div class="sl">Demografia Avançada</div>
+        <div class="g2">
+          <div class="card"><div class="ct">Faixa Etária</div><div class="cs">Distribuição por idade</div><div style="position:relative;height:200px"><canvas id="cFaixaEt"></canvas></div><div class="leg" id="lFaixaEt"></div></div>
+          <div class="card"><div class="ct">Faixa de Faturamento</div><div class="cs">Receita anual declarada (R$/ano)</div><div style="position:relative;height:200px"><canvas id="cFaixaFat"></canvas></div></div>
+        </div>
+
+
+        <div class="sl">Insights Estratégicos</div>
+        <div class="g-mapfat">
+          <div class="card"><div class="ct">Mapa de Faturamento</div><div class="cs">Setor vs faixa de receita anual (R$/ano)</div><div id="ins-fat" style="margin-top:4px;overflow-y:auto;max-height:520px"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
+          <div class="g-mapfat-right">
+            <div class="card"><div class="ct">Top 5 Dores</div><div class="cs">Categorias semânticas extraídas das respostas livres dos empresários no Typeform. Um mesmo participante pode aparecer em várias categorias.</div><div id="ins-dores" style="margin-top:4px"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
+            <div class="card"><div class="ct">Prioridades de Ensino</div><div class="cs">Categorias temáticas extraídas das respostas livres sobre o que os empresários querem aprender no PCE. Um mesmo participante pode aparecer em várias categorias.</div><div id="ins-prior" style="margin-top:4px"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
+          </div>
+        </div>
+        <div class="carf"><div class="ct">Word Cloud — Sonhos & Metas</div><div class="cs">Palavras mais frequentes nos relatos</div><div class="wcloud" id="ins-wcloud"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
+        <div class="carf" style="display:none"><div class="ct">Inscrições ao longo do tempo</div><div class="cs">Volume por dia</div><div style="position:relative;height:130px"><canvas id="cTime"></canvas></div></div>
+        </div>
+      </div>
+      <div class="page" id="page-insights">
+        <!-- KPIs do topo (4 cards: Confirmados / Idade / Empresas+Cidades / MVV) -->
+        <div class="g4" id="ins-cor-kpis"></div>
+
+        <!-- DIAGNÓSTICO ESTRATÉGICO DA TURMA -->
+        <div class="card" id="diagnostico-card" style="margin-top:14px;padding:24px 26px">
+          <div class="diag-title">🎯 Diagnóstico Estratégico da Turma</div>
+          <div class="diag-body" id="diag-body"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div>
+          <div class="diag-leitura" id="diag-leitura"></div>
+          <button class="diag-fonte-toggle" id="diag-fonte-toggle" onclick="toggleDiagFonte()">📖 Ver fonte das informações</button>
+          <div class="diag-fonte" id="diag-fonte" style="display:none">
+            <div class="diag-fonte-sec"><strong>Fonte das informações:</strong></div>
+            <div class="diag-fonte-txt">Os dados foram cruzados a partir de quatro fontes principais:</div>
+            <ul class="diag-fonte-list">
+              <li><strong>Dossiê — PCE Brasil</strong> (Typeform respondido pelos participantes em relacionamento com o time de Sucesso do Cliente durante o Onboarding)</li>
+              <li><strong>Matriculados:</strong> dados do Salesforce</li>
+              <li><strong>Gestão Geral T14</strong> (painel de presença): status de confirmação, onboarding, typeform preenchido, WhatsApp</li>
+              <li><strong>Operacional:</strong> dados de cancelamento, taxas e transferências</li>
+            </ul>
+            <div class="diag-fonte-sec" style="margin-top:14px"><strong>Critérios e métodos utilizados:</strong></div>
+            <ul class="diag-fonte-list">
+              <li><strong>Faturamento empresarial:</strong> estimado pelo ponto médio das faixas <strong>anuais</strong> declaradas no Typeform (ex: faixa R$ 81k–360k/ano → ponto médio R$ 220k/ano). Todos os valores de faturamento no painel são <strong>anuais</strong>. Cobertura: <span id="diag-cobertura">—</span> dos <span id="diag-total">—</span> confirmados.</li>
+              <li><strong>Idade média:</strong> calculada via data de nascimento (Dossiê) quando disponível; nos demais casos, ponto médio da faixa etária dos Matriculados.</li>
+              <li><strong>Top 3 dores e aprendizados:</strong> processamento NLP (normalização de acentos, stopwords removidas, sinônimos consolidados) sobre respostas abertas. Contagem por presença nos comentários, não por menções múltiplas.</li>
+              <li><strong>Modelo de negócio:</strong> categorias do campo <em>"Qual é o modelo de negócio da sua empresa?"</em> do Typeform (20 opções limpas).</li>
+              <li><strong>MVV:</strong> resposta "Sim" à pergunta <em>"Você possui missão, visão e valores em sua empresa?"</em></li>
+              <li><strong>Avaliação de colaboração:</strong> nota 0-10 da pergunta <em>"Como você avalia o relacionamento e a colaboração entre os colaboradores e as equipes da sua empresa?"</em></li>
+            </ul>
+            <div class="diag-fonte-meta">Última atualização: sincronização automática com Google Sheets a cada 15 minutos. <span id="diag-sync">Última sync: aguardando dados ao vivo...</span></div>
+          </div>
+        </div>
+
+        <!-- BLOCO 2 — Onde está o dinheiro -->
+        <div class="sl">💰 Onde está o Faturamento</div>
+        <div class="carf"><div class="ct">Faturamento Empresarial por Geração</div><div class="cs">Faturamento médio anual das empresas (R$/ano), agrupado por faixa etária do dono</div><div style="position:relative;height:240px"><canvas id="cInsFatEt"></canvas></div></div>
+        <div class="g2" style="margin-top:14px">
+          <div class="card"><div class="ct">Faturamento por Modelo de Negócio</div><div class="cs">Faturamento médio anual (R$/ano) — top 8 segmentos</div><div style="position:relative;height:260px"><canvas id="cInsModeloFat"></canvas></div></div>
+          <div class="card"><div class="ct">Faturamento por Tipo de Cliente</div><div class="cs">Faturamento médio anual (R$/ano) por tipo de cliente · apenas confirmados com tipo + faixa de faturamento informados</div><div id="ins-tipo-cli-fat" style="padding:8px 0"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
+        </div>
+        <div class="carf" style="margin-top:14px"><div class="ct">Top 5 Estados por Faturamento Empresarial</div><div class="cs">Faturamento médio anual (R$/ano) por estado — top 5 maiores</div><div style="position:relative;height:200px"><canvas id="cInsEstFat"></canvas></div></div>
+
+        <!-- BLOCO 3 — Maturidade & Performance -->
+        <div class="sl">🏗️ Maturidade & Performance</div>
+        <div class="g2">
+          <div class="card"><div class="ct">Empresas com MVV vs Faturamento</div><div class="cs">Faturamento médio anual (R$/ano) — com vs sem missão, visão e valores · apenas confirmados com MVV + faixa de faturamento informados</div><div id="ins-mvv-perf" style="padding:8px 0"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
+          <div class="card"><div class="ct">% com MVV por Faixa de Faturamento</div><div class="cs">Maturidade gerencial cresce com o porte?</div><div style="position:relative;height:240px"><canvas id="cInsMvvPorte"></canvas></div></div>
+        </div>
+
+        <!-- BLOCO 6 — Setores em destaque -->
+        <div class="sl">🌎 Setores em Destaque</div>
+        <div class="g2">
+          <div class="card"><div class="ct">Quantidade de Empresas por Modelo de Negócio</div><div class="cs">Top 10 segmentos representados na turma</div><div style="position:relative;height:280px"><canvas id="cInsSetorFat"></canvas></div></div>
+          <div class="card"><div class="ct">Faturamento Médio por Modelo de Negócio</div><div class="cs">Faturamento médio anual (R$/ano) — onde está o porte premium</div><div style="position:relative;height:280px"><canvas id="cInsSetorTkt"></canvas></div></div>
+        </div>
+
+        <div class="sl">Operação &amp; Pessoas</div>
+        <div class="g2">
+          <div class="card"><div class="ct">Nível de Centralização na Operação</div><div class="cs">Escala 1–5 (1 = totalmente delegado · 5 = totalmente centralizado)</div><div style="position:relative;height:200px"><canvas id="cCentr"></canvas></div></div>
+          <div class="card"><div class="ct">Principal Desafio na Gestão de Pessoas</div><div class="cs">Escolha única — resposta do Typeform</div><div style="position:relative;height:200px"><canvas id="cDesafio"></canvas></div></div>
+        </div>
+      </div>
+      <script src="assets/js/02-perfil-pristine.js?v=3.1.0"></script>
+
+
+      <div class="page" id="page-manual-pce">
+
+<input type="file" id="mpce-img-input" accept="image/*">
+<div class="manual-locked" id="mpce-locked" style="display:none">
+  <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+  <h3>Conteúdo protegido</h3>
+  <p>O Manual — PCE está disponível apenas para usuários autenticados. Faça login para acessar.</p>
+  <button onclick="authShowModal('login')">🔐 Entrar para acessar</button>
+  <button onclick="switchPage('dash')" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:9px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;text-transform:uppercase">← Voltar ao Dashboard</button>
+</div>
+<div class="manual-loading" id="mpce-loading" style="display:none">Carregando conteúdo da nuvem…</div>
+<div class="manual-cloud-banner" id="mpce-cloud-banner"><strong>⚠️ Sem conexão com a nuvem.</strong> Mostrando última versão em cache.</div>
+<div id="mpce-cards-view" style="display:none">
+  <div class="admin-toolbar" id="mpce-admin-toolbar">
+    <span class="admin-badge">⚙️ MODO ADMIN</span>
+    <button class="admin-toolbar-btn" onclick="manualOpenAdminsModal()">👥 Gerenciar usuários</button>
+    <button class="admin-toolbar-btn" onclick="mpceOpenTrashModal()">🗑 Lixeira <span id="mpce-trash-count-inline">(0)</span></button>
+  </div>
+  <div id="mpce-sections-host"></div>
+  <button class="add-section-btn" id="mpce-btn-add-section" onclick="mpcePromptCreateSection()" style="display:none">+ Adicionar nova seção</button>
+</div>
+<div class="manual-modal-overlay" id="mpce-modal-overlay" onclick="mpceClose(event)">
+
+  <div class="manual-modal" id="mpce-modal">
+    <div class="manual-modal-hero" id="mpce-modal-hero">
+      <div class="manual-modal-hero-placeholder" id="mpce-modal-hero-placeholder">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green);opacity:.3"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      </div>
+      <button class="manual-modal-close" onclick="mpceClose()">✕</button>
+      <button class="manual-modal-upload-btn" id="mpce-modal-upload-btn" onclick="mpceUploadModal()">📷 Trocar foto</button>
+    </div>
+    <div class="manual-modal-body">
+      <div class="manual-edit-hint"><strong>Modo edição ativo.</strong> Clique em qualquer texto para editar. Clique em <strong>💾 Salvar conteúdo</strong> ao terminar.</div>
+      <div class="manual-modal-tag" id="mpce-modal-tag">Manual</div>
+      <h2 class="manual-modal-title" id="mpce-modal-title"></h2>
+      <div class="mpce-tabs" id="mpce-tabs">
+        <button type="button" class="mpce-tab on" data-tab="conteudo" onclick="mpceSwitchTab('conteudo')">Conteúdo</button>
+        <button type="button" class="mpce-tab" data-tab="acao" onclick="mpceSwitchTab('acao')">Ação - CS</button>
+      </div>
+      <div class="manual-modal-content" id="mpce-modal-content"></div>
+      <button id="mpce-add-day" onclick="mpceAddDay()">+ Adicionar nova seção</button>
+      <div class="mpce-anexos" id="mpce-modal-anexos"></div>
+    </div>
+    <div class="manual-modal-footer">
+      <button class="mfb-btn cancel" id="mpce-btn-delete" onclick="mpceDeleteCard(_mpceCurrentCard)" style="margin-right:auto;color:rgba(255,95,95,.85);border-color:rgba(255,95,95,.4);display:none"><span style="font-size:14px">🗑</span> Excluir card</button>
+      <button class="mfb-btn primary" id="mpce-btn-edit" onclick="mpceEditMode()"><span style="font-size:14px">✏️</span> Editar conteúdo</button>
+      <button class="mfb-btn save" id="mpce-btn-save" onclick="mpceSaveEdits()" style="display:none"><span style="font-size:14px">💾</span> Salvar conteúdo</button>
+      <button class="mfb-btn cancel" id="mpce-btn-cancel" onclick="mpceCancelEdits()" style="display:none"><span style="font-size:14px">✕</span> Cancelar</button>
+    </div>
+  </div>
+</div>
+      </div>
+
+            <div class="page" id="page-locked">
+              <div class="manual-locked" style="display:flex">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <h3>Conteúdo protegido</h3>
+                <p id="locked-msg">Esta área contém informações restritas e está disponível apenas para usuários autenticados. Faça login para acessar.</p>
+                <button onclick="gatedLogin()">🔐 Entrar para acessar</button>
+                <button onclick="switchPage('dash')" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:9px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;text-transform:uppercase">← Voltar ao Dashboard</button>
+              </div>
+            </div>
+            <div class="page" id="page-manutencao">
+              <div class="manual-locked" style="display:flex">
+                <svg width="90" height="90" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M28 40 a22 22 0 0 1 44 0"/>
+                  <path d="M22 40 h56"/>
+                  <rect x="46" y="24" width="8" height="8" rx="1"/>
+                  <circle cx="50" cy="55" r="12"/>
+                  <path d="M32 92 v-14 a18 18 0 0 1 36 0 v14"/>
+                  <path d="M62 70 l14 10"/>
+                  <path d="M74 78 l6 4 a4 4 0 1 1 -6 6 l-4-6"/>
+                </svg>
+                <h3>Conteúdo em manutenção</h3>
+                <p id="manutencao-msg">Esta área está passando por manutenção e correções. Em breve estará disponível novamente.</p>
+                <button id="manutencao-login-btn" onclick="gatedLogin()">🔐 Entrar como administrador</button>
+                <button onclick="switchPage('dash')" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:9px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;text-transform:uppercase">← Voltar ao Dashboard</button>
+              </div>
+            </div>
+            <div class="page" id="page-nps"><div id="nv-host-pce"></div>
+
+
+<div class="nv-wrap" id="nv-wrap">
+  <div class="nv-sl">NPS — Satisfação</div>
+  <div class="nv-sub">Imersão e Hot Seats num só lugar. Cada turma da imersão é uma aba; cada hot seat é um card. Suba a pesquisa e tudo se atualiza e acumula.</div>
+
+  <div class="nv-subtabs" id="nv-subtabs">
+    <button class="nv-subtab on" data-tab="imersao">Imersão</button>
+    <button class="nv-subtab" data-tab="hotseat">Hot Seats</button>
+  </div>
+  <div class="nv-prepos hidden" id="nv-prepos">
+    <button class="nv-pp on" data-tipo="hotseat_pos">Pós-PCE</button>
+    <button class="nv-pp" data-tipo="hotseat_pre">Pré-PCE</button>
+  </div>
+
+  <div class="nv-toolbar">
+    <button class="nv-btn nv-primary" id="nv-btn-upload">＋ Subir pesquisa</button>
+    <button class="nv-btn nv-ghost" id="nv-btn-demo" style="display:none">Carregar exemplo (Renata + Iane)</button>
+  </div>
+
+  <div id="nv-content"></div>
+</div>
+
+<div class="nv-modalbg" id="nv-modal">
+  <div class="nv-modal">
+    <h3>Subir pesquisa de satisfação</h3>
+    <div class="nv-mhsub">A única coisa obrigatória é o <b>tipo</b>. O resto o sistema detecta do arquivo e você confirma.</div>
+    <div class="nv-fld"><label>Arquivo (.csv exportado do Typeform / Google Forms)</label><input type="file" id="nv-m-file" accept=".csv,text/csv"></div>
+    <div class="nv-grid2">
+      <div class="nv-fld"><label>Tipo</label><select id="nv-m-tipo"><option value="imersao">Imersão</option><option value="hotseat_pos">Hot Seat · Pós-PCE</option><option value="hotseat_pre">Hot Seat · Pré-PCE</option></select></div>
+      <div class="nv-fld"><label>Turma</label><input type="text" id="nv-m-turma" placeholder="T15" value="T15"></div>
+    </div>
+    <div class="nv-grid2">
+      <div class="nv-fld" id="nv-m-mentor-fld" style="display:none"><label>Mentor</label><select id="nv-m-mentor-sel"></select><input type="text" id="nv-m-mentor-other" placeholder="Nome do mentor" style="display:none;margin-top:8px"></div>
+      <div class="nv-fld" id="nv-m-total-fld"><label>Total de presenciais <span style="opacity:.6">(opcional)</span></label><input type="number" id="nv-m-total" placeholder="ex: 269"></div>
+      <div class="nv-fld" id="nv-m-presentes-fld" style="display:none"><label>Participantes online <span style="opacity:.6">(opcional)</span></label><input type="number" id="nv-m-presentes" placeholder="ex: 48"></div>
+      <div class="nv-fld"><label>Data</label><input type="date" id="nv-m-data"></div>
+    </div>
+    <div id="nv-m-map-wrap" style="display:none">
+      <label style="display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8a8a85;margin-bottom:6px">Mapeamento detectado (confira)</label>
+      <div class="nv-mapbox" id="nv-m-map"></div>
+      <div class="nv-warn" id="nv-m-warn"></div>
+    </div>
+    <div class="nv-mactions"><button class="nv-btn nv-ghost" id="nv-m-cancel">Cancelar</button><button class="nv-btn nv-primary" id="nv-m-confirm" disabled>Confirmar e salvar</button></div>
+  </div>
+</div>
+
+<script src="assets/js/03-nps-vivo.js?v=3.1.0"></script>
+
+      </div>
+
+      <!-- NPS Experts: hospeda o mesmo bloco #nv-wrap, movido pelo modulo. -->
+      <div class="page" id="page-experts"><div id="nv-host-experts"></div></div>
+
+      <div class="page" id="page-faq">
+        <div class="faq-hero">
+          <div class="faq-hero-title">FAQ — PCE</div>
+          <div class="faq-hero-sub">Perguntas frequentes sobre o Programa de Crescimento Empresarial</div>
+        </div>
+        <div id="faq-list"></div>
+      </div>
+
+      <!-- MANUAL — EXPERTS -->
+      <div class="page" id="page-manual">
+        <input type="file" id="manual-img-input" accept="image/*">
+        <div class="manual-locked" id="manual-locked" style="display:none">
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <h3>Conteúdo protegido</h3>
+          <p>O Manual — Experts está disponível apenas para usuários autenticados. Faça login ou crie uma conta para acessar.</p>
+          <button onclick="authShowModal('login')">🔐 Entrar para acessar</button>
+          <button onclick="switchPage('dash')" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:9px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;text-transform:uppercase">← Voltar ao Dashboard</button>
+        </div>
+        <div class="manual-loading" id="manual-loading" style="display:none">Carregando conteúdo da nuvem…</div>
+        <div class="manual-cloud-banner" id="manual-cloud-banner">
+          <strong>⚠️ Sem conexão com a nuvem.</strong> Mostrando última versão em cache. Suas edições serão perdidas até a conexão voltar.
+        </div>
+        <div id="manual-cards-view" style="display:none">
+          <div class="admin-toolbar" id="admin-toolbar">
+            <span class="admin-badge">⚙️ MODO ADMIN</span>
+            <button class="admin-toolbar-btn" onclick="manualOpenAdminsModal()">👥 Gerenciar usuários</button>
+            <button class="admin-toolbar-btn" onclick="manualOpenTrashModal()">🗑 Lixeira <span id="trash-count-inline">(0)</span></button>
+          </div>
+          <div id="manual-sections-host"></div>
+          <button class="add-section-btn" id="btn-add-section" onclick="manualPromptCreateSection()" style="display:none">+ Adicionar nova seção</button>
+        </div>
+
+        <!-- MODAL -->
+        <div class="manual-modal-overlay" id="manual-modal-overlay" onclick="manualClose(event)">
+          <div class="manual-modal" id="manual-modal">
+
+            <div class="manual-modal-hero" id="manual-modal-hero">
+              <div class="manual-modal-hero-placeholder" id="manual-modal-hero-placeholder">
+                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green);opacity:.3"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              </div>
+              <button class="manual-modal-close" onclick="manualClose()">✕</button>
+              <button class="manual-modal-upload-btn" id="manual-modal-upload-btn" onclick="manualUploadModal()">📷 Trocar foto</button>
+            </div>
+
+            <div class="manual-modal-body">
+              <div class="manual-edit-hint">
+                <strong>Modo edição ativo.</strong> Clique em qualquer texto para editar. Use os controles de cada bloco para adicionar/remover itens ou fotos. Clique em <strong>💾 Salvar conteúdo</strong> ao terminar.
+              </div>
+              <div class="manual-modal-tag" id="manual-modal-tag">Manual</div>
+              <h2 class="manual-modal-title" id="manual-modal-title"></h2>
+              <div class="manual-modal-content" id="manual-modal-content"></div>
+              <button id="manual-add-day" onclick="manualAddDay()">+ Adicionar nova seção</button>
+            </div>
+
+            <div class="manual-modal-footer">
+              <button class="mfb-btn cancel" id="manual-btn-delete" onclick="manualDeleteCard(_manualCurrentCard)" style="margin-right:auto;color:rgba(255,95,95,.85);border-color:rgba(255,95,95,.4);display:none">
+                <span style="font-size:14px">🗑</span> Excluir card
+              </button>
+              <button class="mfb-btn primary" id="manual-btn-edit" onclick="manualEditMode()">
+                <span style="font-size:14px">✏️</span> Editar conteúdo
+              </button>
+              <button class="mfb-btn save" id="manual-btn-save" onclick="manualSaveEdits()" style="display:none">
+                <span style="font-size:14px">💾</span> Salvar conteúdo
+              </button>
+              <button class="mfb-btn cancel" id="manual-btn-cancel" onclick="manualCancelEdits()" style="display:none">
+                <span style="font-size:14px">✕</span> Cancelar
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ESTOQUE PCE -->
+      
+<div class="page" id="page-admin">
+              <div class="adm-wrap">
+                <div class="adm-head">
+                  <h2>Painel ADM</h2>
+                  <p>Administração do ecossistema PCE. Área restrita a administradores.</p>
+                </div>
+                <div class="adm-tabs" id="adm-tabs">
+                  <button class="adm-tab on" data-adm="usuarios">👥 Usuários</button>
+                  <button class="adm-tab" data-adm="gerencial">📊 Gerencial</button>
+                  <button class="adm-tab" data-adm="lixeira">🗑 Lixeira</button>
+                  <button class="adm-tab" data-adm="auditoria">🎯 Auditoria</button>
+                </div>
+                <div id="adm-body"></div>
+                <div id="adm-gerencial" style="display:none">
+                  <div class="sl">🎤 Noite de Networking — Detalhamento</div>
+                  <div class="card networking-pv-card" id="networking-pv-card" style="grid-column:1/-1"><div class="ct">🎤 Noite de Networking — Detalhamento</div><div id="networking-pv-content" style="margin-top:14px"></div></div>
+                  <div class="sl" style="margin-top:22px">📋 Typeform — Pendências</div>
+                  <div class="g2">
+                    <div class="card" id="adm-tf-semret-card"><div class="ct">Sem retorno + preenchido</div><div class="cs">Pessoas em <em>sem retorno</em> que já preencheram o Typeform</div><div id="adm-tf-semret" style="margin-top:12px"></div></div>
+                    <div class="card" id="adm-tf-fora-card"><div class="ct">Preencheu Typeform · fora do Onboarding</div><div class="cs">Preencheram o dossiê mas não constam na base de onboarding</div><div id="adm-tf-fora" style="margin-top:12px"></div></div>
+                  </div>
+                  <div class="sl" id="adm-conc-sl" style="display:none;margin-top:22px">🔍 Conciliação — Cartas &amp; Frases</div>
+                  <div class="g2" id="adm-conc-grid" style="display:none">
+                    <div class="card" id="prod-conc-card" style="grid-column:1/-1"><div class="ct">🔍 Conciliação — quem precisa de carta e frase</div><div class="cs" id="prod-conc-sub">Meta = todos que preencheram o Typeform</div><div id="prod-conc" style="margin-top:12px"></div></div>
+                  </div>
+                </div>
+                <div id="adm-auditoria" style="display:none">
+                  <div class="aud-sub">Cruza certificados, cartas proféticas e TAGs com a base de credenciamento para apontar quem não compareceu — e que você não precisa separar.</div>
+                  <div class="sl">Sessão de auditoria</div>
+                  <div class="adm-card">
+                    <div class="aud-session-bar">
+                      <select id="audSessSelect"><option value="">— nova sessão —</option></select>
+                      <input type="text" id="audSessName" placeholder="Nome da sessão (ex: T15 · Imersão Agosto/2026)">
+                      <button class="aud-btn pri" id="audBtnSave">💾 Salvar sessão</button>
+                      <button class="aud-btn dang" id="audBtnDel" disabled>🗑 Excluir</button>
+                      <span class="aud-meta" id="audSessMeta"></span>
+                    </div>
+                  </div>
+                  <div class="sl">Documentos personalizados</div>
+                  <div class="aud-grid">
+                    <div class="aud-upc" data-audslot="certificados"><div class="aud-upc-top"><div><div class="aud-upc-title">🎓 Certificados</div><div class="aud-upc-desc">PDF com todos os certificados gerados.</div></div><div class="aud-pill" id="audpill-certificados">vazio</div></div><label class="aud-drop" for="audfile-certificados">Clique ou arraste o PDF</label><input type="file" id="audfile-certificados" accept=".pdf" style="display:none"><div class="aud-fi" id="audinfo-certificados" style="display:none"></div><div class="aud-fstat" id="audstat-certificados"></div></div>
+                    <div class="aud-upc" data-audslot="carta"><div class="aud-upc-top"><div><div class="aud-upc-title">✉️ Carta Profética</div><div class="aud-upc-desc">PDF ou planilha com nome de cada aluno.</div></div><div class="aud-pill" id="audpill-carta">vazio</div></div><label class="aud-drop" for="audfile-carta">Clique ou arraste o PDF / planilha</label><input type="file" id="audfile-carta" accept=".pdf,.xlsx,.xls,.csv" style="display:none"><select class="aud-shsel" id="audsheet-carta" style="display:none"></select><div class="aud-fi" id="audinfo-carta" style="display:none"></div><div class="aud-fstat" id="audstat-carta"></div></div>
+                    <div class="aud-upc" data-audslot="tag"><div class="aud-upc-top"><div><div class="aud-upc-title">🏷️ TAG</div><div class="aud-upc-desc">PDF ou planilha com nome de cada aluno.</div></div><div class="aud-pill" id="audpill-tag">vazio</div></div><label class="aud-drop" for="audfile-tag">Clique ou arraste o PDF / planilha</label><input type="file" id="audfile-tag" accept=".pdf,.xlsx,.xls,.csv" style="display:none"><select class="aud-shsel" id="audsheet-tag" style="display:none"></select><div class="aud-fi" id="audinfo-tag" style="display:none"></div><div class="aud-fstat" id="audstat-tag"></div></div>
+                  </div>
+                  <div class="sl">Base de credenciamento</div>
+                  <div class="adm-card">
+                    <div class="aud-upc" data-audslot="credenciamento" style="background:transparent;border-style:dashed"><div class="aud-upc-top"><div><div class="aud-upc-title">🎫 Credenciamento (SGE)</div><div class="aud-upc-desc">Relatório de participantes: Nome, Pacote, CPF, status.</div></div><div class="aud-pill" id="audpill-credenciamento">vazio</div></div><label class="aud-drop" for="audfile-credenciamento">Clique ou arraste a planilha</label><input type="file" id="audfile-credenciamento" accept=".xlsx,.xls,.csv" style="display:none"><select class="aud-shsel" id="audsheet-credenciamento" style="display:none"></select><div class="aud-fi" id="audinfo-credenciamento" style="display:none"></div><div class="aud-fstat" id="audstat-credenciamento"></div></div>
+                    <div id="audPacWrap" style="margin-top:16px"><div class="aud-pac-empty" id="audPacEmpty">Envie o credenciamento para ver os pacotes encontrados.</div><div class="aud-pac-grid" id="audPacGrid" style="display:none"></div><div class="aud-pac-acts" id="audPacActs" style="display:none"><button id="audPacAll">selecionar todos</button><button id="audPacNone">limpar seleção</button><button id="audPacNoStaff">todos exceto staff</button></div></div>
+                  </div>
+                  <div class="aud-run"><button class="aud-btn pri" id="audBtnRun" disabled>▶ Rodar auditoria</button></div>
+                  <div id="audResultsWrap" style="display:none"><div class="sl">Resultado da auditoria</div><div class="aud-kpi-row" id="audKpiRow"></div><div class="aud-dtabs" id="audDocTabs"></div><div id="audResSections"></div></div>
+                  <div class="aud-empty-state" id="audEmptyState"><div class="ic">🎯</div><p>Envie os documentos e a base de credenciamento, confirme os pacotes e clique em "Rodar auditoria".</p></div>
+                </div>
+              </div>
+            </div>
+            <div class="page" id="page-estoque">
+        <div class="estoque-hero">
+          <div class="estoque-hero-l">
+            <div class="estoque-hero-title">Estoque PCE</div>
+            <div class="estoque-hero-sub">Controle de materiais e brindes do programa. Edite nome e quantidade direto na lista e anexe uma foto de cada item — tudo é salvo no banco de dados.</div>
+          </div>
+          <div class="estoque-hero-stats">
+            <div class="estoque-stat"><div class="estoque-stat-num" id="estoque-stat-itens">—</div><div class="estoque-stat-lbl">Itens</div></div>
+            <div class="estoque-stat"><div class="estoque-stat-num" id="estoque-stat-novo">—</div><div class="estoque-stat-lbl">Logo Novo</div></div>
+            <div class="estoque-stat"><div class="estoque-stat-num" id="estoque-stat-atual">—</div><div class="estoque-stat-lbl">Logo Atual</div></div>
+            <div class="estoque-stat"><div class="estoque-stat-num" id="estoque-stat-fotos">—</div><div class="estoque-stat-lbl">Com foto</div></div>
+          </div>
+        </div>
+        <div class="estoque-toolbar">
+          <button class="estoque-btn" onclick="estoqueAddItem()"><span style="font-size:15px;line-height:1">＋</span> Adicionar item</button>
+          <div class="estoque-spacer"></div>
+          <span class="estoque-saved-tag" id="estoque-saved-tag">Sincronizado</span>
+          <button class="estoque-btn primary" id="estoque-save-btn" onclick="estoqueSaveAll()"><span style="font-size:14px">💾</span> Salvar</button>
+        </div>
+        <div id="estoque-list-wrap">
+          <table class="estoque-table">
+            <thead><tr>
+              <th class="c hide-sm">#</th>
+              <th>Item</th>
+              <th>Logo</th>
+              <th class="c">Qtd.</th>
+              <th class="c">Foto</th>
+              <th class="c"></th>
+            </tr></thead>
+            <tbody id="estoque-tbody"></tbody>
+          </table>
+        </div>
+        <input type="file" id="estoque-foto-input" accept="image/*" style="display:none">
+      </div>
+
+      <!-- ESTOQUE — visualizador de foto -->
+      <div class="estoque-viewer" id="estoque-viewer" onclick="estoqueCloseViewer(event)">
+        <button class="estoque-viewer-close" onclick="estoqueCloseViewer()">✕</button>
+        <div class="estoque-viewer-inner">
+          <img id="estoque-viewer-img" src="" alt="">
+          <div class="estoque-viewer-cap" id="estoque-viewer-cap"></div>
+        </div>
+      </div>
+
+      <div class="manual-toast" id="manual-toast">Salvo</div>
+
+    </div>
+  </div>
+</div>
+<script src="assets/js/04-core-dashboard.js?v=3.1.0"></script>
+
+<script src="assets/js/05-manual-pce.js?v=3.1.0"></script>
+
+
+<!-- AUTH MODAL -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-card">
+    <h2>🔐 Acessar Manual</h2>
+    <div class="auth-sub">Faça login ou crie uma conta para visualizar e editar o conteúdo.</div>
+    <button onclick="authHideModal();switchPage('dash')" style="position:absolute;top:14px;right:14px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.04em">✕ Fechar</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="auth-tab-login" onclick="authSwitchTab('login')">Entrar</button>
+      <button class="auth-tab" id="auth-tab-signup" onclick="authSwitchTab('signup')">Criar conta</button>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="auth-info" id="auth-info"></div>
+    <div id="auth-form-login">
+      <div class="auth-field"><label>E-mail</label><input type="email" id="auth-login-email" autocomplete="email" placeholder="seu@email.com"></div>
+      <div class="auth-field"><label>Senha</label>
+        <div class="auth-pw-wrap">
+          <input type="password" id="auth-login-pw" autocomplete="current-password" placeholder="••••••••">
+          <button type="button" class="auth-pw-toggle" onclick="authTogglePw('auth-login-pw',this)" title="Mostrar/ocultar senha">👁️</button>
+        </div>
+      </div>
+      <button type="button" class="auth-forgot-link" onclick="authShowForgot()">Esqueci minha senha</button>
+      <button class="auth-submit" id="auth-btn-login" onclick="authDoLogin()">Entrar</button>
+      <div class="auth-footer-msg">Não tem conta? Use a aba "Criar conta".</div>
+    </div>
+    <div id="auth-form-signup" style="display:none">
+      <div class="auth-field"><label>Nome completo</label><input type="text" id="auth-signup-name" autocomplete="name" placeholder="Como você quer aparecer no histórico"></div>
+      <div class="auth-field"><label>E-mail</label><input type="email" id="auth-signup-email" autocomplete="email" placeholder="seu@email.com"></div>
+      <div class="auth-field"><label>Senha (mínimo 6 caracteres)</label>
+        <div class="auth-pw-wrap">
+          <input type="password" id="auth-signup-pw" autocomplete="new-password" placeholder="••••••••">
+          <button type="button" class="auth-pw-toggle" onclick="authTogglePw('auth-signup-pw',this)" title="Mostrar/ocultar senha">👁️</button>
+        </div>
+      </div>
+      <button class="auth-submit" id="auth-btn-signup" onclick="authDoSignup()">Criar conta</button>
+      <div class="auth-footer-msg">Novas contas passam por aprovação de um administrador antes de liberar o acesso.</div>
+    </div>
+
+    <div id="auth-form-forgot" style="display:none">
+      <div class="auth-sub" style="margin:-8px 0 16px">Informe seu e-mail e enviaremos um link de recuperação para você criar uma nova senha.</div>
+      <div class="auth-field"><label>E-mail</label><input type="email" id="auth-forgot-email" autocomplete="email" placeholder="seu@email.com"></div>
+      <button class="auth-submit" id="auth-btn-forgot" onclick="authDoForgot()">Enviar link de recuperação</button>
+      <button type="button" class="auth-back-link" onclick="authSwitchTab('login')">← Voltar para o login</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: Criar/Editar Seção -->
+<div class="simple-modal-overlay" id="sm-section">
+  <div class="simple-modal">
+    <h2 id="sm-section-title">Nova seção</h2>
+    <div class="sm-sub">Crie uma nova seção para agrupar cards do Manual.</div>
+    <div class="sm-field"><label>Título da seção</label><input type="text" id="sm-section-input-title" placeholder="Ex: Treinamentos Internos"></div>
+    <div class="sm-field"><label>Ícone (emoji)</label><input type="text" id="sm-section-input-icon" placeholder="📚" maxlength="4"></div>
+    <div class="sm-field"><label>Tamanho dos cards</label>
+      <select id="sm-section-input-size">
+        <option value="compact">Compacto (vários cards por linha)</option>
+        <option value="large">Grande (poucos cards por linha)</option>
+      </select>
+    </div>
+    <div class="simple-modal-actions">
+      <button class="sm-btn cancel" onclick="manualCloseModal('sm-section')">Cancelar</button>
+      <button class="sm-btn primary" id="sm-section-save" onclick="manualSaveSectionFromModal()">Criar seção</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Criar Card -->
+<div class="simple-modal-overlay" id="sm-card">
+  <div class="simple-modal">
+    <h2>Novo card</h2>
+    <div class="sm-sub">Crie um novo card no Manual. Você poderá editar o conteúdo depois.</div>
+    <div class="sm-field"><label>ID do card (sem espaços, único)</label><input type="text" id="sm-card-input-id" placeholder="exemplo: meu-novo-card"></div>
+    <div class="sm-field"><label>Título</label><input type="text" id="sm-card-input-title" placeholder="Ex: Manual de Boas-vindas"></div>
+    <div class="sm-field"><label>Tag (categoria)</label><input type="text" id="sm-card-input-tag" placeholder="Manual · Programa"></div>
+    <div class="sm-field"><label>Descrição</label><input type="text" id="sm-card-input-desc" placeholder="Descrição curta"></div>
+    <input type="hidden" id="sm-card-input-section">
+    <div class="simple-modal-actions">
+      <button class="sm-btn cancel" onclick="manualCloseModal('sm-card')">Cancelar</button>
+      <button class="sm-btn primary" id="sm-card-save" onclick="manualSaveCardFromModal()">Criar card</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Lixeira -->
+<div class="simple-modal-overlay" id="sm-trash">
+  <div class="simple-modal">
+    <h2>🗑 Lixeira</h2>
+    <div class="sm-sub">Cards e seções excluídos. Você pode restaurá-los aqui.</div>
+    <div class="sm-list" id="sm-trash-list"></div>
+    <div class="simple-modal-actions">
+      <button class="sm-btn cancel" onclick="manualCloseModal('sm-trash')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Gerenciar Usuários (admins) -->
+<div class="simple-modal-overlay" id="sm-admins">
+  <div class="simple-modal" style="max-width:520px">
+    <h2>👥 Gerenciar usuários</h2>
+    <div class="sm-sub">Promova/remova privilégios de admin ou crie novos usuários.</div>
+
+    <!-- Criar novo usuário -->
+    <div id="sm-create-user-wrap" style="margin-bottom:16px">
+      <button id="sm-create-toggle" onclick="adminsToggleCreate()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.25);border-radius:9px;padding:10px 14px;color:var(--green);font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s">
+        <span>+ Criar novo usuário</span>
+        <span id="sm-create-chevron" style="font-size:14px;transition:transform .2s">▾</span>
+      </button>
+      <div id="sm-create-form" style="display:none;margin-top:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:9px;padding:16px">
+        <div class="sm-field">
+          <label>Nome completo</label>
+          <input type="text" id="sm-new-name" placeholder="Ex: João Silva" autocomplete="off">
+        </div>
+        <div class="sm-field">
+          <label>E-mail</label>
+          <input type="email" id="sm-new-email" placeholder="Ex: joao@empresa.com" autocomplete="off">
+        </div>
+        <div class="sm-field">
+          <label>Senha inicial</label>
+          <input type="password" id="sm-new-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:500;text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="sm-new-admin" style="width:14px;height:14px;accent-color:var(--green)">
+            Conceder permissão de admin
+          </label>
+        </div>
+        <div id="sm-create-msg" style="font-size:11.5px;margin-top:10px;display:none;padding:8px 12px;border-radius:7px"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+          <button class="sm-btn cancel" onclick="adminsToggleCreate(true)">Cancelar</button>
+          <button class="sm-btn primary" id="sm-create-btn" onclick="manualCreateUser()">✓ Criar usuário</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Usuários cadastrados</div>
+    <div class="sm-list" id="sm-admins-list"></div>
+    <div class="simple-modal-actions">
+      <button class="sm-btn cancel" onclick="manualCloseModal('sm-admins')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ TWEAKS (exploração de feel — só aparece quando o modo Tweaks é ativado) ═══ -->
+<!-- Painel Tweaks: React (producao) + Babel carregados sob demanda.
+     Ativacao: ?tweaks=1, Alt+Shift+T ou pceTweaksAtivar() no console. -->
+<script src="assets/js/06-tweaks-loader.js?v=3.1.0"></script>
+
+<script src="assets/js/07-credenciamento-xlsx.js?v=3.1.0"></script>
+
+<script id="fb-board" src="assets/js/08-fb-board.js?v=3.1.0"></script>
+
+<script src="assets/js/09-estoque-pce.js?v=3.1.0"></script>
+<script src="assets/js/10-reorganizacao.js?v=3.1.0"></script>
+
+<script src="assets/js/11-auditoria-personalizados.js?v=3.1.0"></script>
+</body>
+</html>
