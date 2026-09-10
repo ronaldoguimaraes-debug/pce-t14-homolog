@@ -1410,7 +1410,7 @@ const mb=document.getElementById('month-bar');if(mb){if(months[v]){mb.innerHTML=
    O codigo das outras visoes continua intacto: para trazer uma de volta, basta
    devolve-la a lista de visiveis aqui. */
 function configTurmaButtons(mode){dashMode='atual';[['br',false],['t15',false],['t16',true],['geral',false]].forEach(function(p){const b=document.getElementById('vbtn-'+p[0]);if(b)b.style.display=p[1]?'':'none';});switchView(TURMA_ATIVA);}
-var PAGINAS_RESTRITAS={nps:'NPS — PCE',admin:'Painel ADM'};
+var PAGINAS_RESTRITAS={nps:'NPS — PCE',experts:'NPS — Experts',admin:'Painel ADM'};
 function gatedLogin(){
   var pr=(typeof window.__bootstrapManual==='function')?window.__bootstrapManual():Promise.resolve();
   Promise.resolve(pr).catch(function(){}).then(function(){
@@ -1421,10 +1421,10 @@ function gatedLogin(){
 function showLockedPage(p){
   var nome=PAGINAS_RESTRITAS[p]||'Esta área';
   window.__gatedPending=p;
-  ['dash','perfil','faq','insights','manual','manual-pce','nps','estoque'].forEach(function(pg){var el=document.getElementById('page-'+pg);if(el)el.classList.remove('active');});
+  ['dash','perfil','faq','insights','manual','manual-pce','nps','experts','estoque'].forEach(function(pg){var el=document.getElementById('page-'+pg);if(el)el.classList.remove('active');});
   var lk=document.getElementById('page-locked');if(lk)lk.classList.add('active');
   var m=document.getElementById('locked-msg');if(m)m.textContent='O '+nome+' contém informações restritas e está disponível apenas para usuários autenticados. Faça login para acessar.';
-  ['dash','turmas','perfil','faq','insights','manual','manual-pce','nps','estoque'].forEach(function(nv){var el=document.getElementById('nav-'+nv);if(el)el.classList.toggle('active',nv===p);});
+  ['dash','turmas','perfil','faq','insights','manual','manual-pce','nps','experts','estoque'].forEach(function(nv){var el=document.getElementById('nav-'+nv);if(el)el.classList.toggle('active',nv===p);});
   var t=document.getElementById('page-title');if(t)t.textContent=nome;
   try{var sw=document.getElementById('view-switch');if(sw)sw.style.display='none';}catch(e){}
 }
@@ -1440,20 +1440,21 @@ function switchPage(p){
   if(p==='turmas'){
     window.__gatedPending=null;
     try{analyticsPageEnter(p);}catch(e){}
-    ['dash','perfil','faq','insights','manual','manual-pce','nps','estoque','locked','admin'].forEach(function(pg){var el=document.getElementById('page-'+pg);if(el)el.classList.remove('active');});
+    ['dash','perfil','faq','insights','manual','manual-pce','nps','experts','estoque','locked','admin'].forEach(function(pg){var el=document.getElementById('page-'+pg);if(el)el.classList.remove('active');});
     var mp=document.getElementById('page-manutencao');if(mp)mp.classList.add('active');
     var mLogged=(typeof authIsLogged==='function' && authIsLogged());
     var mBtn=document.getElementById('manutencao-login-btn');if(mBtn)mBtn.style.display=mLogged?'none':'';
     var mMsg=document.getElementById('manutencao-msg');if(mMsg)mMsg.textContent='Esta área está sendo reconstruída. Em breve com o novo formato.';
     var mBtn2=document.getElementById('manutencao-login-btn');if(mBtn2)mBtn2.style.display='none';
-    ['dash','turmas','perfil','faq','insights','manual','manual-pce','nps','estoque','admin'].forEach(function(nv){var nav=document.getElementById('nav-'+nv);if(nav)nav.classList.toggle('active',nv===p);});
+    ['dash','turmas','perfil','faq','insights','manual','manual-pce','nps','experts','estoque','admin'].forEach(function(nv){var nav=document.getElementById('nav-'+nv);if(nav)nav.classList.toggle('active',nv===p);});
     var vb=document.getElementById('view-btns-container');if(vb)vb.style.display='none';
     var mt=document.getElementById('page-title');if(mt)mt.textContent='Turmas — Histórico';
     var mb=document.getElementById('month-bar');if(mb)mb.style.display='none';
     return;
   }
   window.__gatedPending=null;
-  try{analyticsPageEnter(p);}catch(e){}const isTurmas=(p==='turmas');const pageEl=isTurmas?'dash':p;const activePages=isTurmas?['dash','perfil','insights']:[pageEl];['dash','perfil','faq','insights','manual','manual-pce','nps','estoque','locked','admin'].forEach(pg=>{const el=document.getElementById('page-'+pg);if(el)el.classList.toggle('active',activePages.includes(pg));});const dashPg=document.getElementById('page-dash');if(dashPg){dashPg.classList.toggle('mode-turmas',isTurmas);dashPg.classList.toggle('mode-atual',!isTurmas);}var _pp=document.getElementById('page-perfil');if(_pp)_pp.classList.toggle('standalone',p==='perfil');var _pb=document.getElementById('perfil-body');if(_pb)_pb.style.display='';var _pi=document.getElementById('page-insights');if(_pi)_pi.classList.remove('as-subtab');['dash','turmas','perfil','faq','insights','manual','manual-pce','nps','estoque','admin'].forEach(nv=>{const nav=document.getElementById('nav-'+nv);if(nav)nav.classList.toggle('active',nv===p);});const isDashLike=(p==='dash'||isTurmas);const showSwitch=(isDashLike||p==='perfil'||p==='insights');const viewBtns=document.getElementById('view-btns-container');if(viewBtns)viewBtns.style.display=showSwitch?'flex':'none';const titles={dash:'Dashboard',turmas:'Turmas — Histórico',perfil:'Perfil da Turma',faq:'FAQ — PCE',insights:'Insights Correlacionais',manual:'Manual — Experts','manual-pce':'Manual — PCE','nps':'NPS — PCE','estoque':'Estoque PCE','admin':'Painel ADM'};const titleEl=document.getElementById('page-title');if(titleEl)titleEl.textContent=titles[p]||'';if(showSwitch)configTurmaButtons(isTurmas?'turmas':'dash');if(isTurmas){try{switchView('br');}catch(e){}setTimeout(()=>{try{buildPerfil();}catch(e){}try{if(window.renderInsightsCorrelacionais)window.renderInsightsCorrelacionais();}catch(e){}},150);}else if(p==='dash'){if(store.meta.currentView!==TURMA_ATIVA){try{switchView(TURMA_ATIVA);}catch(e){}}}else if(p==='perfil'){try{showPerfilSub('perfil');}catch(e){}try{buildPerfil();}catch(e){}}if(p==='manual'){manualBootCloud();}else if(p==='manual-pce'){if(typeof mpceBootCloud==='function')mpceBootCloud();}else if(p==='estoque'){if(typeof estoqueBootCloud==='function')estoqueBootCloud();}else if(p==='admin'){if(typeof admBoot==='function')admBoot();}}
+  try{analyticsPageEnter(p);}catch(e){}const isTurmas=(p==='turmas');const pageEl=isTurmas?'dash':p;const activePages=isTurmas?['dash','perfil','insights']:[pageEl];['dash','perfil','faq','insights','manual','manual-pce','nps','experts','estoque','locked','admin'].forEach(pg=>{const el=document.getElementById('page-'+pg);if(el)el.classList.toggle('active',activePages.includes(pg));});const dashPg=document.getElementById('page-dash');if(dashPg){dashPg.classList.toggle('mode-turmas',isTurmas);dashPg.classList.toggle('mode-atual',!isTurmas);}var _pp=document.getElementById('page-perfil');if(_pp)_pp.classList.toggle('standalone',p==='perfil');var _pb=document.getElementById('perfil-body');if(_pb)_pb.style.display='';var _pi=document.getElementById('page-insights');if(_pi)_pi.classList.remove('as-subtab');['dash','turmas','perfil','faq','insights','manual','manual-pce','nps','experts','estoque','admin'].forEach(nv=>{const nav=document.getElementById('nav-'+nv);if(nav)nav.classList.toggle('active',nv===p);});const isDashLike=(p==='dash'||isTurmas);const showSwitch=(isDashLike||p==='perfil'||p==='insights');const viewBtns=document.getElementById('view-btns-container');if(viewBtns)viewBtns.style.display=showSwitch?'flex':'none';const titles={dash:'Dashboard',turmas:'Turmas — Histórico',perfil:'Perfil da Turma',faq:'FAQ — PCE',insights:'Insights Correlacionais',manual:'Manual — Experts','manual-pce':'Manual — PCE','nps':'NPS — PCE','experts':'NPS — Experts','estoque':'Estoque PCE','admin':'Painel ADM'};const titleEl=document.getElementById('page-title');if(titleEl)titleEl.textContent=titles[p]||'';if(showSwitch)configTurmaButtons(isTurmas?'turmas':'dash');if(isTurmas){try{switchView('br');}catch(e){}setTimeout(()=>{try{buildPerfil();}catch(e){}try{if(window.renderInsightsCorrelacionais)window.renderInsightsCorrelacionais();}catch(e){}},150);}else if(p==='dash'){if(store.meta.currentView!==TURMA_ATIVA){try{switchView(TURMA_ATIVA);}catch(e){}}}else if(p==='perfil'){try{showPerfilSub('perfil');}catch(e){}try{buildPerfil();}catch(e){}}if(p==='nps'||p==='experts'){if(typeof window.__npsMount==='function')window.__npsMount(p==='experts'?'experts':'pce',p==='experts'?'nv-host-experts':'nv-host-pce');}
+if(p==='manual'){manualBootCloud();}else if(p==='manual-pce'){if(typeof mpceBootCloud==='function')mpceBootCloud();}else if(p==='estoque'){if(typeof estoqueBootCloud==='function')estoqueBootCloud();}else if(p==='admin'){if(typeof admBoot==='function')admBoot();}}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
 function refreshManual(){Loader.show('Atualizando');const btn=document.getElementById('btnR');if(btn){btn.disabled=true;btn.classList.add('spinning');}const safetyTimer=setTimeout(()=>{if(btn){btn.disabled=false;btn.classList.remove('spinning');}setStatus('neu','Pronto');},10000);fetchAllData(false).finally(()=>{clearTimeout(safetyTimer);if(btn){btn.disabled=false;btn.classList.remove('spinning');}});}
 /* Perfil standalone (aba "Perfil da Turma") = template vazio para T15; Turmas = dados T14 */
@@ -3992,7 +3993,7 @@ async function authDoLogout(){
   try{ if(typeof window.__npsReboot==='function') window.__npsReboot(); }catch(e){}
   try{ if(typeof admSyncNav==='function') admSyncNav(); }catch(e){}
   try{
-    var _act=['nps'].filter(function(pg){var el=document.getElementById('page-'+pg);return el&&el.classList.contains('active');});
+    var _act=['nps','experts'].filter(function(pg){var el=document.getElementById('page-'+pg);return el&&el.classList.contains('active');});
     var _dashTurmas=document.getElementById('page-dash');
     var _emTurmas=_dashTurmas&&_dashTurmas.classList.contains('mode-turmas');
     if(_act.length||_emTurmas) switchPage('dash');

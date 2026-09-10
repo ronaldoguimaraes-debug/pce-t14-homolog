@@ -95,7 +95,10 @@
   ];
   var byDate=function(a,b){return String(a.data_encontro||'').localeCompare(String(b.data_encontro||''));};
   function imersaoList(){
-    var stored=STATE.all.filter(function(e){return e.tipo==='imersao';});
+    var stored=STATE.all.filter(function(e){return e.tipo===tipoIM();});
+    /* As baselines PCE 10 a 14 sao imersoes do PCE. No escopo Experts a lista
+       comeca vazia e so cresce com o que for enviado. */
+    if(ehExperts())return stored.slice().sort(byDate);
     var base={}; BASELINE.forEach(function(b){base[b.label]=b;});
     /* Ao sobrescrever uma baseline, herda os campos curados que a tabela não guarda
        (fortes/melhoria/sub) para não perder o conteúdo editorial. */
@@ -268,13 +271,22 @@
   /* ---------- render ---------- */
   var charts=[];function killCharts(){charts.forEach(function(c){try{c.destroy();}catch(e){}});charts.length=0;}
   var STATE={all:[],tab:'imersao',tipo:'hotseat_pos',imTurma:null};
-  var currentTipo=function(){return STATE.tab==='imersao'?'imersao':STATE.tipo;};
+
+  /* ─── Escopo ────────────────────────────────────────────────────────────────
+     'pce' e a tela de sempre, com Imersao e Hot Seats. 'experts' e a aba NPS
+     Experts: mesma estrutura, so a Imersao, e dados proprios sob o tipo
+     'imersao_experts'. O modulo e um so; o que muda e o escopo e onde o bloco
+     #nv-wrap esta montado. Nenhuma tabela nova no Supabase. */
+  var SCOPE='pce';
+  function tipoIM(){return SCOPE==='experts'?'imersao_experts':'imersao';}
+  function ehExperts(){return SCOPE==='experts';}
+  var currentTipo=function(){return STATE.tab==='imersao'?tipoIM():STATE.tipo;};
   function barRow(label,score,max){var c=scoreColor(score,max);return '<div class="nv-mrow"><div class="nv-mlbl">'+label+'</div><div class="nv-mbar"><div class="nv-mfill" style="width:'+(score/max*100).toFixed(0)+'%;background:'+c+'"></div></div><div class="nv-msc" style="color:'+c+'">'+fmt(score)+'</div></div>';}
 
   function render(){
     killCharts();
     var tipo=currentTipo();
-    if(tipo==='imersao'){renderImersao(imersaoList());return;}
+    if(tipo===tipoIM()){renderImersao(imersaoList());return;}
     var list=STATE.all.filter(function(e){return e.tipo===tipo;}).sort(byDate);
     renderHotseat(list);
   }
@@ -705,17 +717,23 @@
   (function(){var sel=$('nv-m-mentor-sel');sel.innerHTML='<option value="">Selecione o mentor…</option>'+MENTORES.map(function(m){return '<option value="'+m+'">'+m+'</option>';}).join('')+'<option value="__outro">Outro…</option>';sel.addEventListener('change',function(){$('nv-m-mentor-other').style.display=sel.value==='__outro'?'':'none';});$('nv-m-tipo').addEventListener('change',function(){toggleFields();if(LAST_CSV)processFile(LAST_CSV);});})();
   function toggleFields(){var im=$('nv-m-tipo').value==='imersao';$('nv-m-mentor-fld').style.display=im?'none':'';$('nv-m-total-fld').style.display=im?'':'none';var pf=$('nv-m-presentes-fld');if(pf)pf.style.display=im?'none':'';}
   function mentorValue(){var s=$('nv-m-mentor-sel').value;return s==='__outro'?$('nv-m-mentor-other').value.trim():s;}
-  function openModal(){modal.classList.add('on');$('nv-m-tipo').value=currentTipo()==='imersao'?'imersao':STATE.tipo;toggleFields();}
+  function openModal(){
+    modal.classList.add('on');
+    var sel=$('nv-m-tipo');
+    if(ehExperts()){sel.value='imersao';sel.disabled=true;}
+    else{sel.disabled=false;sel.value=(STATE.tab==='imersao')?'imersao':STATE.tipo;}
+    toggleFields();
+  }
   function closeModal(){modal.classList.remove('on');PENDING=null;LAST_CSV='';$('nv-m-file').value='';$('nv-m-mentor-sel').value='';$('nv-m-mentor-other').value='';$('nv-m-mentor-other').style.display='none';var pv=$('nv-m-presentes');if(pv)pv.value='';$('nv-m-map-wrap').style.display='none';$('nv-m-confirm').disabled=true;}
   $('nv-btn-upload').onclick=openModal;$('nv-m-cancel').onclick=closeModal;modal.addEventListener('click',function(e){if(e.target===modal)closeModal();});
   $('nv-m-file').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){LAST_CSV=rd.result;processFile(LAST_CSV);};rd.readAsText(f,'UTF-8');});
   function processFile(text){var warn=$('nv-m-warn');warn.textContent='';try{var rows=parseCSV(text);if(rows.length<2){warn.textContent='Arquivo sem respostas.';return;}var im=$('nv-m-tipo').value==='imersao';PENDING=im?analyzeImersao(rows):analyzeHotseat(rows);$('nv-m-map').innerHTML=PENDING.mapping.map(function(mp){var cls=mp.role==='scale'?'nv-r-scale':mp.role==='pos'?'nv-r-pos':mp.role==='neg'?'nv-r-neg':'nv-r-ignore';return '<div class="nv-maprow"><div class="nv-mapq" title="'+esc(mp.header)+'">'+(esc(mp.header)||'(sem título)')+'</div><div class="nv-maprole '+cls+'">'+mp.txt+'</div></div>';}).join('');$('nv-m-map-wrap').style.display='';var ok=im?(PENDING.recomenda!=null||PENDING.palestrantes.length||PENDING.experiencia.length):PENDING.order.length;$('nv-m-confirm').disabled=!ok;if(!ok)warn.textContent=im?'⚠ Nenhuma nota (0–10) detectada.':'⚠ Nenhuma coluna de nota detectada.';}catch(err){warn.textContent='Erro ao ler CSV: '+err.message;}}
   $('nv-m-confirm').onclick=async function(){if(!PENDING)return;var tipo=$('nv-m-tipo').value,turma=$('nv-m-turma').value.trim(),data=$('nv-m-data').value||new Date().toISOString().slice(0,10),row;
-    if(PENDING._im){row={tipo:'imersao',turma:turma,label:turma,sub:'',data_encontro:data,resps:PENDING.n,total:+$('nv-m-total').value||null,recomenda:PENDING.recomenda,palestrantes:PENDING.palestrantes,experiencia:PENDING.experiencia,comentarios:PENDING.comentarios,created_by_name:'admin'};}
+    if(PENDING._im){row={tipo:tipoIM(),turma:turma,label:turma,sub:'',data_encontro:data,resps:PENDING.n,total:+$('nv-m-total').value||null,recomenda:PENDING.recomenda,palestrantes:PENDING.palestrantes,experiencia:PENDING.experiencia,comentarios:PENDING.comentarios,created_by_name:'admin'};}
     else{row={tipo:tipo,turma:turma,mentor:mentorValue(),data_encontro:data,n_respostas:PENDING.n,total:+$('nv-m-presentes').value||null,metricas:PENDING.metricas,order:PENDING.order,mainKey:PENDING.mainKey,comentarios:PENDING.comentarios,created_by_name:'admin'};}
     var _saved=await insertRow(row);
     if(_saved&&_saved.__local){alert('ATENÇÃO: este encontro foi salvo APENAS neste navegador (localStorage) — NÃO foi para o Supabase.\n\nMotivo: '+(window.__npsLastErr||'desconhecido')+'\n\nOutras pessoas não vão ver este dado e ele some se o navegador for limpo. Verifique se você está logado com um usuário admin e suba a pesquisa novamente.');}
-    closeModal();if(tipo==='imersao'){STATE.tab='imersao';STATE.imTurma=null;}else{STATE.tab='hotseat';STATE.tipo=tipo;}syncTabs();boot();};
+    closeModal();if(tipo==='imersao'||tipo==='imersao_experts'){STATE.tab='imersao';STATE.imTurma=null;}else{STATE.tab='hotseat';STATE.tipo=tipo;}syncTabs();boot();};
 
   /* ---------- demo hot seats (Renata + Iane, dados reais) ---------- */
   var DEMO_RENATA='Carimbo de data/hora,Você ficou satisfeito com o encontro?,O encontro foi relevante e útil para sua empresa?,Quais foram os pontos mais importantes do encontro,Você ficou satisfeito com o conteúdo do encontro?,Nome (opcional)\n11/06/2026 11:39:42,5,5,Vibracao personagem coach,5,Regina Kerber\n11/06/2026 11:41:14,1,1,,1,\n11/06/2026 11:41:26,1,1,Esperava mais do encontro nao foi pratico ficou muito na conversa,1,\n11/06/2026 11:41:55,5,4,sugestoes de pontos a melhorar,4,Adair Carvalho\n11/06/2026 11:41:56,4,5,Excelencia construida por pequenas decisoes cultura,4,Abimael\n11/06/2026 11:42:38,2,2,Nao contribuiu com todos os presentes tema pouco amplo,2,\n11/06/2026 11:46:16,5,5,liberdade de comunicacao interatividade e cases reais,5,Marcio\n11/06/2026 11:55:23,3,2,As percepcoes da Renata,3,Marta\n11/06/2026 11:56:28,4,4,Situacoes chaves que abriram portas,5,Leandro\n11/06/2026 12:11:41,3,3,empresarios dando solucoes uns para os outros,3,Eliss\n11/06/2026 12:34:49,5,5,Escutar as empresas e dicas que cabem pra nos,5,Maria Jonilde\n11/06/2026 12:52:08,3,3,pensei que fosse mais implementacao do que conteudo,3,Luciana\n11/06/2026 14:22:09,5,5,Insights com a participacao dos alunos e dicas da Renata,5,Rosa\n11/06/2026 15:13:15,5,5,Troca de experiencia entre os alunos falar e ouvir,5,Vanessa\n12/06/2026 13:41:30,1,2,Pouco conteudo e muita conversa,2,\n12/06/2026 15:51:37,4,4,Estrategias para alavancar vendas,4,Marcos';
@@ -759,7 +777,7 @@
      certo na leitura, sem reescrever nada no Supabase, e ordenados por nota. */
   function normalizeIM(list){
     list.forEach(function(e){
-      if(!e||!e._im&&e.tipo!=='imersao')return;
+      if(!e||!e._im&&e.tipo!=='imersao'&&e.tipo!=='imersao_experts')return;
       if(e.__normIM)return;
       var pal=(e.palestrantes||[]).slice(),exp=[];
       (e.experiencia||[]).forEach(function(it){
@@ -773,6 +791,32 @@
       e.__normIM=true;
     });
   }
+  /* Move o bloco da tela para a pagina pedida e ajusta o escopo. Mover o no
+     preserva listeners; nada e recriado. O modal e fixo em tela cheia, entao vai
+     uma vez para o body e nunca mais precisa acompanhar. */
+  window.__npsMount=function(escopo,hostId){
+    try{
+      var wrap=document.getElementById('nv-wrap');
+      var host=document.getElementById(hostId);
+      if(wrap&&host&&wrap.parentNode!==host)host.appendChild(wrap);
+      var md=document.getElementById('nv-modal');
+      if(md&&md.parentNode!==document.body)document.body.appendChild(md);
+      SCOPE=(escopo==='experts')?'experts':'pce';
+      var sl=document.querySelector('#nv-wrap .nv-sl'),sb=document.querySelector('#nv-wrap .nv-sub');
+      if(sl)sl.textContent=ehExperts()?'NPS \u2014 Experts':'NPS \u2014 Satisfa\u00e7\u00e3o';
+      if(sb)sb.textContent=ehExperts()
+        ?'Avalia\u00e7\u00e3o das imers\u00f5es pelos experts. Cada turma \u00e9 uma aba. Suba a pesquisa e tudo se atualiza e acumula.'
+        :'Imers\u00e3o e Hot Seats num s\u00f3 lugar. Cada turma da imers\u00e3o \u00e9 uma aba; cada hot seat \u00e9 um card. Suba a pesquisa e tudo se atualiza e acumula.';
+      /* No escopo Experts existe so a Imersao: as abas e o seletor Pre/Pos somem. */
+      var st=document.getElementById('nv-subtabs');if(st)st.style.display=ehExperts()?'none':'';
+      if(ehExperts()){
+        STATE.tab='imersao';STATE.imTurma=null;
+        var pp=document.getElementById('nv-prepos');if(pp)pp.classList.add('hidden');
+      }
+      try{syncTabs();}catch(e){}
+      boot();
+    }catch(e){if(window.console)console.warn('[NPS] mount: '+e.message);}
+  };
   async function boot(){STATE.all=await listAll();normalizeHS(STATE.all);normalizeIM(STATE.all);normalizeIM(BASELINE);render();try{syncDemoBtn();}catch(e){}}
   $('nv-m-data').value=new Date().toISOString().slice(0,10);
   syncTabs();boot();
