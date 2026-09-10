@@ -182,6 +182,14 @@
     if(/coffee/.test(h))return 'Coffee Break';
     if(/noite de networking|satisfeito.*networking/.test(h))return 'Noite de Networking';
     if(/networking.*(util|vivenciado)/.test(h))return 'Networking p/ negócio';
+    /* Formulacoes do formulario online (PCIA e afins), que antes caiam no corte de
+       34 caracteres e viravam rotulo truncado com reticencias. */
+    if(/satisfeito.*conteudo|satisfacao.*conteudo|conteudo abordado/.test(h))return 'Satisfação com o conteúdo';
+    if(/treinador|instrutor|facilitador|mentor do treinamento/.test(h))return 'Treinador';
+    if(/conexoes|trocas de experiencia|troca de experiencia/.test(h))return 'Conexões e trocas';
+    if(/plataforma|transmissao|qualidade de (audio|video|imagem)/.test(h))return 'Plataforma e transmissão';
+    if(/suporte|atendimento/.test(h))return 'Suporte e atendimento';
+    if(/duracao|tempo de|carga horaria|ritmo/.test(h))return 'Duração e ritmo';
     var c=header.replace(/em uma escala de 0 a 10,?/i,'').replace(/considere.*$/i,'').replace(/[?*]/g,'').trim();
     return c.length>34?c.slice(0,34)+'…':c;}
   function analyzeImersao(rows){
@@ -199,7 +207,7 @@
           else{var lb=expLabel(c.header);experiencia.push({label:lb,score:avg});mapping.push({header:c.header,role:'scale',txt:'EXPERIÊNCIA · '+lb});}
         }
       }else{
-        if(/melhorar|melhoria|sugest|negativ|pior/.test(h)){c.values.forEach(function(v){var t=String(v).trim();if(t&&!/^(nada|nao|não|-|n\/a)\.?$/i.test(t))melhoria.push(t);});mapping.push({header:c.header,role:'neg',txt:'MELHORIA'});}
+        if(/melhorar|melhorad|melhoria|aprimor|sugest|negativ|pior|o que faltou|critica|dificuldade/.test(h)){c.values.forEach(function(v){var t=String(v).trim();if(t&&!/^(nada|nao|não|-|n\/a)\.?$/i.test(t))melhoria.push(t);});mapping.push({header:c.header,role:'neg',txt:'MELHORIA'});}
         else if(/gostou|forte|positiv|destaque|importante|melhor.*(evento|palestr)|aprend|marcou/.test(h)){c.values.forEach(function(v){var t=String(v).trim();if(t)positivos.push(t);});mapping.push({header:c.header,role:'pos',txt:'COMENTÁRIO +'});}
         else mapping.push({header:c.header,role:'ignore',txt:'ignorado'});
       }});
