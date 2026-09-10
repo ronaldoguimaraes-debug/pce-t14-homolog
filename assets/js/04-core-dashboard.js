@@ -1399,7 +1399,12 @@ function switchView(v){if(!['br','t15','t16','geral'].includes(v)){Logger.error(
  var _ft=document.getElementById('fb-turma'),_fn=document.getElementById('fb-turma-n'),_fm=document.getElementById('fb-turma-m');
  if(_fn)_fn.textContent=_sig;
  if(_fm)_fm.textContent=(v==='geral')?'Vis\u00e3o geral':(months[v]||'');
- if(_ft)_ft.style.display=_sig?'':'none';})();
+ if(_ft)_ft.style.display=_sig?'':'none';
+ /* O subtitulo da Confirmacao de Presenca acompanha o mes da turma ativa,
+    em vez do "Agosto" fixo que tinha ficado da T15. */
+ var _cs=document.getElementById('cConf-sub');
+ if(_cs){var _mes=months[v]||'';_cs.textContent='Resposta ao Typeform \u2014 participa\u00e7\u00e3o confirmada'+(_mes?(' em '+_mes):' na imers\u00e3o');}
+})();
 const mb=document.getElementById('month-bar');if(mb){if(months[v]){mb.innerHTML='<span class="mb-turma">'+(v==='br'?'T14':v.toUpperCase())+'</span><span class="mb-kicker">Imersão de</span><span class="mb-month">'+months[v]+'</span>';mb.style.display='flex';}else{mb.style.display='none';}}renderCurrentView();}
 /* LOTE 2 · so a T16 aparece. Os botoes de T14, T15 e PCE Geral ficam ocultos.
    O codigo das outras visoes continua intacto: para trazer uma de volta, basta

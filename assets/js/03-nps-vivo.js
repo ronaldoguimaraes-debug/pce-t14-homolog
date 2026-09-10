@@ -211,7 +211,7 @@
     var mainKey=metricas.satisfacao?'satisfacao':order[0];
     return {n:data.length,metricas:metricas,order:order,mainKey:mainKey,comentarios:{positivos:positivos,melhoria:melhoria},mapping:mapping};
   }
-  var STOP={};'a o e de da do das dos que com para por em no na nos nas um uma os as se ao aos foi ser sao são muito mais menos meu minha nosso nossa ele ela eles elas isso este esta the and eu voce você tudo todo toda todos todas ja já nao não sim como qual quais onde quando pra pro sobre entre tem ter teve era esta está fazer feito'.split(' ').forEach(function(w){STOP[w]=1;});
+  var STOP={};'a o e de da do das dos que com para por em no na nos nas um uma os as se ao aos foi ser sao são muito mais menos meu minha nosso nossa ele ela eles elas isso este esta the and eu voce você tudo todo toda todos todas ja já nao não sim como qual quais onde quando pra pro sobre entre tem ter teve era esta está fazer feito ainda caraca nossa poxa entao então apenas pouco bastante sempre nunca porem porém desde tambem também assim depois antes cada outro outra ate até quase talvez'.split(' ').forEach(function(w){STOP[w]=1;});
   function temas(list,n){n=n||4;var f={};list.forEach(function(t){norm(t).replace(/[^a-z\s]/g,' ').split(/\s+/).forEach(function(w){if(w.length>=4&&!STOP[w])f[w]=(f[w]||0)+1;});});return Object.keys(f).map(function(k){return [k,f[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,n).map(function(x){return x[0];});}
   /* Nem toda pesquisa de hot seat tem pergunta de nota em escala. O Pre-PCE, por exemplo,
      mede itens categoricos (dificuldade de preencher formulario, erro sistemico). Nesses casos
