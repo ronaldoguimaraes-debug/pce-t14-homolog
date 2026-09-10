@@ -542,9 +542,10 @@
                 </div>
                 <div id="adm-body"></div>
                 <div id="adm-gerencial" style="display:none">
-                  <div class="sl">🎤 Noite de Networking — Detalhamento</div>
-                  <div class="card networking-pv-card" id="networking-pv-card" style="grid-column:1/-1"><div class="ct">🎤 Noite de Networking — Detalhamento</div><div id="networking-pv-content" style="margin-top:14px"></div></div>
-                  <div class="sl" style="margin-top:22px">📋 Typeform — Pendências</div>
+                  <!-- LOTE 5 · o detalhamento da Noite de Networking era da T15. A T16 ainda
+                       nao tem formulario proprio, entao o bloco sai da tela. O render
+                       renderNetworkingPV ja e tolerante a ausencia do elemento. -->
+                  <div class="sl">📋 Typeform — Pendências</div>
                   <div class="g2">
                     <div class="card" id="adm-tf-semret-card"><div class="ct">Sem retorno + preenchido</div><div class="cs">Pessoas em <em>sem retorno</em> que já preencheram o Typeform</div><div id="adm-tf-semret" style="margin-top:12px"></div></div>
                     <div class="card" id="adm-tf-fora-card"><div class="ct">Preencheu Typeform · fora do Onboarding</div><div class="cs">Preencheram o dossiê mas não constam na base de onboarding</div><div id="adm-tf-fora" style="margin-top:12px"></div></div>
