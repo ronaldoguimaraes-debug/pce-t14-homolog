@@ -134,6 +134,12 @@
   <div class="main">
     <div class="content">
       <div class="float-bar" id="float-bar">
+        <!-- Turma ativa: com uma unica turma na tela, o cabecalho diz qual e. -->
+        <div class="fb-turma" id="fb-turma">
+          <span class="fb-turma-tag">Turma ativa</span>
+          <span class="fb-turma-n" id="fb-turma-n">T16</span>
+          <span class="fb-turma-m" id="fb-turma-m">Novembro</span>
+        </div>
         <span class="ts">Atualizado: <b id="ts">—</b></span>
         <button class="btn" id="btnR" onclick="refreshManual()">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -221,7 +227,7 @@
 
         
         <div class="g2" style="margin-top:0">
-          <div class="card"><div class="ct">Confirmação de Presença</div><div class="cs">Resposta ao Typeform — participação confirmada em Agosto</div><div style="position:relative;height:180px"><canvas id="cConf"></canvas></div><div class="leg" id="lConf"></div></div>
+          <div class="card"><div class="ct">Confirmação de Presença</div><div class="cs" id="cConf-sub">Resposta ao Typeform — participação confirmada na imersão</div><div style="position:relative;height:180px"><canvas id="cConf"></canvas></div><div class="leg" id="lConf"></div></div>
           <div class="card"><div class="ct">Maturidade em IA</div><div class="cs">Nível de conhecimento e utilização de IA (1 = iniciante · 5 = avançado)</div><div style="position:relative;height:180px"><canvas id="cIA"></canvas></div></div>
         </div>
 
