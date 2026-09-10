@@ -150,6 +150,26 @@
   window.__npsReboot=function(){try{STATE.all=[];boot();}catch(e){}};
 
   /* ---------- parsers ---------- */
+  /* Itens de estrutura e experiencia do evento. Qualquer coluna que bata aqui NUNCA
+     e tratada como nome de palestrante, mesmo que pareca. */
+  var EXP_KEYS=/networking|material|ferramenta|espaco|ilumina|\bsom\b|staff|coffee|cafe|alimenta|comida|almoco|jantar|credenciamento|organiza|estrutura|\blocal\b|hotel|\bsala\b|aplicativo|\bapp\b|suporte|atendimento|recep|sinaliza|limpeza|banheiro|estacionamento|conteudo|didatico|experiencia|evento|palco|audio|video|tradu|transmiss|pontualidade|cronograma|brinde|kit|\bmesa\b|cadeira|climatiza|ar condicionado/;
+
+  /* Um cabecalho que e so o nome de uma pessoa: duas a cinco palavras, cada uma comecando
+     em maiuscula (ou sendo conectivo / "&"), sem numeros, e que nao caia na lista acima.
+     Cobre "Tiago Zanin", "Renatta Rezende", "Buzulin & A. Oliveira". */
+  function nomePalestrante(header){
+    var t=String(header||'').replace(/\s*\?.*$/,'')
+      .replace(/^\s*(avalie|avaliacao de|avaliação de|nota (para|de)|como voce avalia|como você avalia)\s+/i,'')
+      .replace(/\s*\(.*?\)\s*$/,'').trim();
+    if(!t||t.length>44||/\d/.test(t))return null;
+    if(EXP_KEYS.test(norm(t)))return null;
+    var w=t.split(/\s+/).filter(Boolean);
+    if(w.length<2||w.length>5)return null;
+    var conectivo=/^(e|de|da|do|dos|das|&)$/i;
+    var ok=w.every(function(x){return conectivo.test(x)||/^[&A-Z\u00c0-\u00dd]/.test(x);});
+    return ok?t:null;
+  }
+
   function palestranteName(header){var m=header.match(/palestrante\s+(.+?)\s*\?/i)||header.match(/palestrante\s+([^?.,]+)/i);return m?m[1].trim():header.slice(0,30);}
   function expLabel(header){var h=norm(header);
     if(/material didatico/.test(h))return 'Material Didático';
@@ -170,7 +190,11 @@
       if(isScaleCol(c.values)){var avg=avgOf(c.values);
         if(/recomenda/.test(h)){recomenda=avg;mapping.push({header:c.header,role:'scale',txt:'RECOMENDAÇÃO'});}
         else if(/palestrante/.test(h)){var nm=palestranteName(c.header);palestrantes.push({label:nm,score:avg});mapping.push({header:c.header,role:'scale',txt:'PALESTRANTE · '+nm});}
-        else{var lb=expLabel(c.header);experiencia.push({label:lb,score:avg});mapping.push({header:c.header,role:'scale',txt:'EXPERIÊNCIA · '+lb});}
+        else{
+          var _nm2=nomePalestrante(c.header);
+          if(_nm2){palestrantes.push({label:_nm2,score:avg});mapping.push({header:c.header,role:'scale',txt:'PALESTRANTE · '+_nm2});}
+          else{var lb=expLabel(c.header);experiencia.push({label:lb,score:avg});mapping.push({header:c.header,role:'scale',txt:'EXPERIÊNCIA · '+lb});}
+        }
       }else{
         if(/melhorar|melhoria|sugest|negativ|pior/.test(h)){c.values.forEach(function(v){var t=String(v).trim();if(t&&!/^(nada|nao|não|-|n\/a)\.?$/i.test(t))melhoria.push(t);});mapping.push({header:c.header,role:'neg',txt:'MELHORIA'});}
         else if(/gostou|forte|positiv|destaque|importante|melhor.*(evento|palestr)|aprend|marcou/.test(h)){c.values.forEach(function(v){var t=String(v).trim();if(t)positivos.push(t);});mapping.push({header:c.header,role:'pos',txt:'COMENTÁRIO +'});}
@@ -211,7 +235,7 @@
     var mainKey=metricas.satisfacao?'satisfacao':order[0];
     return {n:data.length,metricas:metricas,order:order,mainKey:mainKey,comentarios:{positivos:positivos,melhoria:melhoria},mapping:mapping};
   }
-  var STOP={};'a o e de da do das dos que com para por em no na nos nas um uma os as se ao aos foi ser sao são muito mais menos meu minha nosso nossa ele ela eles elas isso este esta the and eu voce você tudo todo toda todos todas ja já nao não sim como qual quais onde quando pra pro sobre entre tem ter teve era esta está fazer feito ainda caraca nossa poxa entao então apenas pouco bastante sempre nunca porem porém desde tambem também assim depois antes cada outro outra ate até quase talvez'.split(' ').forEach(function(w){STOP[w]=1;});
+  var STOP={};'a o e de da do das dos que com para por em no na nos nas um uma os as se ao aos foi ser sao são muito mais menos meu minha nosso nossa ele ela eles elas isso este esta the and eu voce você tudo todo toda todos todas ja já nao não sim como qual quais onde quando pra pro sobre entre tem ter teve era esta está fazer feito ainda caraca nossa poxa entao então apenas pouco bastante sempre nunca porem porém desde tambem também assim depois antes cada outro outra ate até quase talvez estou enquanto estava estao estão vamos posso pode podem acho achei fiquei ficou'.split(' ').forEach(function(w){STOP[w]=1;});
   function temas(list,n){n=n||4;var f={};list.forEach(function(t){norm(t).replace(/[^a-z\s]/g,' ').split(/\s+/).forEach(function(w){if(w.length>=4&&!STOP[w])f[w]=(f[w]||0)+1;});});return Object.keys(f).map(function(k){return [k,f[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,n).map(function(x){return x[0];});}
   /* Nem toda pesquisa de hot seat tem pergunta de nota em escala. O Pre-PCE, por exemplo,
      mede itens categoricos (dificuldade de preencher formulario, erro sistemico). Nesses casos
@@ -277,7 +301,7 @@
       +(_imTaxa!=null?'<div class="nv-imstat"><div class="nv-imstat-n">'+_imTaxa+'%</div><div class="nv-imstat-l">Taxa de resposta</div></div>':'')
       +'</div>'
       +((_imTot==null&&_imRsp==null)?'<div class="nv-imstat-warn">Participantes não informados — clique no ✎ para incluir.</div>':'');
-    h+='<div class="nv-imhero"><div class="nv-card"><div class="nv-ct" style="text-align:center">Recomendação (0–10)</div><div class="nv-ring"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="66" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="11"/><circle cx="75" cy="75" r="66" fill="none" stroke="'+recCol+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'"/></svg><div class="nv-ringc"><div class="nv-ringn" style="color:'+recCol+'">'+fmt(t.recomenda)+'</div></div></div>'+_imStats+'<div class="nv-cs" style="text-align:center;margin:8px 0 0">'+(t.label||t.turma)+' · '+(t.sub||'')+'</div><div class="nv-fortes"><div class="nv-fh" style="color:#46d160">Pontos Fortes</div>'+fortesArr.map(function(x){return '<div class="nv-fi"><span style="color:#46d160">✓</span> '+x+'</div>';}).join('')+'<div class="nv-fh" style="color:#f5c542">Pontos de Melhoria</div>'+melhoriaArr.map(function(x){return '<div class="nv-fi"><span style="color:#f5c542">▲</span> '+x+'</div>';}).join('')+'</div></div><div class="nv-imcols"><div class="nv-card"><div class="nv-ct">Avaliação dos Palestrantes</div>'+((t.palestrantes||[]).map(function(p){return barRow(p.label,p.score,10);}).join('')||'<div class="nv-cs">Sem palestrantes no arquivo.</div>')+'</div><div class="nv-card"><div class="nv-ct">Experiência do Evento</div>'+((t.experiencia||[]).map(function(p){return barRow(p.label,p.score,10);}).join('')||'<div class="nv-cs">Sem itens de experiência.</div>')+'</div></div></div>';
+    h+='<div class="nv-imhero"><div class="nv-card"><div class="nv-ct" style="text-align:center">Recomendação (0–10)</div><div class="nv-ring"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="66" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="11"/><circle cx="75" cy="75" r="66" fill="none" stroke="'+recCol+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'"/></svg><div class="nv-ringc"><div class="nv-ringn" style="color:'+recCol+'">'+fmt(t.recomenda)+'</div></div></div>'+_imStats+'<div class="nv-cs" style="text-align:center;margin:8px 0 0">'+(t.label||t.turma)+' · '+(t.sub||'')+'</div><div class="nv-fortes"><div class="nv-fh" style="color:#46d160">Pontos Fortes</div>'+fortesArr.map(function(x){return '<div class="nv-fi"><span style="color:#46d160">✓</span> '+x+'</div>';}).join('')+'<div class="nv-fh" style="color:#f5c542">Pontos de Melhoria</div>'+melhoriaArr.map(function(x){return '<div class="nv-fi"><span style="color:#f5c542">▲</span> '+x+'</div>';}).join('')+'</div></div><div class="nv-imcols"><div class="nv-card"><div class="nv-ct">Avaliação dos Palestrantes</div><div class="nv-cs" style="margin:-6px 0 10px">Ordenados por nota, do maior para o menor.</div>'+((t.palestrantes||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);}).map(function(p,i){return barRow((i+1)+'\u00ba  '+p.label,p.score,10);}).join('')||'<div class="nv-cs">Sem palestrantes no arquivo.</div>')+'</div><div class="nv-card"><div class="nv-ct">Experiência do Evento</div>'+((t.experiencia||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);}).map(function(p){return barRow(p.label,p.score,10);}).join('')||'<div class="nv-cs">Sem itens de experiência.</div>')+'</div></div></div>';
     var _posArr=(t.comentarios&&t.comentarios.positivos)||[],_negArr=(t.comentarios&&t.comentarios.melhoria)||[];
     var pos=cmBox(_posArr,false,'Sem comentários.');
     var neg=cmBox(_negArr,true,'Nenhum ponto de melhoria.');
@@ -730,7 +754,26 @@
   /* Normaliza Hot Seats para apresentação em escala 0–10 (notas coletadas em 0–5 são reescaladas ×2).
      Também resolve enc.n a partir de n_respostas ao recarregar do banco. Não toca imersão (0–10). */
   function normalizeHS(list){list.forEach(function(e){if(!e||!e.metricas)return;if(e.n==null&&e.n_respostas!=null)e.n=e.n_respostas;if(e.__norm10)return;Object.keys(e.metricas).forEach(function(k){var m=e.metricas[k];if(m&&+m.scaleMax===5){m.avg=m.avg*2;m.scaleMax=10;}});e.__norm10=true;});}
-  async function boot(){STATE.all=await listAll();normalizeHS(STATE.all);render();try{syncDemoBtn();}catch(e){}}
+  /* Registros de imersao ja gravados no banco vieram do classificador antigo, com os
+     palestrantes misturados na Experiencia do Evento. Aqui eles sao devolvidos ao lugar
+     certo na leitura, sem reescrever nada no Supabase, e ordenados por nota. */
+  function normalizeIM(list){
+    list.forEach(function(e){
+      if(!e||!e._im&&e.tipo!=='imersao')return;
+      if(e.__normIM)return;
+      var pal=(e.palestrantes||[]).slice(),exp=[];
+      (e.experiencia||[]).forEach(function(it){
+        var nm=it&&it.label?nomePalestrante(it.label):null;
+        if(nm)pal.push({label:nm,score:it.score});
+        else exp.push(it);
+      });
+      var ord=function(a,b){return (b.score||0)-(a.score||0);};
+      e.palestrantes=pal.sort(ord);
+      e.experiencia=exp.sort(ord);
+      e.__normIM=true;
+    });
+  }
+  async function boot(){STATE.all=await listAll();normalizeHS(STATE.all);normalizeIM(STATE.all);normalizeIM(BASELINE);render();try{syncDemoBtn();}catch(e){}}
   $('nv-m-data').value=new Date().toISOString().slice(0,10);
   syncTabs();boot();
   document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,60);}); // Chart.js (defer) já carregado
