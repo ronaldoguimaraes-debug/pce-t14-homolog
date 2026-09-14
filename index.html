@@ -9,11 +9,11 @@
 <!-- BUILD:20260507230000-V55 -->
 <!-- v49 PROD — UX REFRESH 2026 (verde) -->
 <title>[HOMOLOG] PCE — Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
 <!-- Supabase + Sortable lazy-loaded sob demanda (só quando o Manual abre) — economiza ~250KB no boot -->
-<script src="assets/js/01-manual-deps.js?v=3.1.0"></script>
-<link rel="stylesheet" href="assets/css/app.css?v=3.1.0">
+<script src="assets/js/01-manual-deps.js?v=3.2.0"></script>
+<link rel="stylesheet" href="assets/css/app.css?v=3.2.0">
 
 <!-- ═══════════════════════════════════════════════════════════════════════
      v49_sugestao — UX REFRESH 2025/2026
@@ -139,6 +139,9 @@
     <div class="content">
       <div class="float-bar" id="float-bar">
         <!-- Turma ativa: com uma unica turma na tela, o cabecalho diz qual e. -->
+        <button class="mob-menu-btn" id="mob-menu-btn" onclick="toggleMobileNav()" aria-label="Abrir menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
         <div class="fb-turma" id="fb-turma">
           <span class="fb-turma-tag">Turma ativa</span>
           <span class="fb-turma-n" id="fb-turma-n">T16</span>
@@ -176,21 +179,22 @@
           Modo cache — exibindo dados estáticos. Clique em Atualizar para buscar dados ao vivo.
         </div>
         <div class="g4" id="kpi-dash"><div class="kpi kpi-skeleton-card"><img class="kpi-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="kpi-skeleton-bars"><div class="kpi-skeleton-bar" style="width:70%"></div><div class="kpi-skeleton-bar" style="width:50%"></div></div><div class="kpi-skeleton-txt">CARREGANDO</div></div><div class="kpi kpi-skeleton-card"><img class="kpi-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="kpi-skeleton-bars"><div class="kpi-skeleton-bar" style="width:70%"></div><div class="kpi-skeleton-bar" style="width:50%"></div></div><div class="kpi-skeleton-txt">CARREGANDO</div></div><div class="kpi kpi-skeleton-card"><img class="kpi-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="kpi-skeleton-bars"><div class="kpi-skeleton-bar" style="width:70%"></div><div class="kpi-skeleton-bar" style="width:50%"></div></div><div class="kpi-skeleton-txt">CARREGANDO</div></div><div class="kpi kpi-skeleton-card"><img class="kpi-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="kpi-skeleton-bars"><div class="kpi-skeleton-bar" style="width:70%"></div><div class="kpi-skeleton-bar" style="width:50%"></div></div><div class="kpi-skeleton-txt">CARREGANDO</div></div></div>
-        <div class="month-bar" id="month-bar" style="display:none"></div>
         <div class="np-faixa" id="np-faixa"><div class="np-faixa-icon">🎤</div><div class="np-faixa-text"><div class="np-faixa-title" id="np-faixa-title">Confirmados na Noite de Networking de Maio</div><div class="np-faixa-sub" id="np-faixa-sub"></div></div><div class="np-faixa-count" id="np-faixa-count">—</div></div>
-        <div id="seatmap-section" style="display:none"><div class="card seatmap-card"><div class="ct">Mapa do Evento - Holding</div><div class="cs" id="seatmap-sub">—</div><div class="seatmap-legend"><span><i style="background:#46d160"></i> Confirmado</span><span><i style="background:#ff5f5f"></i> Sem retorno</span><span><i style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2)"></i> Livre</span></div><div id="seatmap-floor" style="overflow-x:auto"></div></div></div>
+        <div class="dash-grid">
+        <div id="seatmap-section" style="display:none"><div class="card seatmap-card"><div class="seatmap-head"><div class="ct">Mapa do Evento · Holding</div><div class="month-bar" id="month-bar" style="display:none"></div></div><div class="cs seatmap-desc">Ocupação da holding para a imersão presencial</div><div class="cs" id="seatmap-sub">—</div><div class="seatmap-legend"><span><i style="background:#46d160"></i> Confirmado</span><span><i style="background:#ff5f5f"></i> Sem retorno</span><span><i style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2)"></i> Livre</span></div><div id="seatmap-floor" style="overflow-x:auto"></div></div></div>
         <div id="br-funil-meta-wrap">
-          
           <div class="sl">Preenchimento do Typeform</div>
-          <div class="g2">
-            <div class="card" style="grid-column:1/-1"><div class="ct">Preenchimento do Typeform</div><div class="cs">Meta = todos os confirmados com typeform preenchido</div><div id="meta-confirm" style="margin-top:12px"></div></div>
+          <div class="g2 tf-grid">
+            <div class="card tf-card" style="grid-column:1/-1"><div class="ct ct-title">Confirmados com Typeform</div><div class="cs">Meta = todos os confirmados com Typeform preenchido</div><div id="meta-confirm" style="margin-top:12px"></div></div>
           </div>
+          <div class="card faixa-vazia"><div class="ct ct-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Faixa de evento</div><div class="cs faixa-vazia-txt">Nenhuma noite de networking configurada para a <span class="faixa-vazia-turma">T16</span>. Quando houver, o contador de confirmados aparece aqui.</div></div>
           <div class="sl" id="prod-t15-sl" style="display:none">Produção T15 — Cartas Proféticas &amp; Frases do Cliente</div>
           <div class="g2" id="prod-t15-grid" style="display:none">
             <div class="card" id="prod-cartas-card"><div class="ct">📜 Cartas Proféticas — T15</div><div class="cs">Contagem por status da coluna ATIVIDADE · aba “Carta Profética - T15”</div><div id="prod-cartas" style="margin-top:12px"></div></div>
             <div class="card" id="prod-frases-card"><div class="ct">💬 Frases do Cliente — T15</div><div class="cs">Contagem por status da coluna ATIVIDADE · aba “Frase do cliente - T15”</div><div id="prod-frases" style="margin-top:12px"></div></div>
             
           </div>
+        </div>
         </div>
         <div id="imersao-container"></div>
         <div id="imersao-t14-wrap" style="display:none"></div>
@@ -315,7 +319,7 @@
           <div class="card"><div class="ct">Principal Desafio na Gestão de Pessoas</div><div class="cs">Escolha única — resposta do Typeform</div><div style="position:relative;height:200px"><canvas id="cDesafio"></canvas></div></div>
         </div>
       </div>
-      <script src="assets/js/02-perfil-pristine.js?v=3.1.0"></script>
+      <script src="assets/js/02-perfil-pristine.js?v=3.2.0"></script>
 
 
       <div class="page" id="page-manual-pce">
@@ -374,7 +378,7 @@
             <div class="page" id="page-locked">
               <div class="manual-locked" style="display:flex">
                 <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <h3>Conteúdo protegido</h3>
+                <h3 id="locked-title">Conteúdo protegido</h3>
                 <p id="locked-msg">Esta área contém informações restritas e está disponível apenas para usuários autenticados. Faça login para acessar.</p>
                 <button onclick="gatedLogin()">🔐 Entrar para acessar</button>
                 <button onclick="switchPage('dash')" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:9px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;text-transform:uppercase">← Voltar ao Dashboard</button>
@@ -391,8 +395,9 @@
                   <path d="M62 70 l14 10"/>
                   <path d="M74 78 l6 4 a4 4 0 1 1 -6 6 l-4-6"/>
                 </svg>
-                <h3>Conteúdo em manutenção</h3>
+                <h3 id="manutencao-title">Conteúdo em manutenção</h3>
                 <p id="manutencao-msg">Esta área está passando por manutenção e correções. Em breve estará disponível novamente.</p>
+              <span class="estado-chip" id="manutencao-chip" style="display:none">Próxima frente de construção</span>
                 <button id="manutencao-login-btn" onclick="gatedLogin()">🔐 Entrar como administrador</button>
                 <button onclick="switchPage('dash')" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:9px 20px;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;text-transform:uppercase">← Voltar ao Dashboard</button>
               </div>
@@ -445,7 +450,7 @@
   </div>
 </div>
 
-<script src="assets/js/03-nps-vivo.js?v=3.1.0"></script>
+<script src="assets/js/03-nps-vivo.js?v=3.2.0"></script>
 
       </div>
 
@@ -633,9 +638,17 @@
     </div>
   </div>
 </div>
-<script src="assets/js/04-core-dashboard.js?v=3.1.0"></script>
+<div class="mob-scrim" id="mob-scrim" onclick="toggleMobileNav(false)"></div>
+<nav class="mob-tabbar" id="mob-tabbar" aria-label="Navegação">
+  <button class="mob-tab active" data-mob="dash" onclick="switchPage('dash')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span>Dashboard</span></button>
+  <button class="mob-tab" data-mob="perfil" onclick="switchPage('perfil')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Perfil</span></button>
+  <button class="mob-tab" data-mob="nps" onclick="switchPage('nps')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>NPS</span></button>
+  <button class="mob-tab" data-mob="estoque" onclick="switchPage('estoque')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Estoque</span></button>
+  <button class="mob-tab" data-mob="menu" onclick="toggleMobileNav()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg><span>Menu</span></button>
+</nav>
+<script src="assets/js/04-core-dashboard.js?v=3.2.0"></script>
 
-<script src="assets/js/05-manual-pce.js?v=3.1.0"></script>
+<script src="assets/js/05-manual-pce.js?v=3.2.0"></script>
 
 
 <!-- AUTH MODAL -->
@@ -785,15 +798,15 @@
 <!-- ═══ TWEAKS (exploração de feel — só aparece quando o modo Tweaks é ativado) ═══ -->
 <!-- Painel Tweaks: React (producao) + Babel carregados sob demanda.
      Ativacao: ?tweaks=1, Alt+Shift+T ou pceTweaksAtivar() no console. -->
-<script src="assets/js/06-tweaks-loader.js?v=3.1.0"></script>
+<script src="assets/js/06-tweaks-loader.js?v=3.2.0"></script>
 
-<script src="assets/js/07-credenciamento-xlsx.js?v=3.1.0"></script>
+<script src="assets/js/07-credenciamento-xlsx.js?v=3.2.0"></script>
 
-<script id="fb-board" src="assets/js/08-fb-board.js?v=3.1.0"></script>
+<script id="fb-board" src="assets/js/08-fb-board.js?v=3.2.0"></script>
 
-<script src="assets/js/09-estoque-pce.js?v=3.1.0"></script>
-<script src="assets/js/10-reorganizacao.js?v=3.1.0"></script>
+<script src="assets/js/09-estoque-pce.js?v=3.2.0"></script>
+<script src="assets/js/10-reorganizacao.js?v=3.2.0"></script>
 
-<script src="assets/js/11-auditoria-personalizados.js?v=3.1.0"></script>
+<script src="assets/js/11-auditoria-personalizados.js?v=3.2.0"></script>
 </body>
 </html>
