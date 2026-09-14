@@ -1966,7 +1966,7 @@ body.tw-a-vibrant .kpi-ribbon,body.tw-a-vibrant .seatmap-card{box-shadow:0 22px 
 --green-a10:rgba(245,166,35,.10);--green-a22:rgba(245,166,35,.22);--green-a30:rgba(245,166,35,.30);--green-soft:#8fae86;
 --body:#c9c9c4;--muted3:#5f5f5b;
 --chart-1:#f5a623;--chart-2:#46d160;--chart-3:#8fe88a;--chart-4:#3f9e5a;--chart-5:#c4e8bb;--chart-6:#EAE5E1;--chart-7:#6f9e78;--chart-8:#324935;--chart-9:#a7d6a0;--chart-10:#557a58;--chart-11:#d8e8d2;--chart-12:#7fbf7a;--chart-track:rgba(255,255,255,.045);
---seat-semret:#ff5f5f;
+--seat-semret:#ff5f5f;--brand-verde-escuro:#324935;
 --font-marca:"Montserrat","Gotham",sans-serif;--font-texto:"Barlow",sans-serif;--font-numero:"Barlow Condensed",sans-serif;
 --font-title:var(--font-marca);--font-num:var(--font-numero);
 --fs-label:11px;--fs-small:12px;--fs-body:13.5px;--fs-nav:13.5px;--fs-card-t:14px;--fs-h2:22px;--fs-kpi:52px;--fs-kpi-s:38px;
@@ -2039,13 +2039,18 @@ body{background:var(--bg)}
 .vbtn.active-t16,.vbtn.active{background:rgba(255,255,255,.06);color:var(--cream)}
 .mob-menu-btn{display:none;width:38px;height:38px;border-radius:9px;background:var(--card);border:1px solid var(--border2);color:var(--cream);align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 
+.user-chip{gap:8px;background:var(--card);border:1px solid var(--border3);border-radius:var(--rpill);padding:4px 12px 4px 4px;font-size:12.5px}
+.user-chip-avatar{width:26px;height:26px;border-radius:50%;background:var(--brand-verde-escuro,#324935);color:var(--green);font-family:var(--font-numero);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+.user-chip-name{font-family:var(--font-texto);font-weight:600;font-size:12.5px;color:var(--muted)}
+.user-chip-logout{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:13px;padding:0 0 0 4px}
+.user-chip-logout:hover{color:var(--red)}
+
 /* — Dashboard: KPIs em 5 cards — */
 .kpi-ribbon{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;background:none;border:none;box-shadow:none;padding:0;overflow:visible}
 .kr-cell{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:18px 18px 16px;overflow:hidden}
 .kr-cell::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:rgba(255,255,255,.12)}
 .kr-cell:has(.kr-n.g)::before{background:var(--green)}
 .kr-cell:has(.kr-n.r)::before{background:var(--red)}
-.kr-cell:first-child::before{background:var(--green)}
 .kr-k{font-family:var(--font-num);font-size:11px;letter-spacing:.14em;color:var(--muted);margin-bottom:8px}
 .kr-n{font-size:52px;line-height:.85;margin-top:0}
 .kr-n.g{color:var(--green)}
