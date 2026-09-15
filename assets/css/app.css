@@ -2172,3 +2172,15 @@ body{background:var(--bg)}
   .ph-kpi:nth-child(odd){border-left:none;padding-left:0}
   .ph-leitura{border-left:none;border-top:1px solid rgba(245,166,35,.18)}
 }
+
+
+/* ── LOTE 2 · Chips de navegação de seção (Perfil) ── */
+.perfil-chips{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 22px;position:sticky;top:0;z-index:20;padding:10px 0;background:linear-gradient(var(--bg) 70%,transparent)}
+.pchip{font-family:var(--font-num,"Barlow Condensed");font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--card);border:1px solid var(--border3,rgba(255,255,255,.08));border-radius:20px;padding:7px 15px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;white-space:nowrap}
+.pchip:hover{color:var(--cream);border-color:rgba(245,166,35,.3)}
+.pchip.active{background:rgba(245,166,35,.12);border-color:rgba(245,166,35,.35);color:var(--green)}
+.sec-head{scroll-margin-top:70px}
+@media(max-width:900px){
+  .perfil-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .perfil-chips::-webkit-scrollbar{display:none}
+}
