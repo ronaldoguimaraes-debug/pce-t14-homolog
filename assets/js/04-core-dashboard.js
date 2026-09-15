@@ -1,7 +1,7 @@
 /* PCE 2.0 · 05-core-dashboard
    Extraido do index monolitico sem alteracao de logica.
    Engenharia e fundacao: Ronaldo Ferreira. */
-const PCE_VERSION = '3.2.2';
+const PCE_VERSION = '3.2.3';
 const API_SCHEMA_VERSION = '3.0'; // atualizado para DASH-BR-COMPLETO v2
 const DATA_SOURCES = {
   br: {
@@ -1514,6 +1514,23 @@ function _perfilSrc(){
   return store.br;
 }
 function _isStandaloneInsights(){return _isStandalonePerfil();}
+/* LOTE 2 · navegacao por chips no Perfil */
+function perfilGo(secId, btn){
+  if(btn){document.querySelectorAll('.pchip').forEach(function(c){c.classList.remove('active');});btn.classList.add('active');}
+  try{if(typeof showPerfilSub==='function')showPerfilSub('perfil');}catch(e){}
+  var el=document.getElementById(secId);
+  if(el){var cont=document.querySelector('.content')||window;
+    var y=el.getBoundingClientRect().top+(cont.scrollTop||0)-72;
+    if(cont.scrollTo)cont.scrollTo({top:y,behavior:'smooth'});else window.scrollTo(0,y);}
+}
+function _perfilScrollSpy(){
+  var cont=document.querySelector('.content');if(!cont)return;
+  var secs=['sec-familia','sec-negocio','sec-gestao','sec-participantes','sec-demografia'];
+  var top=cont.scrollTop+90,cur=secs[0];
+  secs.forEach(function(id){var e=document.getElementById(id);if(e&&e.offsetTop<=top)cur=id;});
+  document.querySelectorAll('.pchip').forEach(function(c){c.classList.toggle('active',c.getAttribute('data-sec')===cur);});
+}
+(function(){var c=document.querySelector('.content');if(c)c.addEventListener('scroll',function(){if(window.__spyRAF)return;window.__spyRAF=requestAnimationFrame(function(){window.__spyRAF=null;var pp=document.getElementById('page-perfil');if(pp&&pp.classList.contains('active')&&pp.classList.contains('standalone'))_perfilScrollSpy();});},{passive:true});})();
 function showPerfilSub(which){var pb=document.getElementById('perfil-body'),pi=document.getElementById('page-insights'),bp=document.getElementById('psub-perfil'),bi=document.getElementById('psub-insights');var ins=(which==='insights');if(pb)pb.style.display=ins?'none':'';if(pi){pi.classList.toggle('active',ins);pi.classList.toggle('as-subtab',ins);}if(bp)bp.classList.toggle('active',!ins);if(bi)bi.classList.toggle('active',ins);if(ins&&window.renderInsightsCorrelacionais){setTimeout(window.renderInsightsCorrelacionais,60);}}
 function buildPerfil() {
   if(typeof _isStandalonePerfil==='function' && _isStandalonePerfil() && !(_perfilSrc().rows||[]).length){var _pbE=document.getElementById('perfil-body');if(_pbE&&window.__perfilPristineHTML!=null)_pbE.innerHTML=window.__perfilPristineHTML;return;}
