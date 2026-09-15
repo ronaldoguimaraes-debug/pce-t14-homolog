@@ -13,7 +13,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
 <!-- Supabase + Sortable lazy-loaded sob demanda (só quando o Manual abre) — economiza ~250KB no boot -->
 <script src="assets/js/01-manual-deps.js?v=3.2.0"></script>
-<link rel="stylesheet" href="assets/css/app.css?v=3.2.2">
+<link rel="stylesheet" href="assets/css/app.css?v=3.2.3">
 
 <!-- ═══════════════════════════════════════════════════════════════════════
      v49_sugestao — UX REFRESH 2025/2026
@@ -206,27 +206,28 @@
         </div>
         <div id="perfil-body">
         <div class="g4" id="kpi-perf"></div>
-        <div class="sl">Família &amp; Cultura</div>
+        <div class="perfil-chips" id="perfil-chips"><button class="pchip active" data-sec="sec-familia" onclick="perfilGo('sec-familia',this)">Família &amp; Cultura</button><button class="pchip" data-sec="sec-negocio" onclick="perfilGo('sec-negocio',this)">Negócio &amp; Geografia</button><button class="pchip" data-sec="sec-gestao" onclick="perfilGo('sec-gestao',this)">Gestão &amp; Estrutura</button><button class="pchip" data-sec="sec-participantes" onclick="perfilGo('sec-participantes',this)">Participantes</button><button class="pchip" data-sec="sec-demografia" onclick="perfilGo('sec-demografia',this)">Demografia</button><button class="pchip" data-sec="__insights" onclick="showPerfilSub('insights');document.querySelectorAll('.pchip').forEach(c=>c.classList.remove('active'));this.classList.add('active')">Insights</button></div>
+        <div class="sl sec-head" id="sec-familia">Família &amp; Cultura</div>
         <div class="g3">
           <div class="card"><div class="ct">Estrutura Familiar</div><div class="cs">Cônjuge, filhos e envolvimento</div><div id="ins-familia" style="margin-top:8px"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
           <div class="card"><div class="ct">Religião</div><div class="cs">Distribuição de crenças</div><div style="position:relative;height:160px"><canvas id="cReligiao"></canvas></div><div class="leg" id="lReligiao"></div></div>
           <div class="card"><div class="ct">Intenções &amp; Metas</div><div class="cs">Clusters de objetivos declarados</div><div id="ins-intencoes" style="margin-top:8px"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
         </div>
-        <div class="sl">Negócio &amp; Geografia</div>
+        <div class="sl sec-head" id="sec-negocio">Negócio &amp; Geografia</div>
         <div class="g3">
           <div class="card"><div class="ct">Segmento de negócio</div><div class="cs">Distribuição por setor</div><div style="position:relative;height:280px"><canvas id="cSeg"></canvas></div></div>
           <div class="card"><div class="ct">Top estados</div><div class="cs">Concentração geográfica</div><div style="position:relative;height:280px"><canvas id="cEst"></canvas></div></div>
           <div class="card"><div class="ct">Top 10 Maiores Faturamentos</div><div class="cs">Empresários com empresa de maior faixa de faturamento anual (R$/ano). Quando há empate de faixa, listamos em ordem alfabética.</div><div id="ins-top-fat" style="margin-top:8px;max-height:280px;overflow-y:auto"><div class="ins-skeleton"><img class="ins-skeleton-logo" src="assets/img/logo-pce-center-ee117996.png" alt=""/><div class="ins-skeleton-bars"><div class="ins-skeleton-bar" style="width:78%"></div><div class="ins-skeleton-bar" style="width:55%"></div><div class="ins-skeleton-bar" style="width:82%"></div></div><div class="ins-skeleton-txt">Aguardando dados ao vivo</div></div></div></div>
         </div>
         
-        <div class="sl">Gestão &amp; Estrutura</div>
+        <div class="sl sec-head" id="sec-gestao">Gestão &amp; Estrutura</div>
         <div class="g3">
           <div class="card"><div class="ct">Nº de Colaboradores</div><div class="cs">Porte das empresas</div><div style="position:relative;height:200px"><canvas id="cColabs"></canvas></div></div>
           <div class="card"><div class="ct">Organograma &amp; Lideranças</div><div class="cs">Estrutura organizacional declarada</div><div id="org-visual" style="margin-top:14px"></div></div>
           <div class="card"><div class="ct">Canal de Aquisição</div><div class="cs">Principal canal de vendas hoje</div><div style="position:relative;height:200px"><canvas id="cCanal"></canvas></div></div>
         </div>
 
-<div class="sl">Perfil dos Participantes</div>
+<div class="sl sec-head" id="sec-participantes">Perfil dos Participantes</div>
         <div class="g3">
           <div class="card"><div class="ct">Gênero</div><div class="cs">Distribuição</div><div style="position:relative;height:160px"><canvas id="cGen"></canvas></div><div class="leg" id="lGen"></div></div>
           <div class="card"><div class="ct">Perfil de cliente</div><div class="cs">B2B, B2C ou ambos</div><div style="position:relative;height:160px"><canvas id="cCli"></canvas></div><div class="leg" id="lCli"></div></div>
@@ -239,7 +240,7 @@
           <div class="card"><div class="ct">Maturidade em IA</div><div class="cs">Nível de conhecimento e utilização de IA (1 = iniciante · 5 = avançado)</div><div style="position:relative;height:180px"><canvas id="cIA"></canvas></div></div>
         </div>
 
-<div class="sl">Demografia Avançada</div>
+<div class="sl sec-head" id="sec-demografia">Demografia Avançada</div>
         <div class="g2">
           <div class="card"><div class="ct">Faixa Etária</div><div class="cs">Distribuição por idade</div><div style="position:relative;height:200px"><canvas id="cFaixaEt"></canvas></div><div class="leg" id="lFaixaEt"></div></div>
           <div class="card"><div class="ct">Faixa de Faturamento</div><div class="cs">Receita anual declarada (R$/ano)</div><div style="position:relative;height:200px"><canvas id="cFaixaFat"></canvas></div></div>
@@ -646,7 +647,7 @@
   <button class="mob-tab" data-mob="estoque" onclick="switchPage('estoque')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Estoque</span></button>
   <button class="mob-tab" data-mob="menu" onclick="toggleMobileNav()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg><span>Menu</span></button>
 </nav>
-<script src="assets/js/04-core-dashboard.js?v=3.2.2"></script>
+<script src="assets/js/04-core-dashboard.js?v=3.2.3"></script>
 
 <script src="assets/js/05-manual-pce.js?v=3.2.0"></script>
 
