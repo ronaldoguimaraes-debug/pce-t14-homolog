@@ -1,7 +1,7 @@
 /* PCE 2.0 · 05-core-dashboard
    Extraido do index monolitico sem alteracao de logica.
    Engenharia e fundacao: Ronaldo Ferreira. */
-const PCE_VERSION = '3.2.3';
+const PCE_VERSION = '3.2.4';
 const API_SCHEMA_VERSION = '3.0'; // atualizado para DASH-BR-COMPLETO v2
 const DATA_SOURCES = {
   br: {
@@ -794,9 +794,34 @@ function barLabelsPlugin(formatter, options) {
     }
   };
 }
+// LOTE 2 · cobertura agregada por secao no Perfil
+var _PERFIL_SEC = {
+  cReligiao:'sec-familia',
+  cSeg:'sec-negocio', cEst:'sec-negocio',
+  cColabs:'sec-gestao', cOrg:'sec-gestao', cCanal:'sec-gestao',
+  cGen:'sec-participantes', cCli:'sec-participantes', cAval:'sec-participantes', cIA:'sec-participantes',
+  cFaixaEt:'sec-demografia', cFaixaFat:'sec-demografia'
+};
+function setCoberturaSecao(secId, totalAnalisado, totalBase){
+  var head = document.getElementById(secId);
+  if(!head || totalBase<=0) return;
+  var pct = Math.round(totalAnalisado/totalBase*100);
+  // guarda a MENOR cobertura vista na secao (pior caso), para nao declarar 100% indevido
+  var prev = parseInt(head.getAttribute('data-cov-pct')||'101',10);
+  if(pct < prev){
+    head.setAttribute('data-cov-pct', pct);
+    var badge = head.querySelector('.sec-cov');
+    if(!badge){ badge=document.createElement('span'); badge.className='sec-cov'; head.appendChild(badge); }
+    badge.innerHTML = totalAnalisado+' de '+totalBase+' · '+pct+'% cobertura';
+  } else if(!head.querySelector('.sec-cov')){
+    var b2=document.createElement('span'); b2.className='sec-cov'; b2.innerHTML=totalAnalisado+' de '+totalBase+' · '+pct+'% cobertura'; head.appendChild(b2);
+    head.setAttribute('data-cov-pct', pct);
+  }
+}
 function appendCobertura(canvasId, totalAnalisado, totalBase, motivo) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+  if (_PERFIL_SEC[canvasId]) { setCoberturaSecao(_PERFIL_SEC[canvasId], totalAnalisado, totalBase); return; }
   let card = canvas.parentElement;
   while (card && !card.classList.contains('card') && !card.classList.contains('carf')) {
     card = card.parentElement;
@@ -1534,6 +1559,7 @@ function _perfilScrollSpy(){
 function showPerfilSub(which){var pb=document.getElementById('perfil-body'),pi=document.getElementById('page-insights'),bp=document.getElementById('psub-perfil'),bi=document.getElementById('psub-insights');var ins=(which==='insights');if(pb)pb.style.display=ins?'none':'';if(pi){pi.classList.toggle('active',ins);pi.classList.toggle('as-subtab',ins);}if(bp)bp.classList.toggle('active',!ins);if(bi)bi.classList.toggle('active',ins);if(ins&&window.renderInsightsCorrelacionais){setTimeout(window.renderInsightsCorrelacionais,60);}}
 function buildPerfil() {
   if(typeof _isStandalonePerfil==='function' && _isStandalonePerfil() && !(_perfilSrc().rows||[]).length){var _pbE=document.getElementById('perfil-body');if(_pbE&&window.__perfilPristineHTML!=null)_pbE.innerHTML=window.__perfilPristineHTML;return;}
+  try{document.querySelectorAll('#perfil-body .sec-cov').forEach(function(e){e.remove();});document.querySelectorAll('#perfil-body .sec-head').forEach(function(h){h.removeAttribute('data-cov-pct');});}catch(e){}
   safeRender('kpi-perf', () => {
     // ── Usa dados ao vivo do store (enriquecidos pelo DASH-BR-COMPLETO) ──
     const rows  = _perfilSrc().rows  || [];
