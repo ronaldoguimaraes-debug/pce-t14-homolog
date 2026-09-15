@@ -1,7 +1,7 @@
 /* PCE 2.0 · 05-core-dashboard
    Extraido do index monolitico sem alteracao de logica.
    Engenharia e fundacao: Ronaldo Ferreira. */
-const PCE_VERSION = '3.2.1';
+const PCE_VERSION = '3.2.2';
 const API_SCHEMA_VERSION = '3.0'; // atualizado para DASH-BR-COMPLETO v2
 const DATA_SOURCES = {
   br: {
@@ -1565,11 +1565,24 @@ function buildPerfil() {
     const avals       = d.map(r => parseFloat(r.avaliacao)).filter(v => !isNaN(v) && v >= 0 && v <= 10);
     const avgAval     = avals.length > 0 ? (avals.reduce((a,b)=>a+b,0)/avals.length).toFixed(1) : '—';
     const comMvv      = d.filter(r => (r.mvv||'').toUpperCase().includes('SIM')).length;
+    const _idade = (window.__idadeMedia? window.__idadeMedia(d):0);
+    const _empUniq = (window.__empresasUnicas? window.__empresasUnicas(d):comEmpresa);
+    const _cidUniq = (window.__cidadesUnicas? window.__cidadesUnicas(d):0);
+    const _pctMvv = Math.round(comMvv/total*100);
+    const _leitura = 'Turma em <b>transição de microempresa para empresa estruturada</b>: ' + _pctMvv + '% já têm missão, visão e valores, mas a operação segue dependente do dono. As prioridades declaradas são <b>estruturação comercial e vendas</b>, <b>gestão de pessoas</b> e <b>previsibilidade de caixa</b>.';
     document.getElementById('kpi-perf').innerHTML = `
-      <div class="kpi hi"><div class="kpi-lbl">Confirmados (perfil)</div><div class="kpi-val g">${total}</div><div class="kpi-sub">todos os confirmados analisados</div></div>
-      <div class="kpi hi-b"><div class="kpi-lbl">Empresas mapeadas</div><div class="kpi-val b">${comEmpresa}</div><div class="kpi-sub">${Math.round(comEmpresa/total*100)}% do total</div></div>
-      <div class="kpi hi-b"><div class="kpi-lbl">Avaliação média</div><div class="kpi-val b">${avgAval}</div><div class="kpi-sub">colaboração (0–10)</div></div>
-      <div class="kpi hi-a"><div class="kpi-lbl">Têm MVV</div><div class="kpi-val a">${Math.round(comMvv/total*100)}%</div><div class="kpi-sub">missão, visão e valores</div></div>
+      <div class="perfil-hero">
+        <div class="ph-kpis">
+          <div class="ph-kpi"><div class="ph-k">Confirmados analisados</div><div class="ph-n g">${total}</div><div class="ph-x">base de análise</div></div>
+          <div class="ph-kpi"><div class="ph-k">Idade média</div><div class="ph-n">${_idade>0?_idade:'—'}</div><div class="ph-x">${_idade>0?'anos · perfil etário':'sem dados'}</div></div>
+          <div class="ph-kpi"><div class="ph-k">Empresas representadas</div><div class="ph-n">${_empUniq}</div><div class="ph-x">${_cidUniq>0?'em '+_cidUniq+' cidades':'confirmadas'}</div></div>
+          <div class="ph-kpi"><div class="ph-k">Empresas com MVV</div><div class="ph-n g">${_pctMvv}%</div><div class="ph-x">${comMvv} de ${total} empresas</div></div>
+        </div>
+        <div class="ph-leitura">
+          <div class="ph-leitura-t">Leitura estratégica</div>
+          <div class="ph-leitura-b">${_leitura}</div>
+        </div>
+      </div>
     `;
 
     // ── Segmento (vem do Typeform — coluna 14 "Qual é o modelo de negócio") ──
@@ -2593,6 +2606,9 @@ function toggleFaq(i){const el=document.getElementById('faq-'+i);if(el)el.classL
     });
     return set.size;
   }
+  window.__idadeMedia    = idadeMedia;
+  window.__empresasUnicas = empresasUnicas;
+  window.__cidadesUnicas  = cidadesUnicas;
   function estadosUnicos(data) {
     const set = new Set();
     data.forEach(r => {
