@@ -2184,3 +2184,9 @@ body{background:var(--bg)}
   .perfil-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .perfil-chips::-webkit-scrollbar{display:none}
 }
+
+
+/* ── LOTE 2 · Cobertura uma vez por seção (Perfil) ── */
+#perfil-body .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+.sec-cov{font-family:var(--font-num,"Barlow Condensed");font-weight:700;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);background:rgba(255,255,255,.04);border:1px solid var(--border,rgba(255,255,255,.06));border-radius:20px;padding:3px 11px;white-space:nowrap;flex:none}
+#perfil-body .ins-cobertura{display:none !important}
