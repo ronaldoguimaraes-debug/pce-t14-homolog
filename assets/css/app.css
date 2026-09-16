@@ -2190,3 +2190,36 @@ body{background:var(--bg)}
 #perfil-body .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
 .sec-cov{font-family:var(--font-num,"Barlow Condensed");font-weight:700;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);background:rgba(255,255,255,.04);border:1px solid var(--border,rgba(255,255,255,.06));border-radius:20px;padding:3px 11px;white-space:nowrap;flex:none}
 #perfil-body .ins-cobertura{display:none !important}
+
+
+/* ── LOTE 3 · Estoque PCE no padrão do redesign ── */
+.estoque-hero{background:linear-gradient(120deg,rgba(245,166,35,.10),rgba(245,166,35,.03) 55%,transparent);border:1px solid rgba(245,166,35,.22);border-radius:var(--rxl,15px);padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.estoque-hero-title{font-family:var(--font-title,"Montserrat");font-weight:800;font-size:24px;letter-spacing:0;text-transform:none;color:var(--cream);margin-bottom:6px}
+.estoque-hero-sub{font-size:13px;color:var(--muted);line-height:1.5;max-width:560px}
+.estoque-hero-stats{display:flex;gap:0;flex-shrink:0}
+.estoque-stat{text-align:center;padding:0 20px;border-left:1px solid rgba(255,255,255,.08)}
+.estoque-stat:first-child{border-left:none}
+.estoque-stat-num{font-family:var(--font-num,"Barlow Condensed");font-weight:800;font-size:34px;color:var(--green);line-height:.9;font-variant-numeric:tabular-nums}
+.estoque-stat-lbl{font-family:var(--font-num,"Barlow Condensed");font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted2);margin-top:8px}
+.estoque-btn{font-family:var(--font-num,"Barlow Condensed");font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:9px 16px;border-radius:var(--r,10px)}
+.estoque-btn:hover{border-color:rgba(245,166,35,.4);color:var(--green)}
+.estoque-btn.primary{background:var(--green);color:var(--bg);border-color:var(--green)}
+.estoque-btn.primary:hover{filter:brightness(1.06);color:var(--bg)}
+.estoque-table{border-radius:var(--rxl,15px)}
+.estoque-table thead th{font-family:var(--font-num,"Barlow Condensed");font-size:11px;letter-spacing:.13em}
+.estoque-nome-inp{font-family:var(--font-texto,"Barlow")}
+.estoque-nome-inp:focus{border-color:rgba(245,166,35,.5)}
+.estoque-logo-sel:focus,.estoque-qtd-inp:focus{border-color:rgba(245,166,35,.5)}
+.estoque-idx{font-family:var(--font-num,"Barlow Condensed")}
+.estoque-thumb:hover{border-color:rgba(245,166,35,.5)}
+.estoque-foto-btn:hover{border-color:rgba(245,166,35,.5);color:var(--green)}
+.estoque-foto-replace:hover{color:var(--green)}
+.estoque-badge.novo{background:rgba(245,166,35,.14);color:var(--green)}
+.estoque-viewer-close:hover{background:rgba(245,166,35,.6)}
+@media(max-width:900px){
+  .estoque-hero{flex-direction:column;align-items:flex-start;gap:18px}
+  .estoque-hero-stats{width:100%;justify-content:space-between;gap:0}
+  .estoque-stat{padding:0 10px}
+  .estoque-stat:first-child{padding-left:0}
+  .estoque-stat-num{font-size:26px}
+}
