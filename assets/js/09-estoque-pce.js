@@ -106,7 +106,7 @@
           + '<td><input class="estoque-nome-inp" value="'+_esc(it.nome)+'" oninput="estoqueEdit(\''+it.id+'\',\'nome\',this.value)" placeholder="Nome do item"></td>'
           + '<td><select class="estoque-logo-sel" onchange="estoqueEdit(\''+it.id+'\',\'logo\',this.value)">'
             + '<option value=""'+(it.logo===''?' selected':'')+'>\u2014 Sem logo</option>'
-            + '<option value="ANTIGO"'+(it.logo==='ANTIGO'?' selected':'')+'>Logo Atual</option>'
+            + '<option value="ANTIGO"'+(it.logo==='ANTIGO'?' selected':'')+'>Logo Antigo</option>'
             + '<option value="NOVO"'+(it.logo==='NOVO'?' selected':'')+'>Logo Novo</option>'
           + '</select></td>'
           + '<td class="c"><input class="estoque-qtd-inp" type="number" min="0" value="'+(Number(it.quantidade)||0)+'" oninput="estoqueEdit(\''+it.id+'\',\'quantidade\',this.value)"></td>'
@@ -201,7 +201,7 @@
     var it=_estoque.find(function(x){ return x.id===id; }); if(!it||!it.foto) return;
     var v=document.getElementById('estoque-viewer'),img=document.getElementById('estoque-viewer-img'),cap=document.getElementById('estoque-viewer-cap');
     if(img) img.src=it.foto;
-    if(cap) cap.textContent=(it.nome||'Item')+(it.logo?(' \u00B7 Logo '+(it.logo==='NOVO'?'Novo':'Atual')):'')+' \u00B7 '+(Number(it.quantidade)||0)+' un.';
+    if(cap) cap.textContent=(it.nome||'Item')+(it.logo?(' \u00B7 Logo '+(it.logo==='NOVO'?'Novo':'Antigo')):'')+' \u00B7 '+(Number(it.quantidade)||0)+' un.';
     if(v) v.classList.add('open');
   };
   window.estoqueCloseViewer=function(e){
