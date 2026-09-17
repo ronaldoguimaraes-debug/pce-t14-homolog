@@ -305,7 +305,7 @@
     if(!STATE.imTurma||!list.filter(function(t){return t.id===STATE.imTurma;}).length) STATE.imTurma=list[list.length-1].id;
     var t=list.filter(function(x){return x.id===STATE.imTurma;})[0];
     var h='<div class="nv-card"><div class="nv-ct">Evolução da Recomendação</div><div class="nv-cs">Nota média de recomendação (0–10) por turma</div><div style="position:relative;height:180px"><canvas id="nv-im-evo"></canvas></div></div><div class="nv-ttabs" id="nv-im-tabs">';
-    list.forEach(function(x){h+='<button class="nv-ttab '+(x.id===t.id?'on':'')+'" data-id="'+x.id+'">'+(x.label||x.turma)+'<span>'+(x.sub||x.data_encontro||'')+'</span></button>';});
+    list.forEach(function(x){var _nota=(x.recomenda!=null&&+x.recomenda>0)?fmt(x.recomenda):'—';h+='<button class="nv-ttab '+(x.id===t.id?'on':'')+'" data-id="'+x.id+'"><span class="nv-ttab-turma">'+(x.label||x.turma)+'</span><span class="nv-ttab-nota">'+_nota+'</span><span class="nv-ttab-sub">'+(x.sub||x.data_encontro||'')+'</span></button>';});
     h+='</div>';
     var dims=(t.palestrantes||[]).concat(t.experiencia||[]);
     /* Cada card so aparece se tiver conteudo. Formulario sem coluna de nome de
