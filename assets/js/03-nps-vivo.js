@@ -299,13 +299,20 @@
     renderHotseat(list);
   }
 
+  var _MES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  function encSub(x){
+    if(x&&x.sub)return x.sub;
+    var d=String((x&&x.data_encontro)||'');var m=/^(\d{4})-(\d{2})/.exec(d);
+    return m?(_MES[+m[2]-1]+'/'+m[1]):'';
+  }
   function renderImersao(list){
     var host=$('nv-content');
     if(!list.length){host.innerHTML='<div class="nv-empty">Nenhuma imersão carregada.</div>';return;}
     if(!STATE.imTurma||!list.filter(function(t){return t.id===STATE.imTurma;}).length) STATE.imTurma=list[list.length-1].id;
     var t=list.filter(function(x){return x.id===STATE.imTurma;})[0];
     var h='<div class="nv-card"><div class="nv-ct">Evolução da Recomendação</div><div class="nv-cs">Nota média de recomendação (0–10) por turma</div><div style="position:relative;height:180px"><canvas id="nv-im-evo"></canvas></div></div><div class="nv-ttabs" id="nv-im-tabs">';
-    list.forEach(function(x){var _nota=(x.recomenda!=null&&+x.recomenda>0)?fmt(x.recomenda):'—';h+='<button class="nv-ttab '+(x.id===t.id?'on':'')+'" data-id="'+x.id+'"><span class="nv-ttab-turma">'+(x.label||x.turma)+'</span><span class="nv-ttab-nota">'+_nota+'</span><span class="nv-ttab-sub">'+(x.sub||x.data_encontro||'')+'</span></button>';});
+    list.forEach(function(x){var _nota=(x.recomenda!=null&&+x.recomenda>0)?fmt(x.recomenda):'—';h+='<button class="nv-ttab '+(x.id===t.id?'on':'')+'" data-id="'+x.id+'"><span class="nv-ttab-turma">'+(x.label||x.turma)+'</span><span class="nv-ttab-nota">'+_nota+'</span><span class="nv-ttab-sub">'+encSub(x)+'</span></button>';});
+    h+='<button class="nv-ttab nv-ttab-new" type="button" data-new="1"><span class="nv-ttab-turma">Nova pesquisa</span><span class="nv-ttab-nota">+</span><span class="nv-ttab-sub">Subir CSV</span></button>';
     h+='</div>';
     var dims=(t.palestrantes||[]).concat(t.experiencia||[]);
     /* Cada card so aparece se tiver conteudo. Formulario sem coluna de nome de
@@ -334,13 +341,13 @@
       +(_imTaxa!=null?'<div class="nv-imstat"><div class="nv-imstat-n">'+_imTaxa+'%</div><div class="nv-imstat-l">Taxa de resposta</div></div>':'')
       +'</div>'
       +((_imTot==null&&_imRsp==null)?'<div class="nv-imstat-warn">Participantes não informados — clique no ✎ para incluir.</div>':'');
-    h+='<div class="nv-imhero"><div class="nv-card"><div class="nv-ct" style="text-align:center">Recomendação (0–10)</div><div class="nv-ring"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="66" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="11"/><circle cx="75" cy="75" r="66" fill="none" stroke="'+recCol+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'"/></svg><div class="nv-ringc"><div class="nv-ringn" style="color:'+recCol+'">'+fmt(t.recomenda)+'</div></div></div>'+_imStats+'<div class="nv-cs" style="text-align:center;margin:8px 0 0">'+(t.label||t.turma)+' · '+(t.sub||'')+'</div><div class="nv-fortes"><div class="nv-fh" style="color:#46d160">Pontos Fortes</div>'+fortesArr.map(function(x){return '<div class="nv-fi"><span style="color:#46d160">✓</span> '+x+'</div>';}).join('')+'<div class="nv-fh" style="color:#f5c542">Pontos de Melhoria</div>'+melhoriaArr.map(function(x){return '<div class="nv-fi"><span style="color:#f5c542">▲</span> '+x+'</div>';}).join('')+'</div></div><div class="nv-imcols">'+_cardPal+_cardExp+'</div></div>';
+    h+='<div class="nv-imhero"><div class="nv-card"><div class="nv-ct" style="text-align:center">Recomendação (0–10)</div><div class="nv-ring"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="66" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="11"/><circle cx="75" cy="75" r="66" fill="none" stroke="'+recCol+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'"/></svg><div class="nv-ringc"><div class="nv-ringn" style="color:'+recCol+'">'+fmt(t.recomenda)+'</div></div></div>'+_imStats+'<div class="nv-cs" style="text-align:center;margin:8px 0 0">'+(t.label||t.turma)+(encSub(t)?' · '+encSub(t):'')+'</div><div class="nv-fortes"><div class="nv-fh" style="color:#46d160">Pontos Fortes</div>'+fortesArr.map(function(x){return '<div class="nv-fi"><span style="color:#46d160">✓</span> '+x+'</div>';}).join('')+'<div class="nv-fh" style="color:#f5c542">Pontos de Melhoria</div>'+melhoriaArr.map(function(x){return '<div class="nv-fi"><span style="color:#f5c542">▲</span> '+x+'</div>';}).join('')+'</div></div><div class="nv-imcols">'+_cardPal+_cardExp+'</div></div>';
     var _posArr=(t.comentarios&&t.comentarios.positivos)||[],_negArr=(t.comentarios&&t.comentarios.melhoria)||[];
     var pos=cmBox(_posArr,false,'Sem comentários.');
     var neg=cmBox(_negArr,true,'Nenhum ponto de melhoria.');
     h+='<div class="nv-card"><div class="nv-ct">Comentários dos Participantes</div><div class="nv-comments"><div>'+cmH('Positivos','#46d160',_posArr)+pos+'</div><div>'+cmH('Pontos de melhoria','#f5c542',_negArr)+neg+'</div></div>'+((t.baseline||!isAdm())?'':'<div style="margin-top:14px;text-align:right"><button class="nv-encdel" data-del="'+t.id+'">excluir turma</button></div>')+'</div>';
     host.innerHTML=h;
-    $('nv-im-tabs').addEventListener('click',function(e){var b=e.target.closest('.nv-ttab');if(!b)return;STATE.imTurma=b.dataset.id;render();});
+    $('nv-im-tabs').addEventListener('click',function(e){var b=e.target.closest('.nv-ttab');if(!b)return;if(b.dataset.new){var up=$('nv-btn-upload');if(up)up.click();return;}STATE.imTurma=b.dataset.id;render();});
     var canvas=$('nv-im-evo'),labels=list.map(function(x){return x.label||x.turma;}),scores=list.map(function(x){return +(+x.recomenda).toFixed(2);});
     var grad=canvas.getContext('2d').createLinearGradient(0,0,0,180);grad.addColorStop(0,'rgba(245,166,35,.22)');grad.addColorStop(1,'rgba(245,166,35,0)');
     if(window.Chart)charts.push(new Chart(canvas,{type:'line',data:{labels:labels,datasets:[{data:scores,borderColor:'#f5a623',backgroundColor:grad,borderWidth:2.5,tension:.35,fill:true,pointRadius:6,pointBackgroundColor:scores.map(function(s){return scoreColor(s,10);}),pointBorderColor:'#1a1a18',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' Recomendação: '+fmt(c.raw);}}}},scales:{x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#7a7a76',font:{size:11}},border:{color:'transparent'}},y:{min:Math.min.apply(null,scores.concat([8.5]))-.3,max:10,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#7a7a76',callback:function(v){return fmt(v);}},border:{color:'transparent'}}}}}));
@@ -829,7 +836,7 @@
         ?'Avalia\u00e7\u00e3o das imers\u00f5es pelos experts. Cada turma \u00e9 uma aba. Suba a pesquisa e tudo se atualiza e acumula.'
         :'Imers\u00e3o e Hot Seats num s\u00f3 lugar. Cada turma da imers\u00e3o \u00e9 uma aba; cada hot seat \u00e9 um card. Suba a pesquisa e tudo se atualiza e acumula.';
       /* No escopo Experts existe so a Imersao: as abas e o seletor Pre/Pos somem. */
-      var st=document.getElementById('nv-subtabs');if(st)st.style.display=ehExperts()?'none':'';
+      var st=document.getElementById('nv-subtabs');if(st){st.style.display='';st.querySelectorAll('[data-tab]').forEach(function(b){if(b.getAttribute('data-tab')!=='imersao')b.style.display=ehExperts()?'none':'';});}
       if(ehExperts()){
         STATE.tab='imersao';STATE.imTurma=null;
         var pp=document.getElementById('nv-prepos');if(pp)pp.classList.add('hidden');
