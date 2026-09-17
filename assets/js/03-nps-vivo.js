@@ -341,13 +341,36 @@
       +(_imTaxa!=null?'<div class="nv-imstat"><div class="nv-imstat-n">'+_imTaxa+'%</div><div class="nv-imstat-l">Taxa de resposta</div></div>':'')
       +'</div>'
       +((_imTot==null&&_imRsp==null)?'<div class="nv-imstat-warn">Participantes não informados — clique no ✎ para incluir.</div>':'');
-    h+='<div class="nv-imhero"><div class="nv-card"><div class="nv-ct" style="text-align:center">Recomendação (0–10)</div><div class="nv-ring"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="66" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="11"/><circle cx="75" cy="75" r="66" fill="none" stroke="'+recCol+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'"/></svg><div class="nv-ringc"><div class="nv-ringn" style="color:'+recCol+'">'+fmt(t.recomenda)+'</div></div></div>'+_imStats+'<div class="nv-cs" style="text-align:center;margin:8px 0 0">'+(t.label||t.turma)+(encSub(t)?' · '+encSub(t):'')+'</div><div class="nv-fortes"><div class="nv-fh" style="color:#46d160">Pontos Fortes</div>'+fortesArr.map(function(x){return '<div class="nv-fi"><span style="color:#46d160">✓</span> '+x+'</div>';}).join('')+'<div class="nv-fh" style="color:#f5c542">Pontos de Melhoria</div>'+melhoriaArr.map(function(x){return '<div class="nv-fi"><span style="color:#f5c542">▲</span> '+x+'</div>';}).join('')+'</div></div><div class="nv-imcols">'+_cardPal+_cardExp+'</div></div>';
+    /* LOTE 3 · NPS parte 2 · hero em 5 colunas (media 0-10) */
+    var _best=dims.slice().sort(function(a,b){return (b.score||0)-(a.score||0);})[0]||null;
+    var _excel=(t.recomenda!=null&&+t.recomenda>=9);
+    var _rankRows=_pals.map(function(p,i){var c=scoreColor(p.score,10);var med=i===0?'\uD83E\uDD47':i===1?'\uD83E\uDD48':i===2?'\uD83E\uDD49':'';return '<tr><td class="nv-rk-pos">'+(med||(i+1))+'</td><td class="nv-rk-nome">'+p.label+'</td><td class="nv-rk-nota" style="color:'+c+'">'+fmt(p.score)+'</td></tr>';}).join('');
+    var _cardRank=_pals.length
+      ? '<div class="nv-card nv-rankcard"><div class="nv-ct">Ranking de Experts</div><div class="nv-cs">Nota m\u00e9dia por palestrante, do maior para o menor</div><table class="nv-rktbl"><thead><tr><th>#</th><th>Expert</th><th class="nv-rk-nota">Nota</th></tr></thead><tbody>'+_rankRows+'</tbody></table></div>'
+      : '';
+    var _cardQ=_exps.length
+      ? '<div class="nv-card"><div class="nv-ct">Notas por pergunta</div><div class="nv-cs">M\u00e9dia 0\u201310 por dimens\u00e3o avaliada</div>'+_exps.map(function(p){return barRow(p.label,p.score,10);}).join('')+'</div>'
+      : '';
+    h+='<div class="nv-hero5">'
+      +'<div class="nv-card nv-ringcard"><div class="nv-ringlbl">Recomenda\u00e7\u00e3o \u00b7 '+(t.label||t.turma)+'</div><div class="nv-ring"><svg viewBox="0 0 150 150"><circle cx="75" cy="75" r="66" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="11"/><circle cx="75" cy="75" r="66" fill="none" stroke="'+recCol+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+off+'"/></svg><div class="nv-ringc"><div class="nv-ringn" style="color:'+recCol+'">'+fmt(t.recomenda)+'</div><div class="nv-ringu">de 10</div></div></div>'
+      +(_excel?'<div class="nv-selo">\u25CF Zona de excel\u00eancia</div>':'<div class="nv-selo off">'+(encSub(t)||'')+'</div>')
+      +'</div>'
+      +'<div class="nv-kpi5">'
+        +'<div class="nv-k5"><div class="nv-k5-l">Participantes</div><div class="nv-k5-n'+(_imTot==null?' off':'')+'">'+(_imTot!=null?_imTot:'\u2014')+'</div><div class="nv-k5-x">no evento'+(isAdm()?' <button class="nv-statedit" data-edit-total="'+t.id+'" title="Editar participantes">\u270E</button>':'')+'</div></div>'
+        +'<div class="nv-k5"><div class="nv-k5-l">Respostas</div><div class="nv-k5-n'+(_imRsp==null?' off':'')+'">'+(_imRsp!=null?_imRsp:'\u2014')+'</div><div class="nv-k5-x">responderam</div></div>'
+        +'<div class="nv-k5 g"><div class="nv-k5-l">Taxa de resposta</div><div class="nv-k5-n'+(_imTaxa==null?' off':'')+'">'+(_imTaxa!=null?_imTaxa+'%':'\u2014')+'</div><div class="nv-k5-x">'+(_imTaxa!=null?_imRsp+' de '+_imTot:'informe participantes')+'</div></div>'
+        +'<div class="nv-k5 g"><div class="nv-k5-l">Melhor dimens\u00e3o</div><div class="nv-k5-n'+(_best?'':' off')+'">'+(_best?fmt(_best.score):'\u2014')+'</div><div class="nv-k5-x">'+(_best?_best.label:'sem dados')+'</div></div>'
+        +((_imTot==null&&_imRsp==null)?'<div class="nv-imstat-warn nv-k5-warn">Participantes n\u00e3o informados \u2014 clique no \u270E para incluir.</div>':'')
+        +'<div class="nv-card nv-fortescard"><div class="nv-fh" style="color:#46d160">Pontos Fortes</div>'+fortesArr.map(function(x){return '<div class="nv-fi"><span style="color:#46d160">\u2713</span> '+x+'</div>';}).join('')+'<div class="nv-fh" style="color:#f5c542;margin-top:10px">Pontos de Melhoria</div>'+melhoriaArr.map(function(x){return '<div class="nv-fi"><span style="color:#f5c542">\u25B2</span> '+x+'</div>';}).join('')+'</div>'
+      +'</div>'
+      +'</div>';
+    h+='<div class="nv-imcols">'+_cardQ+_cardRank+'</div>';
     var _posArr=(t.comentarios&&t.comentarios.positivos)||[],_negArr=(t.comentarios&&t.comentarios.melhoria)||[];
     var pos=cmBox(_posArr,false,'Sem comentários.');
     var neg=cmBox(_negArr,true,'Nenhum ponto de melhoria.');
-    h+='<div class="nv-card"><div class="nv-ct">Comentários dos Participantes</div><div class="nv-comments"><div>'+cmH('Positivos','#46d160',_posArr)+pos+'</div><div>'+cmH('Pontos de melhoria','#f5c542',_negArr)+neg+'</div></div>'+((t.baseline||!isAdm())?'':'<div style="margin-top:14px;text-align:right"><button class="nv-encdel" data-del="'+t.id+'">excluir turma</button></div>')+'</div>';
+    h+='<div class="nv-card"><div class="nv-ct">Comentários dos Participantes</div><div class="nv-cs">'+(cmClean(_posArr).length+cmClean(_negArr).length)+' respostas abertas</div><div class="nv-comments nv-cm2"><div>'+cmH('Positivos','#46d160',_posArr)+pos+'</div><div>'+cmH('Pontos de melhoria','#f5c542',_negArr)+neg+'</div></div>'+((t.baseline||!isAdm())?'':'<div style="margin-top:14px;text-align:right"><button class="nv-encdel" data-del="'+t.id+'">excluir turma</button></div>')+'</div>';
     host.innerHTML=h;
-    $('nv-im-tabs').addEventListener('click',function(e){var b=e.target.closest('.nv-ttab');if(!b)return;if(b.dataset.new){var up=$('nv-btn-upload');if(up)up.click();return;}STATE.imTurma=b.dataset.id;render();});
+    $('nv-im-tabs').addEventListener('click',function(e){var b=e.target.closest('.nv-ttab');if(!b)return;if(b.dataset.new){var up=$('nv-btn-upload');if(up)up.click();try{var tt=$('nv-m-turma');if(tt){tt.value='';tt.placeholder='ex.: T16 Novembro';}}catch(e){}return;}STATE.imTurma=b.dataset.id;render();});
     var canvas=$('nv-im-evo'),labels=list.map(function(x){return x.label||x.turma;}),scores=list.map(function(x){return +(+x.recomenda).toFixed(2);});
     var grad=canvas.getContext('2d').createLinearGradient(0,0,0,180);grad.addColorStop(0,'rgba(245,166,35,.22)');grad.addColorStop(1,'rgba(245,166,35,0)');
     if(window.Chart)charts.push(new Chart(canvas,{type:'line',data:{labels:labels,datasets:[{data:scores,borderColor:'#f5a623',backgroundColor:grad,borderWidth:2.5,tension:.35,fill:true,pointRadius:6,pointBackgroundColor:scores.map(function(s){return scoreColor(s,10);}),pointBorderColor:'#1a1a18',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' Recomendação: '+fmt(c.raw);}}}},scales:{x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#7a7a76',font:{size:11}},border:{color:'transparent'}},y:{min:Math.min.apply(null,scores.concat([8.5]))-.3,max:10,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#7a7a76',callback:function(v){return fmt(v);}},border:{color:'transparent'}}}}}));
