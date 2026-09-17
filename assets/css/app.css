@@ -2252,3 +2252,19 @@ body{background:var(--bg)}
   .nv-ttab{min-width:64px;padding:8px 9px}
   .nv-ttab-nota{font-size:19px}
 }
+
+
+/* ── LOTE 3 · NPS parte 1 · correção (especificidade, título, card nova pesquisa) ── */
+.nv-sl{font-family:var(--font-title,"Montserrat");font-weight:800;font-size:22px;letter-spacing:0}
+.nv-ttab .nv-ttab-turma{font-family:var(--font-num,"Barlow Condensed");font-weight:800;font-size:15px;letter-spacing:.02em;text-transform:uppercase;line-height:1;opacity:1;margin:0;color:var(--muted)}
+.nv-ttab .nv-ttab-nota{font-family:var(--font-num,"Barlow Condensed");font-weight:800;font-size:24px;letter-spacing:0;text-transform:none;line-height:1;opacity:1;margin:2px 0 0;color:var(--muted)}
+.nv-ttab .nv-ttab-sub{font-family:var(--font-texto,"Barlow");font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:none;line-height:1.2;opacity:1;margin:3px 0 0;color:var(--muted2,#7a7a76);white-space:nowrap}
+.nv-ttab:hover .nv-ttab-turma{color:var(--cream)}
+.nv-ttab.on .nv-ttab-turma,.nv-ttab.on .nv-ttab-nota{color:var(--green)}
+.nv-ttab.nv-ttab-new{border:1px dashed rgba(245,166,35,.35);background:transparent}
+.nv-ttab.nv-ttab-new .nv-ttab-turma{color:var(--green);font-size:12px}
+.nv-ttab.nv-ttab-new .nv-ttab-nota{color:var(--green);font-size:26px}
+.nv-ttab.nv-ttab-new .nv-ttab-sub{color:var(--muted)}
+.nv-ttab.nv-ttab-new:hover{background:rgba(245,166,35,.08);border-color:rgba(245,166,35,.6)}
+.nv-cmh{font-size:11px !important}
+@media(max-width:900px){.nv-ttab .nv-ttab-nota{font-size:20px}.nv-ttab.nv-ttab-new .nv-ttab-nota{font-size:22px}}
