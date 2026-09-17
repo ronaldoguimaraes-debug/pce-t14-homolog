@@ -2223,3 +2223,32 @@ body{background:var(--bg)}
   .estoque-stat:first-child{padding-left:0}
   .estoque-stat-num{font-size:26px}
 }
+
+
+/* ── LOTE 3 · NPS parte 1 · faixa de encontros + hero no padrão ── */
+.nv-ct{font-family:var(--font-title,"Montserrat");font-size:14px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--cream,#EAE5E1);margin-bottom:4px}
+.nv-cs{font-size:12.5px}
+.nv-ttabs{gap:6px;background:var(--card,#252523);border:1px solid var(--border3,rgba(255,255,255,.08));border-radius:13px;padding:6px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.nv-ttabs::-webkit-scrollbar{display:none}
+.nv-ttab{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:76px;padding:9px 12px;border-radius:9px;transition:background .15s,color .15s,box-shadow .15s}
+.nv-ttab-turma{font-family:var(--font-num,"Barlow Condensed");font-weight:800;font-size:15px;letter-spacing:.02em;line-height:1}
+.nv-ttab-nota{font-family:var(--font-num,"Barlow Condensed");font-weight:800;font-size:22px;line-height:1;color:var(--green)}
+.nv-ttab-sub{font-family:var(--font-texto,"Barlow");font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--muted2,#7a7a76);margin-top:1px;white-space:nowrap}
+.nv-ttab .nv-ttab-nota,.nv-ttab .nv-ttab-turma{color:var(--muted)}
+.nv-ttab:hover{background:rgba(255,255,255,.04)}
+.nv-ttab:hover .nv-ttab-turma{color:var(--cream)}
+.nv-ttab.on{background:rgba(245,166,35,.1);box-shadow:inset 0 0 0 1px rgba(245,166,35,.32)}
+.nv-ttab.on .nv-ttab-turma{color:var(--green)}
+.nv-ttab.on .nv-ttab-nota{color:var(--green)}
+.nv-ringn{font-family:var(--font-num,"Barlow Condensed");font-size:46px;font-weight:800}
+.nv-imstat{background:var(--card,#252523);border:1px solid var(--border,rgba(255,255,255,.06));border-radius:11px;padding:12px 8px}
+.nv-imstat-n{font-family:var(--font-num,"Barlow Condensed");font-weight:800;font-size:28px}
+.nv-imstat-l{font-family:var(--font-num,"Barlow Condensed");font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2,#7a7a76);margin-top:5px}
+.nv-imstat-warn{font-size:11.5px}
+.nv-fh{font-family:var(--font-num,"Barlow Condensed");font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
+.nv-fi{font-size:12.5px}
+@media(max-width:900px){
+  .nv-ttabs{border-radius:11px}
+  .nv-ttab{min-width:64px;padding:8px 9px}
+  .nv-ttab-nota{font-size:19px}
+}
