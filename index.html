@@ -13,7 +13,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
 <!-- Supabase + Sortable lazy-loaded sob demanda (só quando o Manual abre) — economiza ~250KB no boot -->
 <script src="assets/js/01-manual-deps.js?v=3.2.0"></script>
-<link rel="stylesheet" href="assets/css/app.css?v=3.2.9">
+<link rel="stylesheet" href="assets/css/app.css?v=3.3.0">
 
 <!-- ═══════════════════════════════════════════════════════════════════════
      v49_sugestao — UX REFRESH 2025/2026
@@ -336,6 +336,15 @@
 <div class="manual-loading" id="mpce-loading" style="display:none">Carregando conteúdo da nuvem…</div>
 <div class="manual-cloud-banner" id="mpce-cloud-banner"><strong>⚠️ Sem conexão com a nuvem.</strong> Mostrando última versão em cache.</div>
 <div id="mpce-cards-view" style="display:none">
+  <div class="mhero" id="mpce-hero">
+    <div class="mhero-txt">
+      <div class="mhero-k">Manual do aluno · PCE</div>
+      <h2 class="mhero-t">Viva a sua jornada<br>no PCE</h2>
+      <p class="mhero-s">Manual do GXP e a operação do evento. Explore as seções abaixo.</p>
+      <div class="mhero-acts"><button type="button" class="mhero-btn" onclick="var e=document.getElementById('mpce-sections-host');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})">Visão geral</button></div>
+    </div>
+    <div class="mhero-img" style="background-image:url('assets/img/manual-hero-pce.jpg')"></div>
+  </div>
   <div class="admin-toolbar" id="mpce-admin-toolbar">
     <span class="admin-badge">⚙️ MODO ADMIN</span>
     <button class="admin-toolbar-btn" onclick="manualOpenAdminsModal()">👥 Gerenciar usuários</button>
@@ -481,6 +490,15 @@
           <strong>⚠️ Sem conexão com a nuvem.</strong> Mostrando última versão em cache. Suas edições serão perdidas até a conexão voltar.
         </div>
         <div id="manual-cards-view" style="display:none">
+          <div class="mhero" id="manual-hero">
+            <div class="mhero-txt">
+              <div class="mhero-k">Manual do expert · PCE</div>
+              <h2 class="mhero-t">Conduza a imersão<br>como referência</h2>
+              <p class="mhero-s">Manual do GXP e os manuais de cada imersão. Explore as seções abaixo.</p>
+              <div class="mhero-acts"><button type="button" class="mhero-btn" onclick="var e=document.getElementById('manual-sections-host');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})">Visão geral</button></div>
+            </div>
+            <div class="mhero-img" style="background-image:url('assets/img/manual-hero-experts.jpg')"></div>
+          </div>
           <div class="admin-toolbar" id="admin-toolbar">
             <span class="admin-badge">⚙️ MODO ADMIN</span>
             <button class="admin-toolbar-btn" onclick="manualOpenAdminsModal()">👥 Gerenciar usuários</button>
@@ -647,7 +665,7 @@
   <button class="mob-tab" data-mob="estoque" onclick="switchPage('estoque')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Estoque</span></button>
   <button class="mob-tab" data-mob="menu" onclick="toggleMobileNav()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg><span>Menu</span></button>
 </nav>
-<script src="assets/js/04-core-dashboard.js?v=3.2.9"></script>
+<script src="assets/js/04-core-dashboard.js?v=3.3.0"></script>
 
 <script src="assets/js/05-manual-pce.js?v=3.2.0"></script>
 
