@@ -2469,8 +2469,9 @@ body{background:var(--bg)}
 /* ── LOTE 3 · Painel ADM no padrão ── */
 .adm-head h2{font-family:var(--font-title,"Montserrat");font-size:24px;font-weight:800;letter-spacing:-.01em}
 .adm-head p{font-size:13px;color:var(--muted);margin:0 0 16px}
-.adm-tabs{gap:6px;background:var(--card,#252523);border:1px solid var(--border3,rgba(255,255,255,.08));border-radius:12px;padding:5px;display:inline-flex;margin-bottom:20px}
-.adm-tab{font-family:var(--font-num,"Barlow Condensed");font-size:13px;font-weight:700;letter-spacing:.04em;background:transparent;border:none;color:var(--muted);padding:7px 15px;border-radius:8px}
+.adm-tabs{gap:4px;background:var(--card,#252523);border:1px solid var(--border3,rgba(255,255,255,.08));border-radius:12px;padding:4px;display:inline-flex;max-width:100%;overflow-x:auto;flex-wrap:nowrap;margin-bottom:20px;scrollbar-width:none}
+.adm-tabs::-webkit-scrollbar{display:none}
+.adm-tab{font-family:var(--font-num,"Barlow Condensed");font-size:13px;font-weight:700;letter-spacing:.04em;background:transparent;border:none;color:var(--muted);padding:7px 12px;border-radius:8px;white-space:nowrap}
 .adm-tab:hover:not(.on){color:var(--cream);border-color:transparent;background:rgba(255,255,255,.04)}
 .adm-tab.on{background:var(--green);color:var(--bg,#1F1F1D);border-color:var(--green)}
 .adm-tab[data-adm="auditoria"]::after{content:"homolog";font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;margin-left:8px;padding:2px 6px;border-radius:5px;background:rgba(245,197,66,.15);color:#f5c542;vertical-align:1px}
@@ -2507,5 +2508,6 @@ body{background:var(--bg)}
 .aud-btn.pri:hover{filter:brightness(1.06);color:var(--bg,#1F1F1D)}
 .aud-btn.dang{border-color:rgba(255,95,95,.4);color:#ff8a8a}
 .aud-btn:disabled{opacity:.45;cursor:not-allowed}
+.aud-btn.mini,.adm-b.sm{font-size:11px !important;padding:5px 9px}
 .aud-meta{font-size:12px;color:var(--muted2)}
-@media(max-width:900px){.adm-tabs{display:flex;overflow-x:auto;scrollbar-width:none}.adm-tabs::-webkit-scrollbar{display:none}.adm-tab{white-space:nowrap}}
+@media(max-width:900px){.adm-tabs{display:flex}}
