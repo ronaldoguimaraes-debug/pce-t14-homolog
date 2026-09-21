@@ -342,7 +342,7 @@
       +'</div>'
       +((_imTot==null&&_imRsp==null)?'<div class="nv-imstat-warn">Participantes não informados — clique no ✎ para incluir.</div>':'');
     /* LOTE 3 · NPS parte 2 · hero em 5 colunas (media 0-10) */
-    var _best=dims.slice().sort(function(a,b){return (b.score||0)-(a.score||0);})[0]||null;
+    var _best=(t.experiencia||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0);})[0]||null;
     var _excel=(t.recomenda!=null&&+t.recomenda>=9);
     var _rankRows=_pals.map(function(p,i){var c=scoreColor(p.score,10);var med=i===0?'\uD83E\uDD47':i===1?'\uD83E\uDD48':i===2?'\uD83E\uDD49':'';return '<tr><td class="nv-rk-pos">'+(med||(i+1))+'</td><td class="nv-rk-nome">'+p.label+'</td><td class="nv-rk-nota" style="color:'+c+'">'+fmt(p.score)+'</td></tr>';}).join('');
     var _cardRank=_pals.length
@@ -417,23 +417,23 @@
     h+='</div>';
 
     var dims=['satisfacao','relevancia','conteudo'].filter(function(k){return rank.some(function(e){return e.metricas[k];});});
-    h+='<div class="nv-ranktbl"><table class="nv-rank"><thead><tr><th>#</th><th>Mentor</th><th>Turma</th><th>Data</th>'
+    h+='<div class="nv-ranktbl"><table class="nv-rank"><thead><tr><th>#</th><th>Mentor</th><th>Turma</th><th class="num">Resp.</th><th class="num">Partic.</th><th>Data</th>'
       +dims.map(function(k){return '<th class="num">'+(SHORT_DIM[k]||k)+'</th>';}).join('')
-      +'<th class="num">Resp.</th><th class="num">Online</th></tr></thead><tbody>';
+      +'</tr></thead><tbody>';
     rank.forEach(function(e,i){
       var m=e.metricas[key];
       var pos=(i===0)?'\u{1F947}':(i===1)?'\u{1F948}':(i===2&&n>3)?'\u{1F949}':(i+1)+'\u00BA';
       var st=(m.avg>=media+0.3)?'<span class="nv-badge up">Acima</span>':(m.avg<=media-0.3)?'<span class="nv-badge dn">Abaixo</span>':'<span class="nv-badge eq">Na média</span>';
       var sal=Math.round(((m.topBox||0)-(m.lowBox||0))*100);
       var tx=(e.total&&e.n)?Math.min(100,Math.round(e.n/e.total*100))+'%':'—';
-      h+='<tr'+(i===n-1&&n>2?' class="last"':'')+'><td class="pos">'+pos+'</td><td class="mt">'+esc(e.mentor||'—')+'</td><td><span class="nv-turma">'+esc(e.turma||'—')+'</span></td><td class="dt">'+(e.data_encontro||'—')+'</td>';
+      var _onl=(e.total!=null&&+e.total>0)?+e.total:null;
+      h+='<tr'+(i===n-1&&n>2?' class="last"':'')+'><td class="pos">'+pos+'</td><td class="mt">'+esc(e.mentor||'—')+'</td><td><span class="nv-turma">'+esc(e.turma||'—')+'</span></td>'
+        +'<td class="num">'+(e.n||'—')+'</td>'
+        +'<td class="num">'+(_onl!=null?_onl:'—')+(isAdm()?'<button class="nv-onledit" data-edit-total="'+e.id+'" title="Editar participantes online">✎</button>':'')+'</td>'
+        +'<td class="dt">'+fmtData(e.data_encontro)+'</td>';
       dims.forEach(function(k){var mm=e.metricas[k];
         h+='<td class="num"'+(mm?' style="color:'+scoreColor(mm.avg,mm.scaleMax)+';font-weight:700"':'')+'>'+(mm?fmt(mm.avg):'—')+'</td>';});
-      var _onl=(e.total!=null&&+e.total>0)?+e.total:null;
-      h+='<td class="num">'+(e.n||'—')+'</td>'
-        +'<td class="num">'+(_onl!=null?_onl:'—')
-        +(isAdm()?'<button class="nv-onledit" data-edit-total="'+e.id+'" title="Editar participantes online">✎</button>':'')
-        +'</td></tr>';
+      h+='</tr>';
     });
     h+='</tbody></table></div>';
 
@@ -507,6 +507,7 @@
       +P.map(function(x){return '<div class="nv-anp">'+x+'</div>';}).join('')+'</div>';
     return h+'</div>';
   }
+  function fmtData(d){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(d||''));return m?(m[3]+'/'+m[2]+'/'+m[1]):(d||'\u2014');}
   function renderHotseat(list){
     var host=$('nv-content');
     if(!list.length){host.innerHTML='<div class="nv-empty">Nenhum hot seat deste tipo ainda.<br><b>Suba um CSV</b> ou clique em Carregar exemplo (Renata + Iane).</div>';return;}
@@ -539,7 +540,7 @@
       var _posArr=enc.comentarios.positivos||[],_negArr=enc.comentarios.melhoria||[];
       var pos=cmBox(_posArr,false,'Sem comentários.');
       var neg=cmBox(_negArr,true,'Nenhum ponto de melhoria.');
-      html+='<div class="nv-card"><div class="nv-enchead"><div><div class="nv-enctitle">'+(enc.mentor||'Encontro')+'</div><div class="nv-encmeta">'+(enc.turma||'')+' · '+(enc.tipo||'').replace('hotseat_pos','Hot Seat · Pós-PCE').replace('hotseat_pre','Hot Seat · Pré-PCE')+' · '+(enc.data_encontro||'')+(String(enc.id||'').indexOf('loc_')===0?' · <span class="nv-locbadge">SÓ NESTE NAVEGADOR</span>':'')+'</div></div>'+'<div class="nv-encacts"><button class="nv-encpng" data-png="'+enc.id+'" title="Baixar este relatório em PNG">\u2913 PNG</button>'+(isAdm()?'<button class="nv-encdel" data-del="'+enc.id+'">excluir</button>':'')+'</div></div>'+_hsStats+_hsHero+'<div class="nv-analise"><div class="nv-antitle">Análise automática</div>'+an.paras.map(function(p){return '<div class="nv-anp">'+p+'</div>';}).join('')+((an.temasPos.length||an.temasNeg.length)?'<div class="nv-tags">'+an.temasPos.map(function(x){return '<span class="nv-tag">'+x+'</span>';}).join('')+an.temasNeg.map(function(x){return '<span class="nv-tag nv-tagneg">'+x+'</span>';}).join('')+'</div>':'')+'</div><div class="nv-comments" style="margin-top:16px"><div>'+cmH('Positivos','#46d160',_posArr)+pos+'</div><div>'+cmH('Pontos de melhoria','#f5c542',_negArr)+neg+'</div></div></div>';
+      html+='<div class="nv-card"><div class="nv-enchead"><div><div class="nv-enctitle">'+(enc.mentor||'Encontro')+'</div><div class="nv-encmeta">'+(enc.turma||'')+' · '+(enc.tipo||'').replace('hotseat_pos','Hot Seat · Pós-PCE').replace('hotseat_pre','Hot Seat · Pré-PCE')+' · '+fmtData(enc.data_encontro)+(String(enc.id||'').indexOf('loc_')===0?' · <span class="nv-locbadge">SÓ NESTE NAVEGADOR</span>':'')+'</div></div>'+'<div class="nv-encacts"><button class="nv-encpng" data-png="'+enc.id+'" title="Baixar este relatório em PNG">\u2913 PNG</button>'+(isAdm()?'<button class="nv-encdel" data-del="'+enc.id+'">excluir</button>':'')+'</div></div>'+_hsStats+_hsHero+'<div class="nv-analise"><div class="nv-antitle">Análise automática</div>'+an.paras.map(function(p){return '<div class="nv-anp">'+p+'</div>';}).join('')+((an.temasPos.length||an.temasNeg.length)?'<div class="nv-tags">'+an.temasPos.map(function(x){return '<span class="nv-tag">'+x+'</span>';}).join('')+an.temasNeg.map(function(x){return '<span class="nv-tag nv-tagneg">'+x+'</span>';}).join('')+'</div>':'')+'</div><div class="nv-comments" style="margin-top:16px"><div>'+cmH('Positivos','#46d160',_posArr)+pos+'</div><div>'+cmH('Pontos de melhoria','#f5c542',_negArr)+neg+'</div></div></div>';
     });
     host.innerHTML=html;
     var canvas=$('nv-hs-cmp');
