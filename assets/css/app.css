@@ -2305,3 +2305,46 @@ body{background:var(--bg)}
   .nv-kpi5{grid-template-columns:1fr 1fr}
   .nv-k5-n{font-size:28px}
 }
+
+
+/* ── LOTE 3 · NPS parte 3 · Hot Seats no padrão ── */
+.nv-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.nv-kpi{background:var(--card,#252523);border:1px solid var(--border,rgba(255,255,255,.06));border-radius:var(--rl,13px);padding:14px 16px}
+.nv-kpi-n{font-family:var(--font-num,"Barlow Condensed");font-weight:800;font-size:30px;line-height:.9;color:var(--cream)}
+.nv-kpi-l{font-family:var(--font-num,"Barlow Condensed");font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);margin-top:7px}
+.nv-verdict{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 16px}
+.nv-vd{border-radius:11px;padding:11px 14px;font-size:13px;border:1px solid var(--border,rgba(255,255,255,.06))}
+.nv-vd-top{background:rgba(70,209,96,.08);border-color:rgba(70,209,96,.3)}
+.nv-vd-low{background:rgba(245,197,66,.07);border-color:rgba(245,197,66,.3)}
+.nv-ranktbl{overflow-x:auto;border-radius:12px;border:1px solid var(--border,rgba(255,255,255,.06))}
+.nv-rank{width:100%;border-collapse:collapse;min-width:720px}
+.nv-rank th{font-family:var(--font-num,"Barlow Condensed");font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);text-align:left;padding:9px 10px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--border3,rgba(255,255,255,.08));white-space:nowrap}
+.nv-rank td{padding:10px;border-bottom:1px solid var(--border,rgba(255,255,255,.06));font-size:13px;color:var(--cream);white-space:nowrap}
+.nv-rank tr:last-child td{border-bottom:none}
+.nv-rank td.pos{font-family:var(--font-num,"Barlow Condensed");font-weight:800;font-size:15px;color:var(--green);width:44px}
+.nv-rank td.mt{font-weight:600}
+.nv-rank td.dt{color:var(--muted);font-size:12.5px}
+.nv-rank th.num,.nv-rank td.num{text-align:right;font-family:var(--font-num,"Barlow Condensed");font-size:15px;font-weight:700}
+.nv-rank .nv-turma{font-family:var(--font-num,"Barlow Condensed");font-weight:700;font-size:12px;letter-spacing:.06em;color:var(--muted);background:rgba(255,255,255,.05);border-radius:6px;padding:2px 7px}
+.nv-badge{font-family:var(--font-num,"Barlow Condensed");font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:20px;padding:2px 8px}
+.nv-badge.up{color:#46d160;background:rgba(70,209,96,.12)}
+.nv-badge.dn{color:#ff5f5f;background:rgba(255,95,95,.12)}
+.nv-badge.eq{color:var(--muted);background:rgba(255,255,255,.06)}
+.nv-onledit{background:none;border:none;color:var(--muted2);cursor:pointer;margin-left:4px;font-size:12px}
+.nv-onledit:hover{color:var(--green)}
+.nv-enchead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px}
+.nv-enctitle{font-family:var(--font-title,"Montserrat");font-weight:700;font-size:16px;color:var(--cream)}
+.nv-encmeta{font-size:12px;color:var(--muted2);margin-top:3px}
+.nv-encacts{display:flex;gap:8px;flex-shrink:0}
+.nv-encpng{font-family:var(--font-num,"Barlow Condensed");font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.3);border-radius:8px;padding:6px 12px;cursor:pointer}
+.nv-encpng:hover{background:rgba(245,166,35,.18)}
+.nv-encdel{font-family:var(--font-num,"Barlow Condensed");font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted2);background:transparent;border:1px solid var(--border3,rgba(255,255,255,.08));border-radius:8px;padding:6px 12px;cursor:pointer}
+.nv-encdel:hover{color:#ff5f5f;border-color:rgba(255,95,95,.4)}
+.nv-antitle{font-family:var(--font-num,"Barlow Condensed");font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
+.nv-anp{font-size:13px;line-height:1.55;color:var(--body,#c9c9c4)}
+.nv-locbadge{font-family:var(--font-num,"Barlow Condensed");font-size:10.5px;letter-spacing:.08em;color:#f5c542;background:rgba(245,197,66,.1);border-radius:6px;padding:1px 6px}
+.nv-prepos{display:inline-flex;gap:4px;background:var(--card,#252523);border:1px solid var(--border3,rgba(255,255,255,.08));border-radius:10px;padding:4px;margin:0 0 14px}
+.nv-prepos button{font-family:var(--font-num,"Barlow Condensed");font-weight:700;font-size:13px;letter-spacing:.04em;background:transparent;border:none;color:var(--muted);border-radius:7px;padding:6px 14px;cursor:pointer}
+.nv-prepos button.on{background:var(--green);color:var(--bg,#1F1F1D)}
+.nv-ringl{font-size:11px !important;letter-spacing:.1em}
+@media(max-width:900px){.nv-kpis{grid-template-columns:1fr}.nv-verdict{grid-template-columns:1fr}}
