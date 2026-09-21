@@ -2515,3 +2515,31 @@ body{background:var(--bg)}
 .sli-btn.restore:hover{background:rgba(245,166,35,.16)}
 .aud-meta{font-size:12px;color:var(--muted2)}
 @media(max-width:900px){.adm-tabs{display:flex}}
+
+
+/* ── Feature · imagem do hero editável ── */
+.mhero{position:relative}
+.mhero-edit{position:absolute;right:14px;bottom:14px;z-index:3;font-family:var(--font-texto,"Barlow");font-weight:700;font-size:11.5px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.18);color:var(--cream);border-radius:8px;padding:7px 12px;cursor:pointer;backdrop-filter:blur(4px)}
+.mhero-edit:hover{border-color:rgba(245,166,35,.5);color:var(--green)}
+.mhero-panel{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:600;display:none;align-items:center;justify-content:center;padding:20px}
+.mhero-panel.on{display:flex}
+.mhero-panel-in{width:min(680px,100%);background:var(--bg2,#212120);border:1px solid var(--border3,rgba(255,255,255,.08));border-radius:var(--rxl,15px);padding:20px 22px 18px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.mhero-panel-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.mhero-panel-t{font-family:var(--font-title,"Montserrat");font-weight:700;font-size:16px;color:var(--cream)}
+.mhero-panel-x{background:none;border:1px solid var(--border3,rgba(255,255,255,.08));color:var(--muted);border-radius:8px;width:30px;height:30px;cursor:pointer}
+.mhero-panel-x:hover{color:var(--cream);border-color:rgba(245,166,35,.4)}
+.mhero-prev{height:200px;border-radius:12px;background-color:#101410;background-size:cover;background-position:right 0%;border:1px solid rgba(245,166,35,.2);margin-bottom:14px}
+.mhero-file{display:block;border:1px dashed rgba(245,166,35,.35);border-radius:10px;padding:12px 14px;text-align:center;font-size:12.5px;color:var(--muted);cursor:pointer;margin-bottom:14px}
+.mhero-file:hover{background:rgba(245,166,35,.05);color:var(--green)}
+.mhero-slider{display:flex;align-items:center;gap:12px;font-family:var(--font-num,"Barlow Condensed");font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.mhero-slider input[type=range]{flex:1;accent-color:var(--green)}
+.mhero-slider span:last-child{min-width:52px;text-align:right;color:var(--green)}
+.mhero-hint{font-size:12px;color:var(--muted2);margin:8px 0 16px}
+.mhero-acts{display:flex;gap:8px;align-items:center}
+.mhero-sp{flex:1}
+.mhero-btn2{font-family:var(--font-texto,"Barlow");font-weight:700;font-size:13px;border-radius:10px;padding:9px 14px;border:1px solid var(--border3,rgba(255,255,255,.08));background:var(--card,#252523);color:var(--cream);cursor:pointer}
+.mhero-btn2:hover{border-color:rgba(245,166,35,.4)}
+.mhero-btn2.pri{background:var(--green);border-color:var(--green);color:var(--bg,#1F1F1D)}
+.mhero-btn2.pri:disabled{opacity:.55;cursor:wait}
+.mhero-msg{font-size:12.5px;color:#f5c542;min-height:16px;margin-top:10px}
+@media(max-width:900px){.mhero-prev{height:140px}.mhero-acts{flex-wrap:wrap}}
