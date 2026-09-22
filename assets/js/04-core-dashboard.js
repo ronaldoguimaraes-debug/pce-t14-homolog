@@ -1,7 +1,7 @@
 /* PCE 2.0 · 05-core-dashboard
    Extraido do index monolitico sem alteracao de logica.
    Engenharia e fundacao: Ronaldo Ferreira. */
-const PCE_VERSION = '3.5.2';
+const PCE_VERSION = '3.5.3';
 const API_SCHEMA_VERSION = '3.0'; // atualizado para DASH-BR-COMPLETO v2
 const DATA_SOURCES = {
   br: {
@@ -3411,9 +3411,14 @@ async function admRenderLixeira(){
     '<button class="adm-b ok" style="font-size:12px;padding:9px 16px" onclick="mpceOpenTrashModal()">🗑 Abrir lixeira <span id="adm-trash-n"></span></button>'+
     '</div>';
   try{
-    var r=await SB.from('manualpce_cards').select('id',{count:'exact',head:true}).not('deleted_at','is',null);
+    /* Pendencia A-4 · o botao abre a lixeira inteira, entao o numero conta as
+       duas tabelas. Antes contava so manualpce_cards e divergia do modal. */
+    var [rc,rs]=await Promise.all([
+      SB.from('manualpce_cards').select('id',{count:'exact',head:true}).not('deleted_at','is',null),
+      SB.from('manualpce_sections').select('id',{count:'exact',head:true}).not('deleted_at','is',null)
+    ]);
     var el=document.getElementById('adm-trash-n');
-    if(el && r && typeof r.count==='number') el.textContent='('+r.count+')';
+    if(el) el.textContent='('+(Number(rc&&rc.count)||0)+(Number(rs&&rs.count)||0)+')';
   }catch(e){}
 }
 async function admApprove(userId,val){

@@ -250,7 +250,7 @@ async function mpceRestoreItem(kind,id){
 }
 async function mpceUpdateTrashCount(){
   if(!authIsAdmin()||!_supabaseReady)return;
-  try{var [c,s]=await Promise.all([SB.from('manualpce_cards').select('id',{count:'exact',head:true}).not('deleted_at','is',null),SB.from('manualpce_sections').select('id',{count:'exact',head:true}).not('deleted_at','is',null)]);var el=document.getElementById('mpce-trash-count-inline');if(el)el.textContent='('+(c.count||0)+(s.count||0)+')';}catch(e){}
+  try{var [c,s]=await Promise.all([SB.from('manualpce_cards').select('id',{count:'exact',head:true}).not('deleted_at','is',null),SB.from('manualpce_sections').select('id',{count:'exact',head:true}).not('deleted_at','is',null)]);var el=document.getElementById('mpce-trash-count-inline');if(el)el.textContent='('+((Number(c&&c.count)||0)+(Number(s&&s.count)||0))+')';}catch(e){}
 }
 async function mpceUploadCover(id){
   if(!authIsAdmin())return;_mpceUploadTarget=id;var inp=document.getElementById('mpce-img-input');
