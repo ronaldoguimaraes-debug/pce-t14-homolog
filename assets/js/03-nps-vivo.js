@@ -270,7 +270,7 @@
     if(prev&&prev.metricas&&prev.metricas[enc.mainKey]){var d=main.avg-prev.metricas[enc.mainKey].avg;var dir=d>0.05?'subiu':(d<-0.05?'caiu':'ficou estável');var cls=d>0.05?'nv-up':(d<-0.05?'nv-down':'');P.push('Frente ao encontro anterior (<b>'+(prev.mentor||prev.turma)+'</b>), a satisfação <span class="'+cls+'">'+dir+(Math.abs(d)>=0.05?' '+fmt(Math.abs(d))+' ponto(s)':'')+'</span>.');}
     else P.push('Primeiro encontro deste tipo — vira a <b>linha de base</b> para os próximos.');
     var dims=enc.order.map(function(k){return m[k];}).filter(Boolean);
-    if(dims.length>1){var t=dims.slice().sort(function(a,b){return b.avg-a.avg;})[0],b=dims.slice().sort(function(a,b){return a.avg-b.avg;})[0];P.push('Dimensão mais forte: <b>'+t.label+'</b> ('+fmt(t.avg)+'). Menor nota: <b>'+b.label+'</b> ('+fmt(b.avg)+').');}
+    if(dims.length>1){var t=dims.slice().sort(function(a,b){return b.avg-a.avg;})[0],b=dims.slice().sort(function(a,b){return a.avg-b.avg;})[0];if(Math.abs(t.avg-b.avg)<0.005){P.push('As dimensões empataram em <b>'+fmt(t.avg)+'</b>.');}else{P.push('Dimensão mais forte: <b>'+t.label+'</b> ('+fmt(t.avg)+'). Menor nota: <b>'+b.label+'</b> ('+fmt(b.avg)+').');}}
     var tc=enc.comentarios.positivos.length+enc.comentarios.melhoria.length,rate=enc.n?tc/enc.n:0;var lvl=rate>=0.7?'alto':(rate>=0.35?'médio':'baixo');
     P.push('Engajamento qualitativo <b>'+lvl+'</b>: '+enc.n+' respostas e '+tc+' comentário(s) aberto(s) ('+pct(rate)+'% de aproveitamento).');
     return {paras:P,temasPos:temas(enc.comentarios.positivos),temasNeg:temas(enc.comentarios.melhoria)};
