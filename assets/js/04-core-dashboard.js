@@ -1,7 +1,7 @@
 /* PCE 2.0 · 05-core-dashboard
    Extraido do index monolitico sem alteracao de logica.
    Engenharia e fundacao: Ronaldo Ferreira. */
-const PCE_VERSION = '3.5.3';
+const PCE_VERSION = '3.5.4';
 const API_SCHEMA_VERSION = '3.0'; // atualizado para DASH-BR-COMPLETO v2
 const DATA_SOURCES = {
   br: {
@@ -3418,7 +3418,7 @@ async function admRenderLixeira(){
       SB.from('manualpce_sections').select('id',{count:'exact',head:true}).not('deleted_at','is',null)
     ]);
     var el=document.getElementById('adm-trash-n');
-    if(el) el.textContent='('+(Number(rc&&rc.count)||0)+(Number(rs&&rs.count)||0)+')';
+    if(el) el.textContent='('+((Number(rc&&rc.count)||0)+(Number(rs&&rs.count)||0))+')';
   }catch(e){}
 }
 async function admApprove(userId,val){
