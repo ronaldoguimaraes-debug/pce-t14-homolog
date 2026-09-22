@@ -262,7 +262,28 @@ async function mpceUploadCover(id){
   };inp.click();
 }
 function mpceUploadModal(){if(_mpceCurrentCard)mpceUploadCover(_mpceCurrentCard);}
-function mpceUpdateModalHero(id){var hero=document.getElementById('mpce-modal-hero'),ph=document.getElementById('mpce-modal-hero-placeholder');if(!hero||!ph)return;var old=hero.querySelector('img.modal-hero-img');if(old)old.remove();var cover=(_mpceState[id]&&_mpceState[id]._coverUrl)||'';if(cover){var img=document.createElement('img');img.src=cover;img.className='modal-hero-img';ph.style.display='none';hero.insertBefore(img,hero.firstChild);}else ph.style.display='flex';}
+function mpceUpdateModalHero(id){
+  var hero=document.getElementById('mpce-modal-hero'),ph=document.getElementById('mpce-modal-hero-placeholder');
+  if(!hero||!ph)return;
+  var oldImg = hero.querySelector('img.modal-hero-img');
+  if (oldImg) oldImg.remove();
+  var cover = (_mpceState[id] && _mpceState[id]._coverUrl) || '';
+  if (!cover){ ph.style.display = 'flex'; return; }
+  /* Pendencia D-1 · o placeholder segura a vaga ate a imagem existir de fato.
+     Antes ele saia junto com a atribuicao do src, e o intervalo de rede virava
+     um hero vazio. */
+  var ger = (mpceUpdateModalHero._g = (mpceUpdateModalHero._g || 0) + 1);
+  var img = document.createElement('img');
+  img.className = 'modal-hero-img';
+  img.alt = '';
+  ph.style.display = 'flex';
+  img.onload = function(){ if (ger === mpceUpdateModalHero._g) ph.style.display = 'none'; };
+  img.onerror = function(){ if (ger !== mpceUpdateModalHero._g) return; img.remove(); ph.style.display = 'flex'; };
+  hero.insertBefore(img, hero.firstChild);
+  img.src = cover;
+  /* ja em cache: esconde no mesmo frame, sem piscar */
+  if (img.complete && img.naturalWidth > 0 && ger === mpceUpdateModalHero._g) ph.style.display = 'none';
+}
 function mpceOpen(id){_mpceCurrentCard=id;_mpceEditing=false;_mpceTab='conteudo';mpceRenderModal();document.getElementById('mpce-modal-overlay').classList.add('open');document.body.style.overflow='hidden';}
 function mpceClose(e){if(e&&e.target&&e.target.id!=='mpce-modal-overlay'){if(e.target.tagName)return;}if(_mpceEditing){if(!confirm('Sair sem salvar?'))return;}document.getElementById('mpce-modal-overlay').classList.remove('open');document.getElementById('mpce-modal').classList.remove('editing-mode');document.body.style.overflow='';_mpceCurrentCard=null;_mpceEditing=false;}
 function mpceRenderModal(){

@@ -1,7 +1,7 @@
 /* PCE 2.0 · 05-core-dashboard
    Extraido do index monolitico sem alteracao de logica.
    Engenharia e fundacao: Ronaldo Ferreira. */
-const PCE_VERSION = '3.5.4';
+const PCE_VERSION = '3.5.5';
 const API_SCHEMA_VERSION = '3.0'; // atualizado para DASH-BR-COMPLETO v2
 const DATA_SOURCES = {
   br: {
@@ -4870,15 +4870,21 @@ function manualUpdateModalHero(id){
   var oldImg = hero.querySelector('img.modal-hero-img');
   if (oldImg) oldImg.remove();
   var cover = (_manualState[id] && _manualState[id]._coverUrl) || '';
-  if (cover){
-    var img = document.createElement('img');
-    img.src = cover;
-    img.className = 'modal-hero-img';
-    ph.style.display = 'none';
-    hero.insertBefore(img, hero.firstChild);
-  } else {
-    ph.style.display = 'flex';
-  }
+  if (!cover){ ph.style.display = 'flex'; return; }
+  /* Pendencia D-1 · o placeholder segura a vaga ate a imagem existir de fato.
+     Antes ele saia junto com a atribuicao do src, e o intervalo de rede virava
+     um hero vazio. */
+  var ger = (manualUpdateModalHero._g = (manualUpdateModalHero._g || 0) + 1);
+  var img = document.createElement('img');
+  img.className = 'modal-hero-img';
+  img.alt = '';
+  ph.style.display = 'flex';
+  img.onload = function(){ if (ger === manualUpdateModalHero._g) ph.style.display = 'none'; };
+  img.onerror = function(){ if (ger !== manualUpdateModalHero._g) return; img.remove(); ph.style.display = 'flex'; };
+  hero.insertBefore(img, hero.firstChild);
+  img.src = cover;
+  /* ja em cache: esconde no mesmo frame, sem piscar */
+  if (img.complete && img.naturalWidth > 0 && ger === manualUpdateModalHero._g) ph.style.display = 'none';
 }
 
 // ── ABRIR / FECHAR MODAL ──────────────────────────────────────
