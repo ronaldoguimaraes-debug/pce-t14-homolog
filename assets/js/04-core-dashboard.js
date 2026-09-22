@@ -1,7 +1,7 @@
 /* PCE 2.0 · 05-core-dashboard
    Extraido do index monolitico sem alteracao de logica.
    Engenharia e fundacao: Ronaldo Ferreira. */
-const PCE_VERSION = '3.5.0';
+const PCE_VERSION = '3.5.1';
 const API_SCHEMA_VERSION = '3.0'; // atualizado para DASH-BR-COMPLETO v2
 const DATA_SOURCES = {
   br: {
@@ -1545,7 +1545,7 @@ function perfilGo(secId, btn){
   try{if(typeof showPerfilSub==='function')showPerfilSub('perfil');}catch(e){}
   var el=document.getElementById(secId);
   if(el){var cont=document.querySelector('.content')||window;
-    var y=el.getBoundingClientRect().top+(cont.scrollTop||0)-72;
+    var _ct=(cont&&cont.getBoundingClientRect)?cont.getBoundingClientRect().top:0;var y=el.getBoundingClientRect().top-_ct+(cont.scrollTop||0)-72;
     if(cont.scrollTo)cont.scrollTo({top:y,behavior:'smooth'});else window.scrollTo(0,y);}
 }
 function _perfilScrollSpy(){
