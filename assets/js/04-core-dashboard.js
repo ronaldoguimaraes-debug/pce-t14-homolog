@@ -1,7 +1,7 @@
 /* PCE 2.0 · 05-core-dashboard
    Extraido do index monolitico sem alteracao de logica.
    Engenharia e fundacao: Ronaldo Ferreira. */
-const PCE_VERSION = '3.5.1';
+const PCE_VERSION = '3.5.2';
 const API_SCHEMA_VERSION = '3.0'; // atualizado para DASH-BR-COMPLETO v2
 const DATA_SOURCES = {
   br: {
@@ -546,7 +546,7 @@ function storeUpdateT(key, payload){
 function storeUpdateBr(payload){if(!payload){Logger.warn('STORE','storeUpdateBr: payload nulo — mantendo dados anteriores');return false;}store.br.rows=payload.rows;store.br.stats=payload.stats;store.br.updated=payload.updated;store.br.version=payload.version;store.br.source=payload.source||'api_live';store.br.pendingTransfers=payload.pendingTransfers;store.br.pendingTransferCount=payload.pendingTransferCount;Logger.info('STORE','Brasil atualizado',{total:payload.rows.length,source:store.br.source,version:store.br.version});return true;}
 function storeUpdateUs(payload){if(!payload){Logger.warn('STORE','storeUpdateUs: payload nulo — mantendo dados anteriores');return false;}store.us.data=payload;store.us.updated=payload.updated;store.us.version=payload.version;store.us.source=payload.source||'api_live';Logger.info('STORE','Orlando atualizado',{total:payload.total,confirmados:payload.confirmados});return true;}
 function storeSetOffline(isOffline){store.meta.isOffline=isOffline;const banner=document.getElementById('offline-banner');if(banner)banner.classList.toggle('hidden',!isOffline);}
-function jsonp(url,name,timeoutMs=15000){return new Promise((resolve,reject)=>{const cbName='_pce_cb_'+name+'_'+Date.now()+'_'+Math.random().toString(36).slice(2);let done=false;const timer=setTimeout(()=>{if(done)return;done=true;cleanup();reject(new Error('Timeout JSONP: '+name));},timeoutMs);function cleanup(){clearTimeout(timer);try{delete window[cbName];}catch(e){}const el=document.getElementById('jsonp_'+cbName);if(el)el.remove();}window[cbName]=function(data){if(done)return;done=true;cleanup();resolve(data);};const script=document.createElement('script');script.id='jsonp_'+cbName;script.onerror=()=>{if(done)return;done=true;cleanup();reject(new Error('Script error JSONP: '+name));};script.src=url+(url.includes('?')?'&':'?')+'callback='+cbName;document.head.appendChild(script);});}
+function jsonp(url,name,timeoutMs=15000){return new Promise((resolve,reject)=>{const cbName='_pce_cb_'+name+'_'+Date.now()+'_'+Math.random().toString(36).slice(2);let done=false;const timer=setTimeout(()=>{if(done)return;done=true;cleanup();reject(new Error('Timeout JSONP: '+name));},timeoutMs);function cleanup(){clearTimeout(timer);try{window[cbName]=function(){};}catch(e){}const el=document.getElementById('jsonp_'+cbName);if(el)el.remove();setTimeout(function(){try{delete window[cbName];}catch(e){}},120000);}window[cbName]=function(data){if(done)return;done=true;cleanup();resolve(data);};const script=document.createElement('script');script.id='jsonp_'+cbName;script.onerror=()=>{if(done)return;done=true;cleanup();reject(new Error('Script error JSONP: '+name));};script.src=url+(url.includes('?')?'&':'?')+'callback='+cbName;document.head.appendChild(script);});}
 async function fetchWithRetry(sourceConfig,token){const{id,url,timeout,retries,retryDelay,label}=sourceConfig;let lastError;for(let attempt=0;attempt<=retries;attempt++){if(store.meta.fetchToken!==token){Logger.debug('FETCH',`[${id}] Fetch cancelado — token obsoleto`,{expected:token,current:store.meta.fetchToken});throw new Error('CANCELLED');}if(attempt>0){const delay=retryDelay*Math.pow(2,attempt-1);Logger.warn('FETCH',`[${id}] Retry ${attempt}/${retries} em ${delay}ms`,{lastError:lastError?.message});await new Promise(r=>setTimeout(r,delay));if(store.meta.fetchToken!==token)throw new Error('CANCELLED');}try{const t0=Date.now();Logger.info('FETCH',`[${id}] Tentativa ${attempt+1}/${retries+1} — ${label}`);const data=await jsonp(url,id+'_'+attempt,timeout);Logger.perf('FETCH',`[${id}] Resposta recebida`,t0);return data;}catch(e){lastError=e;Logger.warn('FETCH',`[${id}] Tentativa ${attempt+1} falhou`,{error:e.message});}}throw new Error(`[${id}] Todas as ${retries+1} tentativas falharam. Último erro: ${lastError?.message}`);}
 // ── Render agnóstico de view: repinta o que está na tela (debounce em rAF) ──
 var __renderRAF=null;
@@ -5358,6 +5358,32 @@ document.addEventListener('click', function(e){
           }
         });
       });
+      /* Pendencia C · sessao salva = carregar o Supabase sozinho.
+         Sem isso, quem ja esta logado via o chip vazio e "conteudo protegido" em
+         NPS / Experts / ADM ate abrir um Manual. Olhar o localStorage nao custa
+         download: o SDK so e baixado quando a chave de sessao existe. */
+      try{
+        var _temSessao = false;
+        for (var _i = 0; _i < localStorage.length; _i++){
+          var _k = localStorage.key(_i);
+          if (_k && _k.indexOf('sb-') === 0 && _k.indexOf('-auth-token') > 0){ _temSessao = true; break; }
+        }
+        if (_temSessao){
+          Logger.info('BOOT','Sessao salva encontrada — carregando Supabase em segundo plano');
+          setTimeout(function(){
+            window.__bootstrapManual().then(function(){
+              try{
+                /* re-renderiza a pagina atual: se for restrita, o gate agora libera */
+                var _at = ['nps','experts','admin'].filter(function(pg){
+                  var el = document.getElementById('page-'+pg); return el && el.classList.contains('active');
+                })[0];
+                if (window.__gatedPending) { var _g = window.__gatedPending; window.__gatedPending = null; switchPage(_g); }
+                else if (_at) switchPage(_at);
+              }catch(e){}
+            });
+          }, 400);
+        }
+      }catch(e){ if(typeof Logger!=='undefined') Logger.warn('BOOT','check de sessao',{err:e.message}); }
     }, 100);
   },300);
   // Timeout de segurança curto — esconde loader após 4s no MÁXIMO (dashboard já rendeu com FALLBACK)
