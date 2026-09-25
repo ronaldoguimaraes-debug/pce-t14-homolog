@@ -6,20 +6,29 @@ const API_SCHEMA_VERSION = '3.0'; // atualizado para DASH-BR-COMPLETO v2
 const DATA_SOURCES = {
   br: {
     id:'br',label:'T14 Brasil',flag:'🇧🇷',color:'#f5a623',
-    url:'https://script.google.com/macros/s/AKfycbyJenWWKEcbaHT4juL2Qq1Oe8sfLeuNbf5tj4YJ1546iXGI9b03khspyx4iLx32Hl7H/exec',
+    url:'proxy:br',
     type:'full',timeout:30000,retries:1,retryDelay:2000,
   },
   t15: {
     id:'t15',label:'T15 Brasil',flag:'🇧🇷',color:'#f5a623',
-    url:'https://script.google.com/macros/s/AKfycbxqKIceC2AQ4pD09_-DLGPcSsf6yh0nl-5pU_AUzMo70Xvb8PZpxmOgW6gNojkN-w0h/exec',
+    url:'proxy:t15',
     type:'full',timeout:30000,retries:1,retryDelay:2000,
   },
   t16: {
     id:'t16',label:'T16 Brasil',flag:'🇧🇷',color:'#f5a623',
-    url:'https://script.google.com/macros/s/AKfycbwseu9AlqFt1jlzER-qYrJB7g0cKs0sYJ399JdRunP0q3usubAifCASVIZ8OeWYdYkw/exec',
+    url:'proxy:t16',
     type:'full',timeout:30000,retries:1,retryDelay:2000,
   },
 };
+/* Seguranca 25/09/2026: as portas /exec do Apps Script deixaram de ser chamadas direto pelo navegador.
+   Toda leitura passa pelo porteiro (Edge Function dash-proxy no Supabase), que so responde a usuario
+   logado com perfil aprovado. Os enderecos das portas ficam guardados como segredo no porteiro.
+   Engenharia e fundacao: Ronaldo Ferreira */
+const DASH_PROXY_BASE='https://amibetbgzwaayhyxnank.supabase.co/functions/v1/dash-proxy';
+async function dashSessionToken(){try{if(!window.SB)return null;const r=await SB.auth.getSession();return (r&&r.data&&r.data.session&&r.data.session.access_token)||null;}catch(e){return null;}}
+async function dashFetchRes(src,signal){const tok=await dashSessionToken();if(!tok)throw new Error('SEM_LOGIN');return fetch(DASH_PROXY_BASE+'?src='+encodeURIComponent(src),{signal:signal,cache:'no-store',headers:{'Authorization':'Bearer '+tok,'apikey':(typeof SUPABASE_KEY!=='undefined'?SUPABASE_KEY:'')}});}
+async function dashFetch(src,timeoutMs){const ctrl=new AbortController();const tm=setTimeout(function(){ctrl.abort();},timeoutMs||30000);try{const res=await dashFetchRes(src,ctrl.signal);if(!res.ok)throw new Error('HTTP '+res.status);return await res.json();}finally{clearTimeout(tm);}}
+function dashSrc(u){return (typeof u==='string'&&u.indexOf('proxy:')===0)?u.slice(6):null;}
 const SCHEMA = {
   br:{requiredFields:['rows','total'],rowRequiredFields:['nome','presenca','tipo'],minRows:1}
 };
@@ -38,7 +47,7 @@ const NETWORKING_PV_FALLBACK = []; /* Segurança 25/09/2026: dados de aluno remo
 
    CPF chega mascarado do endpoint — dado pessoal não trafega completo.
    Engenharia e fundação: Ronaldo Ferreira */
-const NETWORKING_T15_URL = 'https://script.google.com/macros/s/AKfycbySoSTzY5x0locfSCuneh3-itR0JsLdck6ABCoIaq2hWYiuSLZjgIEko3qK2mXzADNF/exec';
+const NETWORKING_T15_URL = 'proxy:nt15';
 let NETWORKING_T15_DATA = null;
 let NETWORKING_T15_STATE = 'idle';   // idle | loading | ok | err
 
@@ -50,7 +59,7 @@ async function fetchNetworkingT15(force){
   try{
     const ctrl=new AbortController();
     const tm=setTimeout(function(){ctrl.abort();},12000);
-    const res=await fetch(NETWORKING_T15_URL,{signal:ctrl.signal,cache:'no-store'});
+    const res=dashSrc(NETWORKING_T15_URL)?await dashFetchRes(dashSrc(NETWORKING_T15_URL),ctrl.signal):await fetch(NETWORKING_T15_URL,{signal:ctrl.signal,cache:'no-store'});
     clearTimeout(tm);
     if(!res.ok) throw new Error('HTTP '+res.status);
     const j=await res.json();
@@ -184,14 +193,14 @@ function paintNetworkingT15(turmaValida){
   el.innerHTML=h;
 }
 
-const NETWORKING_PV_URL = 'https://script.google.com/macros/s/AKfycbyMPl7AVEyQQ8UU2T9t6tuCr8tgHbDu0ADARsYFgXDYPwLpUSumKtSfVN3dnGyJHTI_/exec'; // v49.9 endpoint ativo (Google Apps Script)
+const NETWORKING_PV_URL = 'proxy:npv'; // v49.9 endpoint ativo (Google Apps Script)
 let NETWORKING_PV_DATA = NETWORKING_PV_FALLBACK.slice();
 let NETWORKING_PV_SOURCE = 'static_embedded';
 async function fetchNetworkingPV(){
   if(!NETWORKING_PV_URL){if(window.Logger)Logger.info('NETWORKING','Sem URL — fallback embedado',{n:NETWORKING_PV_DATA.length});return false;}
   try{
     const ctrl=new AbortController();const tm=setTimeout(()=>ctrl.abort(),8000);
-    const res=await fetch(NETWORKING_PV_URL,{signal:ctrl.signal,cache:'no-store'});clearTimeout(tm);
+    const res=dashSrc(NETWORKING_PV_URL)?await dashFetchRes(dashSrc(NETWORKING_PV_URL),ctrl.signal):await fetch(NETWORKING_PV_URL,{signal:ctrl.signal,cache:'no-store'});clearTimeout(tm);
     if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();
     const arr=Array.isArray(data)?data:(data.rows||data.data||[]);
@@ -294,7 +303,7 @@ function storeUpdateBr(payload){if(!payload){Logger.warn('STORE','storeUpdateBr:
 function storeUpdateUs(payload){if(!payload){Logger.warn('STORE','storeUpdateUs: payload nulo — mantendo dados anteriores');return false;}store.us.data=payload;store.us.updated=payload.updated;store.us.version=payload.version;store.us.source=payload.source||'api_live';Logger.info('STORE','Orlando atualizado',{total:payload.total,confirmados:payload.confirmados});return true;}
 function storeSetOffline(isOffline){store.meta.isOffline=isOffline;const banner=document.getElementById('offline-banner');if(banner)banner.classList.toggle('hidden',!isOffline);}
 function jsonp(url,name,timeoutMs=15000){return new Promise((resolve,reject)=>{const cbName='_pce_cb_'+name+'_'+Date.now()+'_'+Math.random().toString(36).slice(2);let done=false;const timer=setTimeout(()=>{if(done)return;done=true;cleanup();reject(new Error('Timeout JSONP: '+name));},timeoutMs);function cleanup(){clearTimeout(timer);try{window[cbName]=function(){};}catch(e){}const el=document.getElementById('jsonp_'+cbName);if(el)el.remove();setTimeout(function(){try{delete window[cbName];}catch(e){}},120000);}window[cbName]=function(data){if(done)return;done=true;cleanup();resolve(data);};const script=document.createElement('script');script.id='jsonp_'+cbName;script.onerror=()=>{if(done)return;done=true;cleanup();reject(new Error('Script error JSONP: '+name));};script.src=url+(url.includes('?')?'&':'?')+'callback='+cbName;document.head.appendChild(script);});}
-async function fetchWithRetry(sourceConfig,token){const{id,url,timeout,retries,retryDelay,label}=sourceConfig;let lastError;for(let attempt=0;attempt<=retries;attempt++){if(store.meta.fetchToken!==token){Logger.debug('FETCH',`[${id}] Fetch cancelado — token obsoleto`,{expected:token,current:store.meta.fetchToken});throw new Error('CANCELLED');}if(attempt>0){const delay=retryDelay*Math.pow(2,attempt-1);Logger.warn('FETCH',`[${id}] Retry ${attempt}/${retries} em ${delay}ms`,{lastError:lastError?.message});await new Promise(r=>setTimeout(r,delay));if(store.meta.fetchToken!==token)throw new Error('CANCELLED');}try{const t0=Date.now();Logger.info('FETCH',`[${id}] Tentativa ${attempt+1}/${retries+1} — ${label}`);const data=await jsonp(url,id+'_'+attempt,timeout);Logger.perf('FETCH',`[${id}] Resposta recebida`,t0);return data;}catch(e){lastError=e;Logger.warn('FETCH',`[${id}] Tentativa ${attempt+1} falhou`,{error:e.message});}}throw new Error(`[${id}] Todas as ${retries+1} tentativas falharam. Último erro: ${lastError?.message}`);}
+async function fetchWithRetry(sourceConfig,token){const{id,url,timeout,retries,retryDelay,label}=sourceConfig;let lastError;for(let attempt=0;attempt<=retries;attempt++){if(store.meta.fetchToken!==token){Logger.debug('FETCH',`[${id}] Fetch cancelado — token obsoleto`,{expected:token,current:store.meta.fetchToken});throw new Error('CANCELLED');}if(attempt>0){const delay=retryDelay*Math.pow(2,attempt-1);Logger.warn('FETCH',`[${id}] Retry ${attempt}/${retries} em ${delay}ms`,{lastError:lastError?.message});await new Promise(r=>setTimeout(r,delay));if(store.meta.fetchToken!==token)throw new Error('CANCELLED');}try{const t0=Date.now();Logger.info('FETCH',`[${id}] Tentativa ${attempt+1}/${retries+1} — ${label}`);const data=dashSrc(url)?await dashFetch(dashSrc(url),timeout):await jsonp(url,id+'_'+attempt,timeout);Logger.perf('FETCH',`[${id}] Resposta recebida`,t0);return data;}catch(e){lastError=e;Logger.warn('FETCH',`[${id}] Tentativa ${attempt+1} falhou`,{error:e.message});}}throw new Error(`[${id}] Todas as ${retries+1} tentativas falharam. Último erro: ${lastError?.message}`);}
 // ── Render agnóstico de view: repinta o que está na tela (debounce em rAF) ──
 var __renderRAF=null;
 function renderActive(){
@@ -3911,6 +3920,8 @@ async function authOnLogin(user){
     return;
   }
   authUpdateUI();
+  /* Seguranca 25/09/2026: os dados das turmas so carregam depois do login (porteiro). */
+  try{ if(typeof fetchAllData==='function') fetchAllData(true).catch(function(){}); }catch(e){}
   if (document.getElementById('page-manual').classList.contains('active')){
     manualBootCloud();
   }
